@@ -1,0 +1,190 @@
+import type { Maybe } from "Maybe"
+
+import { EQ, GT, LT } from "Compare"
+import Float from "Float"
+import Fn from "Function"
+import IO from "IO"
+import List from "List"
+import Math from "Math"
+import { Just, Nothing } from "Maybe"
+
+import Random from "Random"
+
+
+
+export type Suit = Clubs | Diamonds | Hearts | Spades | Joker
+export type Denomination = NoFace(Integer) | Jack | Queen | King | Ace | Wildcard
+
+export type Card = Card(Suit, Denomination)
+
+getSuit :: Card -> Suit
+export getSuit = where {
+  Card(s, _) =>
+    s
+}
+
+getValue :: Card -> Denomination
+export getValue = where {
+  Card(_, v) =>
+    v
+}
+
+getOrdinalValue :: Boolean -> Denomination -> Integer
+export getOrdinalValue = (aceHigh, d) => where(d) {
+  NoFace(x) =>
+    x
+
+  Jack =>
+    11
+
+  Queen =>
+    12
+
+  King =>
+    13
+
+  Ace =>
+    aceHigh ? 14 : 1
+
+  Wildcard =>
+    0
+}
+export getOrdinal = getOrdinalValue(true)
+export getOrdinalLow = getOrdinalValue(false)
+
+makeFullSuit :: Suit -> List Card
+makeFullSuit = (s) => [
+  ...map((v) => Card(s, NoFace(v)), List.range(2, 11)),
+  Card(s, Jack),
+  Card(s, Queen),
+  Card(s, King),
+  Card(s, Ace),
+]
+
+DECK :: List Card
+export DECK = [
+  ...makeFullSuit(Clubs),
+  ...makeFullSuit(Diamonds),
+  ...makeFullSuit(Hearts),
+  ...makeFullSuit(Spades),
+]
+
+DECK_WITH_JOKERS :: List Card
+export DECK_WITH_JOKERS = [...DECK, Card(Joker, Wildcard), Card(Joker, Wildcard)]
+
+
+shuffle :: Random.Seed -> List Card -> List Card
+export shuffle = (seed, deck) => pipe(
+  Random.generateFromSeed,
+  // shuffle by default doesn't shuffle enough
+  (rand) => pipe(
+    rand.shuffle,
+    rand.shuffle,
+    rand.shuffle,
+  )(deck),
+)(seed)
+
+sortDescWithTrump :: Boolean -> Suit -> List Card -> List Card
+export sortDescWithTrump = (aceHigh, trumpSuit, cards) => List.sortBy(
+  (a, b) => where(#[a, b]) {
+    #[Card(d1, v1), Card(d2, v2)] =>
+      do {
+        x = getOrdinalValue(aceHigh, v1)
+        y = getOrdinalValue(aceHigh, v2)
+        trump1 = d1 == trumpSuit
+        trump2 = d2 == trumpSuit
+        return if (trump1 && !trump2) {
+          LT
+        } else if (trump2 && !trump1) {
+          GT
+        } else {
+          x == y ? EQ : x < y ? GT : LT
+        }
+      }
+  },
+  cards,
+)
+export sortWithTrump = sortDescWithTrump(true)
+export sortLowWithTrump = sortDescWithTrump(false)
+
+sortDesc :: Boolean -> List Card -> List Card
+export sortDesc = (aceHigh, cards) => List.sortBy(
+  (a, b) => where(#[a, b]) {
+    #[Card(d1, v1), Card(d2, v2)] =>
+      do {
+        x = getOrdinalValue(aceHigh, v1)
+        y = getOrdinalValue(aceHigh, v2)
+        return x == y ? EQ : x < y ? GT : LT
+      }
+  },
+  cards,
+)
+export sort = sortDesc(true)
+export sortLow = sortDesc(false)
+
+includes :: Card -> List Card -> Boolean
+export includes = (c, cs) => where(c) {
+  Card(d, v) =>
+    Fn.any(where { Card(d2, v2) => d == d2 && v == v2 }, cs)
+}
+
+
+cut :: Integer -> List a -> #[List a, List a]
+export cut = (a, xs) => #[List.slice(0, a, xs), List.slice(a, List.length(xs), xs)]
+
+recut :: Integer -> Integer -> List a -> List (List a)
+export recut = (per, times, xs) => List.repeatWith(
+  (i) => List.slice(i * per, (i + 1) * per, xs),
+  times,
+)
+
+deal :: Integer -> Integer -> List Card -> Maybe #[List (List Card), List Card]
+export deal = (perPlayer, totalPlayers, cards) => {
+  totalCards = List.length(cards)
+  toDeal = perPlayer * totalPlayers
+  return if (perPlayer < 0 || totalPlayers < 0 || totalCards < toDeal) {
+    Nothing
+  } else {
+    pipe(
+      cut(toDeal),
+      where {
+        #[hands, remainder] =>
+          #[recut(perPlayer, totalPlayers, hands), remainder]
+      },
+      Just,
+    )(cards)
+  }
+}
+
+filterBySuit :: Suit -> List Card -> List Card
+export filterBySuit = (s, cs) => List.filter(
+  pipe(
+    getSuit,
+    Fn.equals(s),
+  ),
+  cs,
+)
+
+rejectBySuit :: Suit -> List Card -> List Card
+export rejectBySuit = (s, cs) => List.filter(
+  pipe(
+    getSuit,
+    Fn.equals(s),
+  ),
+  cs,
+)
+
+isFaceCard :: Card -> Boolean
+export isFaceCard = where {
+  Card(_, NoFace(_)) =>
+    false
+
+  _ =>
+    true
+}
+
+getFaceCards :: List Card -> List Card
+export getFaceCards = (cards) => List.filter(isFaceCard, cards)
+
+getNonFaceCards :: List Card -> List Card
+export getNonFaceCards = (cards) => List.reject(isFaceCard, cards)

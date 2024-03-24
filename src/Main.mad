@@ -1,0 +1,45 @@
+import IO from "IO"
+import List from "List"
+
+import Random from "Random"
+
+import Deck from "./Deck"
+import OhHell from "./OhHell"
+
+
+
+main = () => {
+  seed = Random.mkSeedFromString("oh-madness-v1")
+  // shuffled = Deck.shuffle(seed, Deck.DECK)
+  // IO.cTrace("initial deal!", shuffled)
+  pipe(
+    OhHell.initialDeal(seed, 10),
+    map(OhHell.prepForBetting),
+    IO.cTrace("dealt cards"),
+    map(
+      (state) => List.reduce(
+        (agg, player) => where(player) {
+          OhHell.ActivePlayer(OhHell.Player(name, hand), _, points) =>
+            do {
+              bet = pipe(
+                OhHell.weighHand(state.trump, hand),
+                IO.cTrace(`${name}: ->`),
+                (weights) => weights.trumpFaceCards,
+              )(agg.bets)
+              return {
+                ...agg,
+                players: [
+                  ...agg.players,
+                  OhHell.ActivePlayer(OhHell.Player(name, hand), OhHell.Bet(bet), points),
+                ],
+                bets: [...agg.bets, bet],
+              }
+            }
+        },
+        { ...state, players: [] },
+        state.players,
+      ),
+    ),
+    IO.cTrace("..."),
+  )(["Brekk", "Arnaud"])
+}
