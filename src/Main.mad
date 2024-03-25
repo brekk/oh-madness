@@ -10,36 +10,38 @@ import OhHell from "./OhHell"
 
 main = () => {
   seed = Random.mkSeedFromString("oh-madness-v1")
+  gen = Random.generateFromSeed(seed)
   // shuffled = Deck.shuffle(seed, Deck.DECK)
   // IO.cTrace("initial deal!", shuffled)
   pipe(
-    OhHell.initialDeal(seed, 10),
+    OhHell.initialDeal(gen),
     map(OhHell.prepForBetting),
     IO.cTrace("dealt cards"),
     map(
       (state) => List.reduce(
         (agg, player) => where(player) {
           OhHell.ActivePlayer(OhHell.Player(name, hand), _, points) =>
-            do {
-              bet = pipe(
-                OhHell.weighHand(state.trump, hand),
-                IO.cTrace(`${name}: ->`),
-                (weights) => weights.trumpFaceCards,
-              )(agg.bets)
-              return {
-                ...agg,
-                players: [
-                  ...agg.players,
-                  OhHell.ActivePlayer(OhHell.Player(name, hand), OhHell.Bet(bet), points),
-                ],
-                bets: [...agg.bets, bet],
-              }
-            }
+            pipe(
+              OhHell.weighHand(state.trump, hand),
+              IO.cTrace(`${name}: ->`),
+              (weights) => weights.trumpFaceCards,
+              // OhHell.judgeByWeight(rand, agg.bets, state.round
+              (bet) => (
+                {
+                  ...agg,
+                  players: [
+                    ...agg.players,
+                    OhHell.ActivePlayer(OhHell.Player(name, hand), OhHell.Bet(bet), points),
+                  ],
+                  bets: [...agg.bets, bet],
+                }
+              ),
+            )(agg.bets)
         },
         { ...state, players: [] },
         state.players,
       ),
     ),
     IO.cTrace("..."),
-  )(["Brekk", "Arnaud"])
+  )(["Brekk", "Arnaud", "Hlolli"])
 }

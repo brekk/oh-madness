@@ -13,49 +13,83 @@ import { Just, Nothing, fromMaybe } from "Maybe"
 
 import Random from "Random"
 
-import Deck from "./Deck"
-
 
 
 export type Player = Player(String, List Card)
 
-export alias InitialState = { cardsPerPlayer :: Integer, players :: List Player, trump :: Suit }
+export alias InitialState = {
+  cardsPerPlayer :: Integer,
+  cardsPerRound :: List Integer,
+  players :: List Player,
+  trump :: Suit,
+}
 
 export type GameError = Error(Integer, String) | GenericError
 
-initialDeal :: Seed -> Integer -> List String -> Either GameError InitialState
-export initialDeal = (seed, cardsPerPlayer, playerNames) => {
+// If three to five play, 10 cards are dealt to each player in the first deal; if six play, 8 cards, and, if seven play, 7 cards.
+cardsPerTotalPlayers :: Integer -> Integer
+cardsPerTotalPlayers = (i) => if (i >= 3 && i <= 5) {
+  10
+} else if (i == 6) {
+  8
+} else if (i == 7) {
+  7
+} else {
+  -1
+}
+
+roundsPerTotalPlayers :: Integer -> List Integer
+roundsPerTotalPlayers = (i) => {
+  max = cardsPerTotalPlayers(i)
+  return if (max > 0) {
+    List.concat(List.reverse(List.range(2, max)), List.range(1, max))
+  } else {
+    [max]
+  }
+}
+
+sum :: List Integer -> Integer
+sum = List.reduce(Math.add, 0)
+
+initialDeal :: Random Card -> List String -> Either GameError InitialState
+export initialDeal = (rand, playerNames) => {
   totalPlayers = List.length(playerNames)
-  return pipe(
-    Deck.shuffle(seed),
-    Deck.deal(cardsPerPlayer, totalPlayers),
-    where {
-      Just(#[hands, undealt]) =>
-        Right({
-          players: pipe(
-            List.zip(playerNames),
-            map(where { #[name, hand] => Player(name, hand) }),
-          )(hands),
-          trump: pipe(
-            List.first,
-            map(Deck.getSuit),
-          )(undealt),
-          cardsPerPlayer,
-        })
+  cardsPerPlayer = cardsPerTotalPlayers(totalPlayers)
+  return if (totalPlayers < 3 || totalPlayers > 7) {
+    Left(Error(1, "Between 3 - 7 players needed!"))
+  } else {
+    pipe(
+      Deck.shuffle(rand),
+      Deck.deal(cardsPerPlayer, totalPlayers),
+      where {
+        Just(#[hands, undealt]) =>
+          Right({
+            players: pipe(
+              List.zip(playerNames),
+              map(where { #[name, hand] => Player(name, hand) }),
+            )(hands),
+            trump: pipe(
+              List.first,
+              map(Deck.getSuit),
+            )(undealt),
+            cardsPerPlayer,
+            cardsPerRound: roundsPerTotalPlayers(totalPlayers),
+          })
 
-      Nothing =>
-        Left(Error(1, `Unable to deal hands for ${show(totalPlayers)} players.`))
-    },
-    chain(
-      (state) => where(state.trump) {
         Nothing =>
-          Left(Error(2, "Trump suit not found."))
-
-        Just(suit) =>
-          Right({ ...state, trump: suit })
+          Left(Error(2, `Unable to deal hands for ${show(totalPlayers)} players.`))
       },
-    ),
-  )(Deck.DECK)
+      chain(
+        (state) => where(state.trump) {
+          Nothing =>
+            Left(Error(3, "Trump suit not found."))
+
+          Just(suit) =>
+            Right({ ...state, trump: suit })
+        },
+      ),
+    )(Deck.DECK)
+  }
 }
 
 // ActivePlayer
@@ -63,15 +97,16 @@ export type PlayerState = Initial | Bet(Integer) | Played | ChangeTrumpBet(Suit,
 export type ActivePlayer = ActivePlayer(Player, PlayerState, Integer)
 
 alias PlayState = {
+  ...InitialState,
   bets :: List Integer,
-  cardsPerPlayer :: Integer,
   players :: List ActivePlayer,
+  round :: Integer,
   trump :: Suit,
 }
 
 prepForBetting :: InitialState -> PlayState
 export prepForBetting = (state) => (
-  { ...state, bets: [], players: map((p) => ActivePlayer(p, Initial, 0), state.players) }
+  { ...state, bets: [], players: map((p) => ActivePlayer(p, Initial, 0), state.players), round: 0 }
 )
 
 isTrump :: Suit -> Card -> Boolean
@@ -82,7 +117,7 @@ export isTrump = (s, c) => pipe(
 
 
 canBet :: Integer -> List Integer -> Boolean
-export canBet = (goal, xs) => List.reduce((sum, a) => sum + a, 0, xs) != goal
+export canBet = (goal, xs) => sum(xs) != goal
 
 export alias HandWeights = {
   faceCards :: Integer,
@@ -110,4 +145,15 @@ export weighHand = (trump, cards, bets) => {
       List.length,
     )(faceCards),
   }
+}
+
+judgeByWeight :: Random Integer -> PlayState -> HandWeights -> Integer
+export judgeByWeight = (rand, state, weights) => {
+  totalPlayers = List.length(state.players)
+  max = pipe(
+    List.nth(state.round),
+    fromMaybe(totalPlayers),
+  )(state.cardsPerRound)
+  currentSum = sum(state.bets)
+  return rand.integer(weights.trumpFaceCards, max - currentSum)
 }

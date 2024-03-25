@@ -73,16 +73,12 @@ DECK_WITH_JOKERS :: List Card
 export DECK_WITH_JOKERS = [...DECK, Card(Joker, Wildcard), Card(Joker, Wildcard)]
 
 
-shuffle :: Random.Seed -> List Card -> List Card
-export shuffle = (seed, deck) => pipe(
-  Random.generateFromSeed,
-  // shuffle by default doesn't shuffle enough
-  (rand) => pipe(
-    rand.shuffle,
-    rand.shuffle,
-    rand.shuffle,
-  )(deck),
-)(seed)
+shuffle :: Random Card -> List Card -> List Card
+export shuffle = (rand, deck) => pipe(
+  rand.shuffle,
+  rand.shuffle,
+  rand.shuffle,
+)(deck)
 
 sortDescWithTrump :: Boolean -> Suit -> List Card -> List Card
 export sortDescWithTrump = (aceHigh, trumpSuit, cards) => List.sortBy(
