@@ -1,9 +1,9 @@
-import type { Maybe } from "Maybe"
+// import type { Maybe } from "Maybe"
 
-import type { Card, Denomination, Suit } from "./Deck"
+// import type { Card, Denomination, Suit } from "./Deck"
 
 import List from "List"
-import { Just, Nothing, fromMaybe } from "Maybe"
+import { Just, Nothing } from "Maybe"
 import Random from "Random"
 import { assertEquals, test } from "Test"
 
@@ -24,33 +24,37 @@ import {
   Spades,
   Wildcard,
   __makeFullSuit,
-  cut,
+  // cut,
   deal,
   filterBySuit,
-  getContiguous,
+  // getContiguous,
   getFaceCards,
   getNonFaceCards,
   getOrdinal,
   getOrdinalLow,
   getSuit,
   getValue,
-  includes,
-  isConsecutive,
-  isConsecutiveAnySuit,
-  isConsecutiveSameSuit,
+  // includes,
+  // isConsecutive,
+  // isConsecutiveAnySuit,
+  // isConsecutiveSameSuit,
   isFaceCard,
   isSuit,
   ordinalToDenomination,
-  recut,
+  // recut,
   rejectBySuit,
   shuffle,
-  sort,
-  sortDesc,
-  sortDescWithTrump,
-  sortLow,
-  sortLowWithTrump,
-  sortWithTrump,
 } from "./Deck"
+
+
+
+// sort,
+// sortDesc,
+// sortDescWithTrump,
+// sortLow,
+// sortLowWithTrump,
+// sortWithTrump,
+
 
 
 
@@ -239,7 +243,6 @@ test(
   ),
 )
 
-/*
 test(
   "getNonFaceCards",
   () => assertEquals(
@@ -252,4 +255,3 @@ test(
     [Card(Joker, NoFace(7))],
   ),
 )
-*/
