@@ -1,19 +1,25 @@
 import type { Maybe } from "Maybe"
+import type { Random } from "Random"
 
 import { EQ, GT, LT } from "Compare"
-import Float from "Float"
 import Fn from "Function"
 import IO from "IO"
 import List from "List"
 import Math from "Math"
 import { Just, Nothing } from "Maybe"
-
 import Random from "Random"
 
 
 
 export type Suit = Clubs | Diamonds | Hearts | Spades | Joker
-export type Denomination = NoFace(Integer) | Jack | Queen | King | Ace | Wildcard
+export type Denomination
+  = NoFace(Integer)
+  | Jack
+  | Queen
+  | King
+  | Ace
+  | Wildcard
+  | InvalidDenomination
 
 export type Card = Card(Suit, Denomination)
 
@@ -48,12 +54,35 @@ export getOrdinalValue = (aceHigh, d) => where(d) {
 
   Wildcard =>
     0
+
+  InvalidDenomination =>
+    -1
 }
+
+
 export getOrdinal = getOrdinalValue(true)
 export getOrdinalLow = getOrdinalValue(false)
 
-makeFullSuit :: Suit -> List Card
-makeFullSuit = (s) => [
+
+ordinalToDenomination :: Integer -> Denomination
+export ordinalToDenomination = (i) => if (i == 14 || i == 1) {
+  Ace
+} else if (i == 13) {
+  King
+} else if (i == 12) {
+  Queen
+} else if (i == 11) {
+  Jack
+} else if (i == 0) {
+  Wildcard
+} else if (i < 0 || i > 14) {
+  InvalidDenomination
+} else {
+  NoFace(i)
+}
+
+__makeFullSuit :: Suit -> List Card
+export __makeFullSuit = (s) => [
   ...map((v) => Card(s, NoFace(v)), List.range(2, 11)),
   Card(s, Jack),
   Card(s, Queen),
@@ -63,22 +92,18 @@ makeFullSuit = (s) => [
 
 DECK :: List Card
 export DECK = [
-  ...makeFullSuit(Clubs),
-  ...makeFullSuit(Diamonds),
-  ...makeFullSuit(Hearts),
-  ...makeFullSuit(Spades),
+  ...__makeFullSuit(Clubs),
+  ...__makeFullSuit(Diamonds),
+  ...__makeFullSuit(Hearts),
+  ...__makeFullSuit(Spades),
 ]
 
 DECK_WITH_JOKERS :: List Card
 export DECK_WITH_JOKERS = [...DECK, Card(Joker, Wildcard), Card(Joker, Wildcard)]
 
 
-shuffle :: Random Card -> List Card -> List Card
-export shuffle = (rand, deck) => pipe(
-  rand.shuffle,
-  rand.shuffle,
-  rand.shuffle,
-)(deck)
+shuffle :: List Card -> Random -> List Card
+export shuffle = Random.shuffle
 
 sortDescWithTrump :: Boolean -> Suit -> List Card -> List Card
 export sortDescWithTrump = (aceHigh, trumpSuit, cards) => List.sortBy(
@@ -152,27 +177,27 @@ export deal = (perPlayer, totalPlayers, cards) => {
   }
 }
 
+isSuit :: Suit -> Card -> Boolean
+export isSuit = (s, c) => pipe(
+  getSuit,
+  Fn.equals(s),
+)(c)
+
 filterBySuit :: Suit -> List Card -> List Card
-export filterBySuit = (s, cs) => List.filter(
-  pipe(
-    getSuit,
-    Fn.equals(s),
-  ),
-  cs,
-)
+export filterBySuit = (s, cs) => List.filter(isSuit(s), cs)
 
 rejectBySuit :: Suit -> List Card -> List Card
-export rejectBySuit = (s, cs) => List.filter(
-  pipe(
-    getSuit,
-    Fn.equals(s),
-  ),
-  cs,
-)
+export rejectBySuit = (s, cs) => List.reject(isSuit(s), cs)
 
 isFaceCard :: Card -> Boolean
 export isFaceCard = where {
   Card(_, NoFace(_)) =>
+    false
+
+  Card(_, InvalidDenomination) =>
+    false
+
+  Card(_, Wildcard) =>
     false
 
   _ =>
@@ -184,3 +209,42 @@ export getFaceCards = (cards) => List.filter(isFaceCard, cards)
 
 getNonFaceCards :: List Card -> List Card
 export getNonFaceCards = (cards) => List.reject(isFaceCard, cards)
+
+isConsecutive :: Boolean -> Boolean -> Card -> Card -> Boolean
+export isConsecutive = (matchSuit, aceHigh, c1, c2) => {
+  ord = getOrdinalValue(aceHigh)
+  return where(#[c1, c2]) {
+    #[Card(s1, v1), Card(s2, v2)] =>
+      (matchSuit ? s1 == s2 : true) && Math.abs(ord(v1) - ord(v2)) == 1
+  }
+}
+export isConsecutiveSameSuit = isConsecutive(true)
+export isConsecutiveAnySuit = isConsecutive(false)
+
+/**
+ * Finds "runs" of cards: cards in consecutive order
+ *  
+ */
+getContiguous :: Boolean -> Boolean -> List Card -> List (List Card)
+export getContiguous = (matchSuit, aceHigh, cards) => {
+  ord = getOrdinalValue(aceHigh)
+  conseq = isConsecutive(matchSuit, aceHigh)
+  return pipe(
+    List.reduce(
+      (stacks, card) => if (List.isEmpty(stacks)) {
+        [[card]]
+      } else {
+        // not yet right
+        where(card) {
+          Card(s, v) =>
+            pipe(
+              IO.cTrace("before"),
+              map(List.filter(conseq(card))),
+              IO.cTrace("after"),
+            )(stacks)
+        }
+      },
+      [],
+    ),
+  )(cards)
+}

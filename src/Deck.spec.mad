@@ -1,0 +1,255 @@
+import type { Maybe } from "Maybe"
+
+import type { Card, Denomination, Suit } from "./Deck"
+
+import List from "List"
+import { Just, Nothing, fromMaybe } from "Maybe"
+import Random from "Random"
+import { assertEquals, test } from "Test"
+
+import {
+  Ace,
+  Card,
+  Clubs,
+  DECK,
+  DECK_WITH_JOKERS,
+  Diamonds,
+  Hearts,
+  InvalidDenomination,
+  Jack,
+  Joker,
+  King,
+  NoFace,
+  Queen,
+  Spades,
+  Wildcard,
+  __makeFullSuit,
+  cut,
+  deal,
+  filterBySuit,
+  getContiguous,
+  getFaceCards,
+  getNonFaceCards,
+  getOrdinal,
+  getOrdinalLow,
+  getSuit,
+  getValue,
+  includes,
+  isConsecutive,
+  isConsecutiveAnySuit,
+  isConsecutiveSameSuit,
+  isFaceCard,
+  isSuit,
+  ordinalToDenomination,
+  recut,
+  rejectBySuit,
+  shuffle,
+  sort,
+  sortDesc,
+  sortDescWithTrump,
+  sortLow,
+  sortLowWithTrump,
+  sortWithTrump,
+} from "./Deck"
+
+
+
+rand = Random.generateFromString("deck-v1")
+
+test("deal - invalid inputs", () => assertEquals(deal(-1, -1, []), Nothing))
+
+test(
+  "shuffle",
+  () => assertEquals(
+    pipe(
+      shuffle(DECK),
+      deal(5, 5),
+    )(rand),
+    Just(#[
+      [
+        [
+          Card(Hearts, NoFace(7)),
+          Card(Joker, Wildcard),
+          Card(Clubs, NoFace(9)),
+          Card(Hearts, NoFace(10)),
+          Card(Hearts, NoFace(4)),
+          Card(Hearts, NoFace(9)),
+        ],
+        [
+          Card(Hearts, NoFace(9)),
+          Card(Diamonds, Queen),
+          Card(Spades, NoFace(6)),
+          Card(Spades, NoFace(4)),
+          Card(Clubs, NoFace(7)),
+          Card(Diamonds, NoFace(4)),
+        ],
+        [
+          Card(Diamonds, NoFace(4)),
+          Card(Spades, Queen),
+          Card(Spades, NoFace(3)),
+          Card(Hearts, NoFace(3)),
+          Card(Diamonds, NoFace(2)),
+          Card(Spades, Jack),
+        ],
+        [
+          Card(Spades, Jack),
+          Card(Hearts, NoFace(2)),
+          Card(Hearts, Queen),
+          Card(Spades, NoFace(10)),
+          Card(Diamonds, Jack),
+          Card(Diamonds, NoFace(8)),
+        ],
+        [
+          Card(Diamonds, NoFace(8)),
+          Card(Spades, NoFace(2)),
+          Card(Clubs, NoFace(6)),
+          Card(Hearts, NoFace(6)),
+          Card(Hearts, NoFace(5)),
+          Card(Clubs, NoFace(2)),
+        ],
+      ],
+      [
+        Card(Clubs, NoFace(2)),
+        Card(Diamonds, NoFace(9)),
+        Card(Hearts, NoFace(8)),
+        Card(Clubs, Ace),
+        Card(Hearts, King),
+        Card(Diamonds, NoFace(5)),
+        Card(Hearts, Jack),
+        Card(Spades, NoFace(7)),
+        Card(Diamonds, King),
+        Card(Joker, Wildcard),
+        Card(Spades, Ace),
+        Card(Clubs, NoFace(10)),
+        Card(Clubs, Queen),
+        Card(Spades, NoFace(9)),
+        Card(Clubs, Jack),
+        Card(Diamonds, NoFace(3)),
+        Card(Spades, NoFace(5)),
+        Card(Clubs, NoFace(5)),
+        Card(Spades, NoFace(8)),
+        Card(Diamonds, NoFace(7)),
+        Card(Diamonds, NoFace(10)),
+        Card(Clubs, NoFace(3)),
+        Card(Clubs, King),
+        Card(Diamonds, Ace),
+        Card(Spades, King),
+        Card(Clubs, NoFace(4)),
+        Card(Diamonds, NoFace(6)),
+        Card(Clubs, NoFace(8)),
+        Card(Hearts, Ace),
+      ],
+    ]),
+  ),
+)
+
+test(
+  "__makeFullSuit",
+  () => assertEquals(
+    __makeFullSuit(Joker),
+    [
+      Card(Joker, NoFace(2)),
+      Card(Joker, NoFace(3)),
+      Card(Joker, NoFace(4)),
+      Card(Joker, NoFace(5)),
+      Card(Joker, NoFace(6)),
+      Card(Joker, NoFace(7)),
+      Card(Joker, NoFace(8)),
+      Card(Joker, NoFace(9)),
+      Card(Joker, NoFace(10)),
+      Card(Joker, Jack),
+      Card(Joker, Queen),
+      Card(Joker, King),
+      Card(Joker, Ace),
+    ],
+  ),
+)
+
+test("getSuit", () => assertEquals(getSuit(Card(Diamonds, Ace)), Diamonds))
+test(
+  "getValue",
+  () => assertEquals(getValue(Card(Diamonds, InvalidDenomination)), InvalidDenomination),
+)
+test(
+  "getOrdinalValue - aceHigh",
+  () => assertEquals(
+    map(getOrdinal, [InvalidDenomination, Wildcard, Ace, King, Queen, Jack, NoFace(-100)]),
+    [-1, 0, 14, 13, 12, 11, -100],
+  ),
+)
+
+test(
+  "getOrdinalValue - aceLow",
+  () => assertEquals(
+    map(getOrdinalLow, [InvalidDenomination, Wildcard, Ace, King, Queen, Jack, NoFace(-100)]),
+    [-1, 0, 1, 13, 12, 11, -100],
+  ),
+)
+
+test(
+  "ordinalToDenomination",
+  () => assertEquals(
+    map(ordinalToDenomination, List.concat(List.range(11, 15), [0, -1, 8])),
+    [Jack, Queen, King, Ace, Wildcard, InvalidDenomination, NoFace(8)],
+  ),
+)
+
+test("isSuit", () => assertEquals(isSuit(Joker, Card(Joker, InvalidDenomination)), true))
+
+test(
+  "filterBySuit",
+  () => assertEquals(
+    filterBySuit(Joker, DECK_WITH_JOKERS),
+    [Card(Joker, Wildcard), Card(Joker, Wildcard)],
+  ),
+)
+test(
+  "rejectBySuit",
+  () => assertEquals(
+    rejectBySuit(Joker, [Card(Joker, Wildcard), Card(Diamonds, NoFace(1000))]),
+    [Card(Diamonds, NoFace(1000))],
+  ),
+)
+test(
+  "isFaceCard",
+  () => assertEquals(
+    map(
+      isFaceCard,
+      [
+        Card(Joker, NoFace(7)),
+        Card(Joker, InvalidDenomination),
+        Card(Joker, Wildcard),
+        Card(Joker, Ace),
+      ],
+    ),
+    [false, false, false, true],
+  ),
+)
+
+test(
+  "getFaceCards",
+  () => assertEquals(
+    getFaceCards([
+      Card(Joker, NoFace(7)),
+      Card(Joker, InvalidDenomination),
+      Card(Joker, Wildcard),
+      Card(Joker, Ace),
+    ]),
+    [Card(Joker, Ace)],
+  ),
+)
+
+/*
+test(
+  "getNonFaceCards",
+  () => assertEquals(
+    getNonFaceCards([
+      Card(Joker, NoFace(7)),
+      Card(Joker, InvalidDenomination),
+      Card(Joker, Wildcard),
+      Card(Joker, Ace),
+    ]),
+    [Card(Joker, NoFace(7))],
+  ),
+)
+*/

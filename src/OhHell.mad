@@ -1,6 +1,5 @@
 import type { Either } from "Either"
 import type { Maybe } from "Maybe"
-
 import type { Seed } from "Random"
 
 import type { Card, Suit } from "./Deck"
@@ -8,10 +7,14 @@ import type { Card, Suit } from "./Deck"
 import { EQ, GT, LT } from "Compare"
 import { Left, Right } from "Either"
 import Fn from "Function"
+import IO from "IO"
 import List from "List"
+import Math from "Math"
 import { Just, Nothing, fromMaybe } from "Maybe"
-
 import Random from "Random"
+
+import { Ace } from "./Deck"
+import Deck from "./Deck"
 
 
 
@@ -40,7 +43,7 @@ cardsPerTotalPlayers = (i) => if (i >= 3 && i <= 5) {
 
 roundsPerTotalPlayers :: Integer -> List Integer
 roundsPerTotalPlayers = (i) => {
-  max = cardsPerTotalPlayers(i)
+  max = cardsPerTotalPlayers(i) + 1
   return if (max > 0) {
     List.concat(List.reverse(List.range(2, max)), List.range(1, max))
   } else {
@@ -51,7 +54,7 @@ roundsPerTotalPlayers = (i) => {
 sum :: List Integer -> Integer
 sum = List.reduce(Math.add, 0)
 
-initialDeal :: Random Card -> List String -> Either GameError InitialState
+initialDeal :: Random -> List String -> Either GameError InitialState
 export initialDeal = (rand, playerNames) => {
   totalPlayers = List.length(playerNames)
   cardsPerPlayer = cardsPerTotalPlayers(totalPlayers)
@@ -59,7 +62,7 @@ export initialDeal = (rand, playerNames) => {
     Left(Error(1, "Between 3 - 7 players needed!"))
   } else {
     pipe(
-      Deck.shuffle(rand),
+      Deck.shuffle($, rand),
       Deck.deal(cardsPerPlayer, totalPlayers),
       where {
         Just(#[hands, undealt]) =>
@@ -147,13 +150,49 @@ export weighHand = (trump, cards, bets) => {
   }
 }
 
-judgeByWeight :: Random Integer -> PlayState -> HandWeights -> Integer
-export judgeByWeight = (rand, state, weights) => {
+/**
+ * If a player has great trump cards (starting with an ace), what is the contiguous set of
+ * cards that will beat all others? i.e. If they have ace through queen of trump, then
+ * that would guarantee at least 3 tricks (A + K + Q)
+ * This function will only search from the top down, so if the player is missing the ace
+ * it will return an empty list
+ */
+winningCards :: Suit -> List Card -> List Card
+export winningCards = (trump, cards) => {
+  aceOfTrump = Deck.Card(trump, Ace)
+  hasAce = Deck.includes(aceOfTrump, cards)
+  return if (!hasAce) {
+    []
+  } else {
+    pipe(
+      Deck.filterBySuit(trump),
+      Deck.sortWithTrump(trump),
+      List.reduce(
+        (stack, card) => pipe(
+          List.first,
+          fromMaybe(Deck.Card(Deck.Joker, Deck.InvalidDenomination)),
+          Deck.isConsecutiveSameSuit(true, card),
+          (yes) => yes ? List.append(card, stack) : stack,
+        )(stack),
+        [aceOfTrump],
+      ),
+    )(cards)
+  }
+}
+
+
+judgeByWeight :: Random -> PlayState -> List Integer -> HandWeights -> Integer
+export judgeByWeight = (rand, state, bets, weights) => {
   totalPlayers = List.length(state.players)
   max = pipe(
     List.nth(state.round),
     fromMaybe(totalPlayers),
   )(state.cardsPerRound)
-  currentSum = sum(state.bets)
-  return rand.integer(weights.trumpFaceCards, max - currentSum)
+  IO.cTrace(`max`, max)
+  currentSum = sum(bets)
+  IO.cTrace(`>>>`, currentSum)
+  upperLimit = max - currentSum
+  // likely bets: trump face cards
+
+  return Random.integer(weights.trumpFaceCards, upperLimit, rand)
 }

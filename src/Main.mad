@@ -1,6 +1,5 @@
 import IO from "IO"
 import List from "List"
-
 import Random from "Random"
 
 import Deck from "./Deck"
@@ -9,8 +8,7 @@ import OhHell from "./OhHell"
 
 
 main = () => {
-  seed = Random.mkSeedFromString("oh-madness-v1")
-  gen = Random.generateFromSeed(seed)
+  gen = Random.generateFromString("oh-madness-0.0.0")
   // shuffled = Deck.shuffle(seed, Deck.DECK)
   // IO.cTrace("initial deal!", shuffled)
   pipe(
@@ -24,8 +22,9 @@ main = () => {
             pipe(
               OhHell.weighHand(state.trump, hand),
               IO.cTrace(`${name}: ->`),
-              (weights) => weights.trumpFaceCards,
-              // OhHell.judgeByWeight(rand, agg.bets, state.round
+              // (weights) => weights.trumpFaceCards,
+              OhHell.judgeByWeight(gen, state, agg.bets),
+              IO.cTrace("bet bet bet"),
               (bet) => (
                 {
                   ...agg,
