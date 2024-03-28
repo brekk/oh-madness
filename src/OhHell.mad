@@ -29,9 +29,18 @@ export alias InitialState = {
 
 export type GameError = Error(Integer, String) | GenericError
 
+getHumanError :: GameError -> String
+export getHumanError = where {
+  Error(_, s) =>
+    s
+
+  GenericError =>
+    "An error occurred!"
+}
+
 // If three to five play, 10 cards are dealt to each player in the first deal; if six play, 8 cards, and, if seven play, 7 cards.
 cardsPerTotalPlayers :: Integer -> Integer
-cardsPerTotalPlayers = (i) => if (i >= 3 && i <= 5) {
+export cardsPerTotalPlayers = (i) => if (i >= 3 && i <= 5) {
   10
 } else if (i == 6) {
   8
@@ -42,7 +51,7 @@ cardsPerTotalPlayers = (i) => if (i >= 3 && i <= 5) {
 }
 
 roundsPerTotalPlayers :: Integer -> List Integer
-roundsPerTotalPlayers = (i) => {
+export roundsPerTotalPlayers = (i) => {
   max = cardsPerTotalPlayers(i) + 1
   return if (max > 0) {
     List.concat(List.reverse(List.range(2, max)), List.range(1, max))
@@ -51,8 +60,8 @@ roundsPerTotalPlayers = (i) => {
   }
 }
 
-sum :: List Integer -> Integer
-sum = List.reduce(Math.add, 0)
+__sum :: List Integer -> Integer
+export __sum = List.reduce(Math.add, 0)
 
 initialDeal :: Random -> List String -> Either GameError InitialState
 export initialDeal = (rand, playerNames) => {
@@ -62,7 +71,7 @@ export initialDeal = (rand, playerNames) => {
     Left(Error(1, "Between 3 - 7 players needed!"))
   } else {
     pipe(
-      Deck.shuffle($, rand),
+      Random.shuffle($, rand),
       Deck.deal(cardsPerPlayer, totalPlayers),
       where {
         Just(#[hands, undealt]) =>
@@ -96,7 +105,7 @@ export initialDeal = (rand, playerNames) => {
 }
 
 // ActivePlayer
-export type PlayerState = Initial | Bet(Integer) | Played | ChangeTrumpBet(Suit, Integer)
+export type PlayerState = Initial | Bet(Integer) | Played
 export type ActivePlayer = ActivePlayer(Player, PlayerState, Integer)
 
 alias PlayState = {
@@ -120,7 +129,7 @@ export isTrump = (s, c) => pipe(
 
 
 canBet :: Integer -> List Integer -> Boolean
-export canBet = (goal, xs) => sum(xs) != goal
+export canBet = (goal, xs) => __sum(xs) != goal
 
 export alias HandWeights = {
   faceCards :: Integer,
@@ -129,20 +138,22 @@ export alias HandWeights = {
   trumpFaceCards :: Integer,
 }
 
+__largest :: List Integer -> Integer
+export __largest = pipe(
+  List.sortBy((a, b) => a == b ? EQ : a < b ? GT : LT),
+  List.first,
+  fromMaybe(0),
+)
+
 weighHand :: Suit -> List Card -> List Integer -> HandWeights
 export weighHand = (trump, cards, bets) => {
   sorted = Deck.sortWithTrump(trump, cards)
   trumpCards = Deck.filterBySuit(trump, sorted)
   faceCards = Deck.getFaceCards(sorted)
-  highestBet = pipe(
-    List.sortBy((a, b) => a == b ? EQ : a < b ? GT : LT),
-    List.first,
-    fromMaybe(0),
-  )(bets)
   return {
     trumpCards: List.length(trumpCards),
     faceCards: List.length(faceCards),
-    highestBet,
+    highestBet: __largest(bets),
     trumpFaceCards: pipe(
       Deck.filterBySuit(trump),
       List.length,
@@ -189,7 +200,7 @@ export judgeByWeight = (rand, state, bets, weights) => {
     fromMaybe(totalPlayers),
   )(state.cardsPerRound)
   IO.cTrace(`max`, max)
-  currentSum = sum(bets)
+  currentSum = __sum(bets)
   IO.cTrace(`>>>`, currentSum)
   upperLimit = max - currentSum
   // likely bets: trump face cards

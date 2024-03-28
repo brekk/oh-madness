@@ -1,0 +1,161 @@
+import type { ActivePlayer } from "./OhHell"
+
+import Either from "Either"
+import List from "List"
+import Random from "Random"
+import { assertEquals, test } from "Test"
+
+import { Ace, Card, Clubs, Diamonds, Hearts, Jack, King, NoFace, Queen, Spades } from "./Deck"
+import {
+  ActivePlayer,
+  Bet,
+  Error,
+  GenericError,
+  Initial,
+  Played,
+  Player,
+  __largest,
+  __sum,
+  canBet,
+  cardsPerTotalPlayers,
+  getHumanError,
+  initialDeal,
+  isTrump,
+  judgeByWeight,
+  prepForBetting,
+  roundsPerTotalPlayers,
+  weighHand,
+  winningCards,
+} from "./OhHell"
+
+
+
+test(
+  "cardsPerTotalPlayers",
+  () => assertEquals(map(cardsPerTotalPlayers, List.range(2, 8)), [-1, 10, 10, 10, 8, 7]),
+)
+
+test(
+  "roundsPerTotalPlayers",
+  () => assertEquals(
+    map(roundsPerTotalPlayers, [1, 3, 8]),
+    [[0], [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [0]],
+  ),
+)
+
+test("__sum", () => assertEquals(__sum(List.range(0, 10)), 45))
+
+test(
+  "prepForBetting",
+  () => {
+    input = {
+      cardsPerPlayer: 1,
+      cardsPerRound: [1],
+      players: [Player("Brekk", [])],
+      trump: Diamonds,
+    }
+    return assertEquals(
+      prepForBetting(input),
+      { ...input, bets: [], players: [ActivePlayer(Player("Brekk", []), Initial, 0)], round: 0 },
+    )
+  },
+)
+
+test("isTrump", () => assertEquals(isTrump(Diamonds, Card(Diamonds, Ace)), true))
+
+test("canBet", () => assertEquals(canBet(109, roundsPerTotalPlayers(3)), false))
+
+test("__largest", () => assertEquals(__largest(List.range(0, 10)), 9))
+
+test(
+  "weighHand",
+  () => assertEquals(
+    weighHand(Diamonds, [Card(Diamonds, Ace)], [10]),
+    { faceCards: 1, highestBet: 10, trumpCards: 1, trumpFaceCards: 1 },
+  ),
+)
+
+test(
+  "initialDeal - invalid number of players",
+  () => {
+    rand = Random.generateFromString("test")
+    return assertEquals(
+      pipe(
+        initialDeal(rand),
+        where {
+          Either.Left(x) =>
+            getHumanError(x)
+
+          _ =>
+            "Whatever"
+        },
+      )([]),
+      "Between 3 - 7 players needed!",
+    )
+  },
+)
+test("getHumanError", () => assertEquals(getHumanError(GenericError), "An error occurred!"))
+
+test(
+  "initialDeal - invalid number of players",
+  () => {
+    rand = Random.generateFromString("test")
+    return assertEquals(
+      pipe(
+        initialDeal(rand),
+      )(["Brekk", "Arnaud", "Hlolli"]),
+      Either.Right({
+        cardsPerPlayer: 10,
+        cardsPerRound: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        players: [
+          Player(
+            "Brekk",
+            [
+              Card(Diamonds, Jack),
+              Card(Clubs, NoFace(6)),
+              Card(Spades, Jack),
+              Card(Diamonds, NoFace(10)),
+              Card(Clubs, NoFace(8)),
+              Card(Clubs, Queen),
+              Card(Hearts, NoFace(3)),
+              Card(Diamonds, NoFace(7)),
+              Card(Diamonds, NoFace(5)),
+              Card(Spades, NoFace(8)),
+            ],
+          ),
+          Player(
+            "Arnaud",
+            [
+              Card(Hearts, King),
+              Card(Clubs, NoFace(3)),
+              Card(Spades, NoFace(9)),
+              Card(Clubs, Jack),
+              Card(Clubs, NoFace(10)),
+              Card(Diamonds, Ace),
+              Card(Clubs, NoFace(4)),
+              Card(Hearts, NoFace(2)),
+              Card(Diamonds, NoFace(9)),
+              Card(Spades, NoFace(7)),
+            ],
+          ),
+          Player(
+            "Hlolli",
+            [
+              Card(Diamonds, NoFace(4)),
+              Card(Spades, NoFace(2)),
+              Card(Diamonds, NoFace(2)),
+              Card(Hearts, NoFace(5)),
+              Card(Diamonds, NoFace(3)),
+              Card(Spades, NoFace(4)),
+              Card(Spades, NoFace(5)),
+              Card(Spades, NoFace(10)),
+              Card(Diamonds, NoFace(8)),
+              Card(Hearts, Jack),
+            ],
+          ),
+        ],
+        trump: Clubs,
+      }),
+    )
+  },
+)

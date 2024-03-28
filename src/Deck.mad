@@ -29,14 +29,14 @@ export getSuit = where {
     s
 }
 
-getValue :: Card -> Denomination
-export getValue = where {
+getRank :: Card -> Denomination
+export getRank = where {
   Card(_, v) =>
     v
 }
 
-getOrdinalValue :: Boolean -> Denomination -> Integer
-export getOrdinalValue = (aceHigh, d) => where(d) {
+getOrdinalRank :: Boolean -> Denomination -> Integer
+export getOrdinalRank = (aceHigh, d) => where(d) {
   NoFace(x) =>
     x
 
@@ -60,8 +60,8 @@ export getOrdinalValue = (aceHigh, d) => where(d) {
 }
 
 
-export getOrdinal = getOrdinalValue(true)
-export getOrdinalLow = getOrdinalValue(false)
+export getOrdinal = getOrdinalRank(true)
+export getOrdinalLow = getOrdinalRank(false)
 
 
 ordinalToDenomination :: Integer -> Denomination
@@ -101,15 +101,13 @@ export DECK = [
 DECK_WITH_JOKERS :: List Card
 export DECK_WITH_JOKERS = [...DECK, Card(Joker, Wildcard), Card(Joker, Wildcard)]
 
-
-
 sortDescWithTrump :: Boolean -> Suit -> List Card -> List Card
 export sortDescWithTrump = (aceHigh, trumpSuit, cards) => List.sortBy(
   (a, b) => where(#[a, b]) {
     #[Card(d1, v1), Card(d2, v2)] =>
       do {
-        x = getOrdinalValue(aceHigh, v1)
-        y = getOrdinalValue(aceHigh, v2)
+        x = getOrdinalRank(aceHigh, v1)
+        y = getOrdinalRank(aceHigh, v2)
         trump1 = d1 == trumpSuit
         trump2 = d2 == trumpSuit
         return if (trump1 && !trump2) {
@@ -131,8 +129,8 @@ export sortDesc = (aceHigh, cards) => List.sortBy(
   (a, b) => where(#[a, b]) {
     #[Card(d1, v1), Card(d2, v2)] =>
       do {
-        x = getOrdinalValue(aceHigh, v1)
-        y = getOrdinalValue(aceHigh, v2)
+        x = getOrdinalRank(aceHigh, v1)
+        y = getOrdinalRank(aceHigh, v2)
         return x == y ? EQ : x < y ? GT : LT
       }
   },
@@ -158,16 +156,28 @@ export cut = (a, xs) => {
   }
 }
 
+// recut :: Integer -> Integer -> List a -> Maybe (List (List a))
+// export recut = (per, times, xs) => if (per > 0 && times > 0 && per * times <= List.length(xs)) {
+//   pipe(
+//     List.repeatWith((i) => List.slice(i * per, ((i + 1) * per) - 1, xs)),
+//     Just,
+//   )(times)
+// } else {
+//   Nothing
+// }
 
-recut :: Integer -> Integer -> List a -> Maybe (List (List a))
-export recut = (per, times, xs) => if (per > 0 && times > 0 && per * times <= List.length(xs)) {
-  pipe(
-    List.repeatWith((i) => List.slice(i * (per - 1), (i + 1) * (per - 1), xs)),
-    Just,
-  )(times)
-} else {
-  Nothing
+// remove if bifunctor tuples land
+mapFst :: (a -> c) -> #[a, b] -> #[c, b]
+mapFst = (fn, tuple) => where(tuple) {
+  #[a, b] =>
+    #[fn(a), b]
 }
+
+__recut :: Integer -> Integer -> List a -> List (List a)
+export __recut = (per, times, xs) => List.repeatWith(
+  (i) => List.slice(i * per, ((i + 1) * per) - 1, xs),
+  times,
+)
 
 deal :: Integer -> Integer -> List Card -> Maybe #[List (List Card), List Card]
 export deal = (perPlayer, totalPlayers, cards) => {
@@ -178,18 +188,7 @@ export deal = (perPlayer, totalPlayers, cards) => {
   } else {
     pipe(
       cut(toDeal),
-      chain(
-        where {
-          #[hands, remainder] =>
-            where(recut(perPlayer, totalPlayers, hands)) {
-              Just(dealt) =>
-                Just(#[dealt, remainder])
-
-              _ =>
-                Nothing
-            }
-        },
-      ),
+      map(mapFst(__recut(perPlayer, totalPlayers))),
     )(cards)
   }
 }
@@ -243,7 +242,7 @@ export getNonFaceCards = pipe(
 
 isConsecutive :: Boolean -> Boolean -> Card -> Card -> Boolean
 export isConsecutive = (matchSuit, aceHigh, c1, c2) => {
-  ord = getOrdinalValue(aceHigh)
+  ord = getOrdinalRank(aceHigh)
   return where(#[c1, c2]) {
     #[Card(s1, v1), Card(s2, v2)] =>
       (matchSuit ? s1 == s2 : true) && Math.abs(ord(v1) - ord(v2)) == 1
@@ -253,29 +252,11 @@ export isConsecutiveSameSuit = isConsecutive(true)
 export isConsecutiveAnySuit = isConsecutive(false)
 
 /**
- * Finds "runs" of cards: cards in consecutive order
+ * Finds "straights" of cards: cards in consecutive order
  *  
  */
-getContiguous :: Boolean -> Boolean -> List Card -> List (List Card)
-export getContiguous = (matchSuit, aceHigh, cards) => {
-  ord = getOrdinalValue(aceHigh)
-  conseq = isConsecutive(matchSuit, aceHigh)
-  return pipe(
-    List.reduce(
-      (stacks, card) => if (List.isEmpty(stacks)) {
-        [[card]]
-      } else {
-        // not yet right
-        where(card) {
-          Card(s, v) =>
-            pipe(
-              IO.cTrace("before"),
-              map(List.filter(conseq(card))),
-              IO.cTrace("after"),
-            )(stacks)
-        }
-      },
-      [],
-    ),
-  )(cards)
-}
+// getStraights :: Boolean -> Boolean -> List Card -> List (List Card)
+// export getStraights = (matchSuit, aceHigh, cards) => {
+//   ord = getOrdinalRank(aceHigh)
+//   conseq = isConsecutive(matchSuit, aceHigh)
+// }
