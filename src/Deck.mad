@@ -102,8 +102,6 @@ DECK_WITH_JOKERS :: List Card
 export DECK_WITH_JOKERS = [...DECK, Card(Joker, Wildcard), Card(Joker, Wildcard)]
 
 
-shuffle :: List Card -> Random -> List Card
-export shuffle = Random.shuffle
 
 sortDescWithTrump :: Boolean -> Suit -> List Card -> List Card
 export sortDescWithTrump = (aceHigh, trumpSuit, cards) => List.sortBy(
@@ -150,14 +148,26 @@ export includes = (c, cs) => where(c) {
 }
 
 
-cut :: Integer -> List a -> #[List a, List a]
-export cut = (a, xs) => #[List.slice(0, a, xs), List.slice(a, List.length(xs), xs)]
+cut :: Integer -> List a -> Maybe #[List a, List a]
+export cut = (a, xs) => {
+  len = List.length(xs)
+  return if (a <= len && a > -1) {
+    Just(#[List.slice(0, a - 1, xs), List.slice(a, len, xs)])
+  } else {
+    Nothing
+  }
+}
 
-recut :: Integer -> Integer -> List a -> List (List a)
-export recut = (per, times, xs) => List.repeatWith(
-  (i) => List.slice(i * per, (i + 1) * per, xs),
-  times,
-)
+
+recut :: Integer -> Integer -> List a -> Maybe (List (List a))
+export recut = (per, times, xs) => if (per > 0 && times > 0 && per * times <= List.length(xs)) {
+  pipe(
+    List.repeatWith((i) => List.slice(i * (per - 1), (i + 1) * (per - 1), xs)),
+    Just,
+  )(times)
+} else {
+  Nothing
+}
 
 deal :: Integer -> Integer -> List Card -> Maybe #[List (List Card), List Card]
 export deal = (perPlayer, totalPlayers, cards) => {
@@ -168,11 +178,18 @@ export deal = (perPlayer, totalPlayers, cards) => {
   } else {
     pipe(
       cut(toDeal),
-      where {
-        #[hands, remainder] =>
-          #[recut(perPlayer, totalPlayers, hands), remainder]
-      },
-      Just,
+      chain(
+        where {
+          #[hands, remainder] =>
+            where(recut(perPlayer, totalPlayers, hands)) {
+              Just(dealt) =>
+                Just(#[dealt, remainder])
+
+              _ =>
+                Nothing
+            }
+        },
+      ),
     )(cards)
   }
 }
@@ -203,12 +220,26 @@ export isFaceCard = where {
   _ =>
     true
 }
+isNonStandardDenomination :: Card -> Boolean
+export isNonStandardDenomination = where {
+  Card(_, InvalidDenomination) =>
+    true
+
+  Card(_, Wildcard) =>
+    true
+
+  _ =>
+    false
+}
 
 getFaceCards :: List Card -> List Card
-export getFaceCards = (cards) => List.filter(isFaceCard, cards)
+export getFaceCards = List.filter(isFaceCard)
 
 getNonFaceCards :: List Card -> List Card
-export getNonFaceCards = (cards) => List.reject(isFaceCard, cards)
+export getNonFaceCards = pipe(
+  List.reject(isFaceCard),
+  List.reject(isNonStandardDenomination),
+)
 
 isConsecutive :: Boolean -> Boolean -> Card -> Card -> Boolean
 export isConsecutive = (matchSuit, aceHigh, c1, c2) => {

@@ -24,128 +24,115 @@ import {
   Spades,
   Wildcard,
   __makeFullSuit,
-  // cut,
+  cut,
   deal,
   filterBySuit,
-  // getContiguous,
+  getContiguous,
   getFaceCards,
   getNonFaceCards,
   getOrdinal,
   getOrdinalLow,
   getSuit,
   getValue,
-  // includes,
-  // isConsecutive,
-  // isConsecutiveAnySuit,
-  // isConsecutiveSameSuit,
+  includes,
+  isConsecutive,
+  isConsecutiveAnySuit,
+  isConsecutiveSameSuit,
   isFaceCard,
   isSuit,
   ordinalToDenomination,
-  // recut,
+  recut,
   rejectBySuit,
-  shuffle,
+  sort,
+  sortLow,
+  sortLowWithTrump,
+  sortWithTrump,
 } from "./Deck"
 
 
 
-// sort,
-// sortDesc,
-// sortDescWithTrump,
-// sortLow,
-// sortLowWithTrump,
-// sortWithTrump,
-
-
-
-
-rand = Random.generateFromString("deck-v1")
-
-test("deal - invalid inputs", () => assertEquals(deal(-1, -1, []), Nothing))
-
 test(
-  "shuffle",
-  () => assertEquals(
-    pipe(
-      shuffle(DECK),
-      deal(5, 5),
-    )(rand),
-    Just(#[
-      [
+  "deal",
+  () => {
+    rand = Random.generateFromString("deck-v1")
+    return assertEquals(
+      deal(5, 5, DECK),
+      Just(#[
         [
-          Card(Hearts, NoFace(7)),
-          Card(Joker, Wildcard),
-          Card(Clubs, NoFace(9)),
-          Card(Hearts, NoFace(10)),
-          Card(Hearts, NoFace(4)),
-          Card(Hearts, NoFace(9)),
+          [
+            Card(Clubs, NoFace(2)),
+            Card(Clubs, NoFace(3)),
+            Card(Clubs, NoFace(4)),
+            Card(Clubs, NoFace(5)),
+            Card(Clubs, NoFace(6)),
+          ],
+          [
+            Card(Clubs, NoFace(6)),
+            Card(Clubs, NoFace(7)),
+            Card(Clubs, NoFace(8)),
+            Card(Clubs, NoFace(9)),
+            Card(Clubs, NoFace(10)),
+          ],
+          [
+            Card(Clubs, NoFace(10)),
+            Card(Clubs, Jack),
+            Card(Clubs, Queen),
+            Card(Clubs, King),
+            Card(Clubs, Ace),
+          ],
+          [
+            Card(Clubs, Ace),
+            Card(Diamonds, NoFace(2)),
+            Card(Diamonds, NoFace(3)),
+            Card(Diamonds, NoFace(4)),
+            Card(Diamonds, NoFace(5)),
+          ],
+          [
+            Card(Diamonds, NoFace(5)),
+            Card(Diamonds, NoFace(6)),
+            Card(Diamonds, NoFace(7)),
+            Card(Diamonds, NoFace(8)),
+            Card(Diamonds, NoFace(9)),
+          ],
         ],
         [
-          Card(Hearts, NoFace(9)),
-          Card(Diamonds, Queen),
-          Card(Spades, NoFace(6)),
-          Card(Spades, NoFace(4)),
-          Card(Clubs, NoFace(7)),
-          Card(Diamonds, NoFace(4)),
-        ],
-        [
-          Card(Diamonds, NoFace(4)),
-          Card(Spades, Queen),
-          Card(Spades, NoFace(3)),
-          Card(Hearts, NoFace(3)),
-          Card(Diamonds, NoFace(2)),
-          Card(Spades, Jack),
-        ],
-        [
-          Card(Spades, Jack),
+          Card(Diamonds, Ace),
           Card(Hearts, NoFace(2)),
-          Card(Hearts, Queen),
-          Card(Spades, NoFace(10)),
-          Card(Diamonds, Jack),
-          Card(Diamonds, NoFace(8)),
-        ],
-        [
-          Card(Diamonds, NoFace(8)),
-          Card(Spades, NoFace(2)),
-          Card(Clubs, NoFace(6)),
-          Card(Hearts, NoFace(6)),
+          Card(Hearts, NoFace(3)),
+          Card(Hearts, NoFace(4)),
           Card(Hearts, NoFace(5)),
-          Card(Clubs, NoFace(2)),
+          Card(Hearts, NoFace(6)),
+          Card(Hearts, NoFace(7)),
+          Card(Hearts, NoFace(8)),
+          Card(Hearts, NoFace(9)),
+          Card(Hearts, NoFace(10)),
+          Card(Hearts, Jack),
+          Card(Hearts, Queen),
+          Card(Hearts, King),
+          Card(Hearts, Ace),
+          Card(Spades, NoFace(2)),
+          Card(Spades, NoFace(3)),
+          Card(Spades, NoFace(4)),
+          Card(Spades, NoFace(5)),
+          Card(Spades, NoFace(6)),
+          Card(Spades, NoFace(7)),
+          Card(Spades, NoFace(8)),
+          Card(Spades, NoFace(9)),
+          Card(Spades, NoFace(10)),
+          Card(Spades, Jack),
+          Card(Spades, Queen),
+          Card(Spades, King),
+          Card(Spades, Ace),
+          Card(Joker, Wildcard),
+          Card(Joker, Wildcard),
         ],
-      ],
-      [
-        Card(Clubs, NoFace(2)),
-        Card(Diamonds, NoFace(9)),
-        Card(Hearts, NoFace(8)),
-        Card(Clubs, Ace),
-        Card(Hearts, King),
-        Card(Diamonds, NoFace(5)),
-        Card(Hearts, Jack),
-        Card(Spades, NoFace(7)),
-        Card(Diamonds, King),
-        Card(Joker, Wildcard),
-        Card(Spades, Ace),
-        Card(Clubs, NoFace(10)),
-        Card(Clubs, Queen),
-        Card(Spades, NoFace(9)),
-        Card(Clubs, Jack),
-        Card(Diamonds, NoFace(3)),
-        Card(Spades, NoFace(5)),
-        Card(Clubs, NoFace(5)),
-        Card(Spades, NoFace(8)),
-        Card(Diamonds, NoFace(7)),
-        Card(Diamonds, NoFace(10)),
-        Card(Clubs, NoFace(3)),
-        Card(Clubs, King),
-        Card(Diamonds, Ace),
-        Card(Spades, King),
-        Card(Clubs, NoFace(4)),
-        Card(Diamonds, NoFace(6)),
-        Card(Clubs, NoFace(8)),
-        Card(Hearts, Ace),
-      ],
-    ]),
-  ),
+      ]),
+    )
+  },
 )
+
+test("deal - invalid counts", () => assertEquals(deal(-1, -1, []), Nothing))
+// test("deal - invalid inputs", () => assertEquals(deal(6, 9, DECK_WITH_JOKERS), Nothing))
 
 test(
   "__makeFullSuit",
@@ -254,4 +241,214 @@ test(
     ]),
     [Card(Joker, NoFace(7))],
   ),
+)
+
+test(
+  "sortWithTrump",
+  () => assertEquals(
+    sortWithTrump(
+      Spades,
+      [
+        Card(Joker, NoFace(7)),
+        Card(Diamonds, Ace),
+        Card(Hearts, King),
+        Card(Spades, Jack),
+        Card(Joker, InvalidDenomination),
+        Card(Joker, Wildcard),
+        Card(Diamonds, Queen),
+        Card(Hearts, NoFace(10)),
+        Card(Spades, NoFace(8)),
+        Card(Joker, Ace),
+      ],
+    ),
+    [
+      Card(Spades, Jack),
+      Card(Spades, NoFace(8)),
+      Card(Diamonds, Ace),
+      Card(Joker, Ace),
+      Card(Hearts, King),
+      Card(Diamonds, Queen),
+      Card(Hearts, NoFace(10)),
+      Card(Joker, NoFace(7)),
+      Card(Joker, Wildcard),
+      Card(Joker, InvalidDenomination),
+    ],
+  ),
+)
+
+test(
+  "sortLowWithTrump",
+  () => assertEquals(
+    sortLowWithTrump(
+      Hearts,
+      [
+        Card(Joker, NoFace(7)),
+        Card(Diamonds, Ace),
+        Card(Hearts, King),
+        Card(Spades, Jack),
+        Card(Joker, InvalidDenomination),
+        Card(Joker, Wildcard),
+        Card(Diamonds, Queen),
+        Card(Hearts, NoFace(10)),
+        Card(Spades, NoFace(8)),
+        Card(Joker, Ace),
+      ],
+    ),
+    [
+      Card(Hearts, King),
+      Card(Hearts, NoFace(10)),
+      Card(Diamonds, Queen),
+      Card(Spades, Jack),
+      Card(Spades, NoFace(8)),
+      Card(Joker, NoFace(7)),
+      Card(Diamonds, Ace),
+      Card(Joker, Ace),
+      Card(Joker, Wildcard),
+      Card(Joker, InvalidDenomination),
+    ],
+  ),
+)
+
+test(
+  "sort",
+  () => assertEquals(
+    sort([
+      Card(Joker, NoFace(7)),
+      Card(Diamonds, Ace),
+      Card(Hearts, King),
+      Card(Spades, Jack),
+      Card(Joker, InvalidDenomination),
+      Card(Joker, Wildcard),
+      Card(Diamonds, Queen),
+      Card(Hearts, NoFace(10)),
+      Card(Spades, NoFace(8)),
+      Card(Joker, Ace),
+    ]),
+    [
+      Card(Diamonds, Ace),
+      Card(Joker, Ace),
+      Card(Hearts, King),
+      Card(Diamonds, Queen),
+      Card(Spades, Jack),
+      Card(Hearts, NoFace(10)),
+      Card(Spades, NoFace(8)),
+      Card(Joker, NoFace(7)),
+      Card(Joker, Wildcard),
+      Card(Joker, InvalidDenomination),
+    ],
+  ),
+)
+
+test(
+  "sortLow",
+  () => assertEquals(
+    sortLow([
+      Card(Joker, NoFace(7)),
+      Card(Diamonds, Ace),
+      Card(Hearts, King),
+      Card(Spades, Jack),
+      Card(Joker, InvalidDenomination),
+      Card(Joker, Wildcard),
+      Card(Diamonds, Queen),
+      Card(Hearts, NoFace(10)),
+      Card(Spades, NoFace(8)),
+      Card(Joker, Ace),
+    ]),
+    [
+      Card(Hearts, King),
+      Card(Diamonds, Queen),
+      Card(Spades, Jack),
+      Card(Hearts, NoFace(10)),
+      Card(Spades, NoFace(8)),
+      Card(Joker, NoFace(7)),
+      Card(Diamonds, Ace),
+      Card(Joker, Ace),
+      Card(Joker, Wildcard),
+      Card(Joker, InvalidDenomination),
+    ],
+  ),
+)
+
+test(
+  "includes",
+  () => assertEquals(
+    includes(
+      Card(Joker, Wildcard),
+      [
+        Card(Hearts, King),
+        Card(Diamonds, Queen),
+        Card(Spades, Jack),
+        Card(Hearts, NoFace(10)),
+        Card(Spades, NoFace(8)),
+        Card(Joker, NoFace(7)),
+        Card(Diamonds, Ace),
+        Card(Joker, Ace),
+        Card(Joker, Wildcard),
+        Card(Joker, InvalidDenomination),
+      ],
+    ),
+    true,
+  ),
+)
+
+// remove these if `List.cut` lands in prelude
+test(
+  "cut",
+  () => assertEquals(cut(6, List.range(0, 11)), Just(#[[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10]])),
+)
+
+test("cut - bad", () => assertEquals(cut(-6, List.range(0, 11)), Nothing))
+
+test(
+  "recut",
+  () => assertEquals(
+    recut(
+      3,
+      3,
+      [
+        Card(Hearts, King),
+        Card(Diamonds, Queen),
+        Card(Spades, Jack),
+        Card(Hearts, NoFace(10)),
+        Card(Spades, NoFace(8)),
+        Card(Joker, NoFace(7)),
+        Card(Diamonds, Ace),
+        Card(Joker, Ace),
+        Card(Joker, Wildcard),
+        Card(Joker, InvalidDenomination),
+      ],
+    ),
+    Just([
+      [Card(Hearts, King), Card(Diamonds, Queen), Card(Spades, Jack)],
+      [Card(Spades, Jack), Card(Hearts, NoFace(10)), Card(Spades, NoFace(8))],
+      [Card(Spades, NoFace(8)), Card(Joker, NoFace(7)), Card(Diamonds, Ace)],
+    ]),
+  ),
+)
+// test("recut - bad", () => assertEquals(recut(-1, -1, []), Nothing))
+
+test(
+  "isConsecutiveSameSuit",
+  () => do {
+    _ <- assertEquals(
+      isConsecutiveSameSuit(true, Card(Joker, NoFace(4)), Card(Joker, NoFace(5))),
+      true,
+    )
+    return assertEquals(
+      isConsecutiveSameSuit(true, Card(Joker, NoFace(4)), Card(Joker, NoFace(100))),
+      false,
+    )
+  },
+)
+
+test(
+  "isConsecutiveAnySuit",
+  () => do {
+    _ <- assertEquals(
+      isConsecutiveAnySuit(true, Card(Diamonds, NoFace(4)), Card(Joker, NoFace(5))),
+      true,
+    )
+    _ <- assertEquals(isConsecutiveSameSuit(false, Card(Joker, Ace), Card(Joker, NoFace(2))), true)
+    return assertEquals(isConsecutiveSameSuit(false, Card(Joker, Ace), Card(Diamonds, King)), false)
+  },
 )
