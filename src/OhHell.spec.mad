@@ -90,20 +90,18 @@ test(
             "Whatever"
         },
       )([]),
-      "Between 3 - 7 players needed!",
+      "Unable to deal hands for 0 players.",
     )
   },
 )
 test("getHumanError", () => assertEquals(getHumanError(GenericError), "An error occurred!"))
 
 test(
-  "initialDeal - invalid number of players",
+  "initialDeal",
   () => {
     rand = Random.generateFromString("test")
     return assertEquals(
-      pipe(
-        initialDeal(rand),
-      )(["Brekk", "Arnaud", "Hlolli"]),
+      initialDeal(rand, ["Brekk", "Arnaud", "Hlolli"]),
       Either.Right({
         cardsPerPlayer: 10,
         cardsPerRound: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
@@ -111,51 +109,62 @@ test(
           Player(
             "Brekk",
             [
-              Card(Diamonds, Jack),
-              Card(Clubs, NoFace(6)),
-              Card(Spades, Jack),
-              Card(Diamonds, NoFace(10)),
-              Card(Clubs, NoFace(8)),
+              Card(Hearts, NoFace(8)),
+              Card(Spades, Ace),
+              Card(Diamonds, NoFace(8)),
               Card(Clubs, Queen),
-              Card(Hearts, NoFace(3)),
-              Card(Diamonds, NoFace(7)),
-              Card(Diamonds, NoFace(5)),
-              Card(Spades, NoFace(8)),
+              Card(Spades, NoFace(9)),
+              Card(Hearts, Ace),
+              Card(Hearts, NoFace(4)),
+              Card(Diamonds, NoFace(2)),
+              Card(Clubs, NoFace(3)),
+              Card(Clubs, NoFace(9)),
             ],
           ),
           Player(
             "Arnaud",
             [
-              Card(Hearts, King),
-              Card(Clubs, NoFace(3)),
-              Card(Spades, NoFace(9)),
-              Card(Clubs, Jack),
               Card(Clubs, NoFace(10)),
-              Card(Diamonds, Ace),
-              Card(Clubs, NoFace(4)),
+              Card(Hearts, NoFace(7)),
               Card(Hearts, NoFace(2)),
-              Card(Diamonds, NoFace(9)),
-              Card(Spades, NoFace(7)),
+              Card(Spades, NoFace(6)),
+              Card(Hearts, NoFace(9)),
+              Card(Spades, Queen),
+              Card(Clubs, NoFace(4)),
+              Card(Spades, NoFace(3)),
+              Card(Clubs, King),
+              Card(Spades, NoFace(5)),
             ],
           ),
           Player(
             "Hlolli",
             [
-              Card(Diamonds, NoFace(4)),
+              Card(Diamonds, NoFace(6)),
+              Card(Clubs, Jack),
+              Card(Spades, Jack),
+              Card(Diamonds, NoFace(10)),
               Card(Spades, NoFace(2)),
-              Card(Diamonds, NoFace(2)),
-              Card(Hearts, NoFace(5)),
-              Card(Diamonds, NoFace(3)),
-              Card(Spades, NoFace(4)),
-              Card(Spades, NoFace(5)),
-              Card(Spades, NoFace(10)),
-              Card(Diamonds, NoFace(8)),
-              Card(Hearts, Jack),
+              Card(Spades, NoFace(8)),
+              Card(Diamonds, King),
+              Card(Clubs, NoFace(8)),
+              Card(Diamonds, NoFace(4)),
+              Card(Spades, King),
             ],
           ),
         ],
-        trump: Clubs,
+        trump: Diamonds,
       }),
+    )
+  },
+)
+
+test(
+  "winningCards",
+  () => do {
+    _ <- assertEquals(winningCards(Diamonds, []), [])
+    return assertEquals(
+      winningCards(Diamonds, [Card(Diamonds, Ace), Card(Spades, Jack), Card(Diamonds, King)]),
+      [Card(Diamonds, Ace), Card(Diamonds, King)],
     )
   },
 )

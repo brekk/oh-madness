@@ -1,6 +1,4 @@
 import type { Either } from "Either"
-import type { Maybe } from "Maybe"
-import type { Seed } from "Random"
 
 import type { Card, Suit } from "./Deck"
 
@@ -67,41 +65,29 @@ initialDeal :: Random -> List String -> Either GameError InitialState
 export initialDeal = (rand, playerNames) => {
   totalPlayers = List.length(playerNames)
   cardsPerPlayer = cardsPerTotalPlayers(totalPlayers)
-  return if (totalPlayers < 3 || totalPlayers > 7) {
-    Left(Error(1, "Between 3 - 7 players needed!"))
-  } else {
-    pipe(
-      Random.shuffle($, rand),
-      Deck.deal(cardsPerPlayer, totalPlayers),
-      where {
-        Just(#[hands, undealt]) =>
-          Right({
-            players: pipe(
-              List.zip(playerNames),
-              map(where { #[name, hand] => Player(name, hand) }),
-            )(hands),
-            trump: pipe(
-              List.first,
-              map(Deck.getSuit),
-            )(undealt),
-            cardsPerPlayer,
-            cardsPerRound: roundsPerTotalPlayers(totalPlayers),
-          })
+  return pipe(
+    Random.shuffle($, rand),
+    Deck.deal(cardsPerPlayer, totalPlayers),
+    where {
+      Just(#[hands, undealt]) =>
+        Right({
+          players: pipe(
+            List.zip(playerNames),
+            map(where { #[name, hand] => Player(name, hand) }),
+          )(hands),
+          trump: pipe(
+            List.first,
+            map(Deck.getSuit),
+            fromMaybe(Deck.Joker),
+          )(undealt),
+          cardsPerPlayer,
+          cardsPerRound: roundsPerTotalPlayers(totalPlayers),
+        })
 
-        Nothing =>
-          Left(Error(2, `Unable to deal hands for ${show(totalPlayers)} players.`))
-      },
-      chain(
-        (state) => where(state.trump) {
-          Nothing =>
-            Left(Error(3, "Trump suit not found."))
-
-          Just(suit) =>
-            Right({ ...state, trump: suit })
-        },
-      ),
-    )(Deck.DECK)
-  }
+      Nothing =>
+        Left(Error(2, `Unable to deal hands for ${show(totalPlayers)} players.`))
+    },
+  )(Deck.DECK)
 }
 
 // ActivePlayer
