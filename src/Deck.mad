@@ -17,64 +17,6 @@ export type Rank = NoFace(Integer) | Jack | Queen | King | Ace | Wildcard | Inva
 
 export type Card = Card(Suit, Rank)
 
-__showSuit :: Suit -> String
-__showSuit = where {
-  Clubs =>
-    "♧"
-
-  Diamonds =>
-    "♢"
-
-  Hearts =>
-    "♡"
-
-  Spades =>
-    "♤"
-
-  Joker =>
-    "🃟"
-}
-
-__showRank :: Rank -> String
-__showRank = where {
-  Ace =>
-    "A"
-
-  NoFace(c) =>
-    show(c)
-
-  InvalidRank =>
-    "?"
-
-  Jack =>
-    "J"
-
-  Queen =>
-    "Q"
-
-  King =>
-    "K"
-
-  Wildcard =>
-    ""
-}
-
-__colorCard :: Suit -> String -> String
-__colorCard = (s, str) => if (s == Hearts || s == Diamonds) {
-  Terminal.text.red(str)
-} else if (s == Clubs || s == Spades) {
-  Terminal.text.blue(str)
-} else {
-  str
-}
-
-showCard :: Card -> String
-export showCard = where {
-  Card(s, r) =>
-    __colorCard(s, `${__showSuit(s)}${r != Wildcard ? " " ++ __showRank(r) : ""}`)
-}
-
-
 getSuit :: Card -> Suit
 export getSuit = where {
   Card(s, _) =>

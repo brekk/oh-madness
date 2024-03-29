@@ -1,10 +1,11 @@
 import IO from "IO"
 import List from "List"
 import Random from "Random"
-import { pShow } from "Show"
+import String from "String"
 
 import Deck from "./Deck"
 import OhHell from "./OhHell"
+import { showActivePlayer } from "./Show"
 
 
 
@@ -12,39 +13,43 @@ main = () => {
   gen = Random.generateFromString("oh-madness-0.0.0")
   // shuffled = Deck.shuffle(seed, Deck.DECK)
   // IO.cTrace("initial deal!", shuffled)
-  IO.trace("SHOW!", map(Deck.showCard, Deck.DECK_WITH_JOKERS))
-  /*
-                pipe(
-                  OhHell.initialDeal(gen),
-                  map(OhHell.prepForBetting),
-                  IO.cTrace("dealt cards"),
-                  map(
-                    (state) => List.reduce(
-                      (agg, player) => where(player) {
-                        OhHell.ActivePlayer(OhHell.Player(name, hand), _, points) =>
-                          pipe(
-                            OhHell.weighHand(state.trump, hand),
-                            IO.cTrace(`${name}: ->`),
-                            // (weights) => weights.trumpFaceCards,
-                            OhHell.judgeByWeight(gen, state, agg.bets),
-                            IO.cTrace("bet bet bet"),
-                            (bet) => (
-                              {
-                                ...agg,
-                                players: [
-                                  ...agg.players,
-                                  OhHell.ActivePlayer(OhHell.Player(name, hand), OhHell.Bet(bet), points),
-                                ],
-                                bets: [...agg.bets, bet],
-                              }
-                            ),
-                          )(agg.bets)
-                      },
-                      { ...state, players: [] },
-                      state.players,
-                    ),
-                  ),
-                  IO.cTrace("..."),
-                )(["Brekk", "Arnaud", "Hlolli"])
-                */
+  // IO.trace("SHOW!", map(Deck.showCard, Deck.DECK_WITH_JOKERS))
+  pipe(
+    OhHell.initialDeal(gen),
+    map(OhHell.prepForBetting),
+    map(
+      (state) => List.reduce(
+        (agg, player) => where(player) {
+          OhHell.ActivePlayer(OhHell.Player(name, hand), _, points) =>
+            pipe(
+              OhHell.weighHand(state.trump, hand),
+              IO.cTrace(`${name}: ->`),
+              // (weights) => weights.trumpFaceCards,
+              OhHell.judgeByWeight(gen, state, agg.bets),
+              IO.cTrace("bet bet bet"),
+              (bet) => (
+                {
+                  ...agg,
+                  players: [
+                    ...agg.players,
+                    OhHell.ActivePlayer(OhHell.Player(name, hand), OhHell.Bet(bet), points),
+                  ],
+                  bets: [...agg.bets, bet],
+                }
+              ),
+            )(agg.bets)
+        },
+        { ...state, players: [] },
+        state.players,
+      ),
+    ),
+    map(
+      (state) => pipe(
+        .players,
+        map(showActivePlayer(state.trump)),
+        String.join("\n"),
+        IO.putLine,
+      )(state),
+    ),
+  )(["Brekk", "Arnaud", "Hlolli"])
 }

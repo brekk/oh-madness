@@ -1,0 +1,101 @@
+import type { Card, Rank, Suit } from "./Deck"
+import type { ActivePlayer, Player } from "./OhHell"
+
+import List from "List"
+import String from "String"
+import Terminal from "Terminal"
+
+import {
+  Ace,
+  Card,
+  Clubs,
+  Diamonds,
+  Hearts,
+  InvalidRank,
+  Jack,
+  Joker,
+  King,
+  NoFace,
+  Queen,
+  Spades,
+  Wildcard,
+  sortWithTrump,
+} from "./Deck"
+import { ActivePlayer, Player } from "./OhHell"
+
+
+
+__showSuit :: Suit -> String
+export __showSuit = where {
+  Clubs =>
+    "♧"
+
+  Diamonds =>
+    "♢"
+
+  Hearts =>
+    "♡"
+
+  Spades =>
+    "♤"
+
+  Joker =>
+    "🃏"
+}
+
+__showRank :: Rank -> String
+export __showRank = where {
+  Ace =>
+    "A"
+
+  NoFace(c) =>
+    show(c)
+
+  InvalidRank =>
+    "?"
+
+  Jack =>
+    "J"
+
+  Queen =>
+    "Q"
+
+  King =>
+    "K"
+
+  Wildcard =>
+    ""
+}
+
+__colorCard :: Suit -> String -> String
+export __colorCard = (s, str) => if (s == Hearts || s == Diamonds) {
+  Terminal.text.red(str)
+} else if (s == Clubs || s == Spades) {
+  Terminal.text.blue(str)
+} else {
+  str
+}
+
+showCard :: Card -> String
+export showCard = where {
+  Card(s, r) =>
+    __colorCard(s, `${__showSuit(s)}${r != Wildcard ? " " ++ __showRank(r) : ""}`)
+}
+
+showPlayer :: Suit -> Player -> String
+export showPlayer = (trump, player) => where(player) {
+  Player(name, hand) =>
+    `${name}: ► ${
+      pipe(
+        sortWithTrump(trump),
+        map(showCard),
+        String.join(" | "),
+      )(hand)
+    }`
+}
+
+showActivePlayer :: Suit -> ActivePlayer -> String
+export showActivePlayer = (trump, player) => where(player) {
+  ActivePlayer(p, _, _) =>
+    showPlayer(trump, p)
+}
