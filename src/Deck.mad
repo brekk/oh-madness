@@ -8,20 +8,72 @@ import List from "List"
 import Math from "Math"
 import { Just, Nothing } from "Maybe"
 import Random from "Random"
+import Terminal from "Terminal"
 
 
 
 export type Suit = Clubs | Diamonds | Hearts | Spades | Joker
-export type Denomination
-  = NoFace(Integer)
-  | Jack
-  | Queen
-  | King
-  | Ace
-  | Wildcard
-  | InvalidDenomination
+export type Rank = NoFace(Integer) | Jack | Queen | King | Ace | Wildcard | InvalidRank
 
-export type Card = Card(Suit, Denomination)
+export type Card = Card(Suit, Rank)
+
+__showSuit :: Suit -> String
+__showSuit = where {
+  Clubs =>
+    "♧"
+
+  Diamonds =>
+    "♢"
+
+  Hearts =>
+    "♡"
+
+  Spades =>
+    "♤"
+
+  Joker =>
+    "🃟"
+}
+
+__showRank :: Rank -> String
+__showRank = where {
+  Ace =>
+    "A"
+
+  NoFace(c) =>
+    show(c)
+
+  InvalidRank =>
+    "?"
+
+  Jack =>
+    "J"
+
+  Queen =>
+    "Q"
+
+  King =>
+    "K"
+
+  Wildcard =>
+    ""
+}
+
+__colorCard :: Suit -> String -> String
+__colorCard = (s, str) => if (s == Hearts || s == Diamonds) {
+  Terminal.text.red(str)
+} else if (s == Clubs || s == Spades) {
+  Terminal.text.blue(str)
+} else {
+  str
+}
+
+showCard :: Card -> String
+export showCard = where {
+  Card(s, r) =>
+    __colorCard(s, `${__showSuit(s)}${r != Wildcard ? " " ++ __showRank(r) : ""}`)
+}
+
 
 getSuit :: Card -> Suit
 export getSuit = where {
@@ -29,13 +81,13 @@ export getSuit = where {
     s
 }
 
-getRank :: Card -> Denomination
+getRank :: Card -> Rank
 export getRank = where {
   Card(_, v) =>
     v
 }
 
-getOrdinalRank :: Boolean -> Denomination -> Integer
+getOrdinalRank :: Boolean -> Rank -> Integer
 export getOrdinalRank = (aceHigh, d) => where(d) {
   NoFace(x) =>
     x
@@ -55,7 +107,7 @@ export getOrdinalRank = (aceHigh, d) => where(d) {
   Wildcard =>
     0
 
-  InvalidDenomination =>
+  InvalidRank =>
     -1
 }
 
@@ -64,8 +116,8 @@ export getOrdinal = getOrdinalRank(true)
 export getOrdinalLow = getOrdinalRank(false)
 
 
-ordinalToDenomination :: Integer -> Denomination
-export ordinalToDenomination = (i) => if (i == 14 || i == 1) {
+ordinalToRank :: Integer -> Rank
+export ordinalToRank = (i) => if (i == 14 || i == 1) {
   Ace
 } else if (i == 13) {
   King
@@ -76,7 +128,7 @@ export ordinalToDenomination = (i) => if (i == 14 || i == 1) {
 } else if (i == 0) {
   Wildcard
 } else if (i < 0 || i > 14) {
-  InvalidDenomination
+  InvalidRank
 } else {
   NoFace(i)
 }
@@ -210,7 +262,7 @@ export isFaceCard = where {
   Card(_, NoFace(_)) =>
     false
 
-  Card(_, InvalidDenomination) =>
+  Card(_, InvalidRank) =>
     false
 
   Card(_, Wildcard) =>
@@ -219,9 +271,9 @@ export isFaceCard = where {
   _ =>
     true
 }
-isNonStandardDenomination :: Card -> Boolean
-export isNonStandardDenomination = where {
-  Card(_, InvalidDenomination) =>
+isNonStandardRank :: Card -> Boolean
+export isNonStandardRank = where {
+  Card(_, InvalidRank) =>
     true
 
   Card(_, Wildcard) =>
@@ -237,7 +289,7 @@ export getFaceCards = List.filter(isFaceCard)
 getNonFaceCards :: List Card -> List Card
 export getNonFaceCards = pipe(
   List.reject(isFaceCard),
-  List.reject(isNonStandardDenomination),
+  List.reject(isNonStandardRank),
 )
 
 isConsecutive :: Boolean -> Boolean -> Card -> Card -> Boolean

@@ -1,0 +1,178 @@
+
+/*
+__unicard :: Card -> String
+__unicard = where {
+  Card(Spades, Ace) =>
+    "🂡"
+
+  Card(Spades, NoFace(i)) =>
+    if (i == 2) {
+      "🂢"
+    } else if (i == 3) {
+      "🂣"
+    } else if (i == 4) {
+      "🂤"
+    } else if (i == 5) {
+      "🂥"
+    } else if (i == 6) {
+      "🂦"
+    } else if (i == 7) {
+      "🂧"
+    } else if (i == 8) {
+      "🂨"
+    } else if (i == 9) {
+      "🂩"
+    } else {
+      "🂪"
+    }
+
+  Card(Spades, Wildcard) =>
+    "🂬"
+
+  Card(Spades, Jack) =>
+    "🂫"
+
+  Card(Spades, Queen) =>
+    "🂭"
+
+  Card(Spades, King) =>
+    "🂮"
+
+  Card(Hearts, Ace) =>
+    "🂱"
+
+  Card(Hearts, NoFace(i)) =>
+    if (i == 2) {
+      "🂲"
+    } else if (i == 3) {
+      "🂳"
+    } else if (i == 4) {
+      "🂴"
+    } else if (i == 5) {
+      "🂵"
+    } else if (i == 6) {
+      "🂶"
+    } else if (i == 7) {
+      "🂷"
+    } else if (i == 8) {
+      "🂸"
+    } else if (i == 9) {
+      "🂹"
+    } else {
+      "🂺"
+    }
+
+  Card(Hearts, Wildcard) =>
+    "🂼"
+
+  Card(Hearts, Jack) =>
+    "🂻"
+
+  Card(Hearts, Queen) =>
+    "🂽"
+
+  Card(Hearts, King) =>
+    "🂾"
+
+  Card(Diamonds, Ace) =>
+    "🃁"
+
+  Card(Diamonds, NoFace(i)) =>
+    if (i == 2) {
+      "🃂"
+    } else if (i == 3) {
+      "🃃"
+    } else if (i == 4) {
+      "🃄"
+    } else if (i == 5) {
+      "🃅"
+    } else if (i == 6) {
+      "🃆"
+    } else if (i == 7) {
+      "🃇"
+    } else if (i == 8) {
+      "🃈"
+    } else if (i == 9) {
+      "🃉"
+    } else {
+      "🃊"
+    }
+
+  Card(Diamonds, Jack) =>
+    "🃋"
+
+  Card(Diamonds, Wildcard) =>
+    "🃌"
+
+  Card(Diamonds, Queen) =>
+    "🃍"
+
+  Card(Diamonds, King) =>
+    "🃎"
+
+  Card(Clubs, Ace) =>
+    "🃑"
+
+  Card(Clubs, NoFace(c)) =>
+    if (c == 2) {
+      "🃒"
+    } else if (c == 3) {
+      "🃓"
+    } else if (c == 4) {
+      "🃔"
+    } else if (c == 5) {
+      "🃕"
+    } else if (c == 6) {
+      "🃖"
+    } else if (c == 7) {
+      "🃗"
+    } else if (c == 8) {
+      "🃘"
+    } else if (c == 9) {
+      "🃙"
+    } else {
+      "🃚"
+    }
+
+  Card(Clubs, Jack) =>
+    "🃛"
+
+  Card(Clubs, Wildcard) =>
+    "🃜"
+
+  Card(Clubs, Queen) =>
+    "🃝"
+
+  Card(Clubs, King) =>
+    "🃞"
+}
+
+__unicodeSuit :: Suit -> Char
+__unicodeSuit = (suit) => suit == Clubs
+  ? 'D'
+  : suit == Diamonds ? 'C' : suit == Hearts ? 'B' : suit == Spades ? 'A' : 'D'
+
+__unicodeRank :: Rank -> Char
+__unicodeRank = where {
+  Ace =>
+    '1'
+
+  NoFace(c) =>
+    Char.fromInteger(c)
+
+  InvalidRank =>
+    'C'
+
+  Jack =>
+    'B'
+
+  Queen =>
+    'D'
+
+  King =>
+    'E'
+
+  Wildcard =>
+    'F'
+}
+*/

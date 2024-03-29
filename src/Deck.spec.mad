@@ -1,6 +1,6 @@
 // import type { Maybe } from "Maybe"
 
-// import type { Card, Denomination, Suit } from "./Deck"
+// import type { Card, Rank, Suit } from "./Deck"
 
 import List from "List"
 import { Just, Nothing } from "Maybe"
@@ -15,7 +15,7 @@ import {
   DECK_WITH_JOKERS,
   Diamonds,
   Hearts,
-  InvalidDenomination,
+  InvalidRank,
   Jack,
   Joker,
   King,
@@ -39,7 +39,7 @@ import {
   isConsecutiveSameSuit,
   isFaceCard,
   isSuit,
-  ordinalToDenomination,
+  ordinalToRank,
   rejectBySuit,
   sort,
   sortLow,
@@ -152,14 +152,11 @@ test(
 )
 
 test("getSuit", () => assertEquals(getSuit(Card(Diamonds, Ace)), Diamonds))
-test(
-  "getRank",
-  () => assertEquals(getRank(Card(Diamonds, InvalidDenomination)), InvalidDenomination),
-)
+test("getRank", () => assertEquals(getRank(Card(Diamonds, InvalidRank)), InvalidRank))
 test(
   "getOrdinalRank - aceHigh",
   () => assertEquals(
-    map(getOrdinal, [InvalidDenomination, Wildcard, Ace, King, Queen, Jack, NoFace(-100)]),
+    map(getOrdinal, [InvalidRank, Wildcard, Ace, King, Queen, Jack, NoFace(-100)]),
     [-1, 0, 14, 13, 12, 11, -100],
   ),
 )
@@ -167,20 +164,20 @@ test(
 test(
   "getOrdinalRank - aceLow",
   () => assertEquals(
-    map(getOrdinalLow, [InvalidDenomination, Wildcard, Ace, King, Queen, Jack, NoFace(-100)]),
+    map(getOrdinalLow, [InvalidRank, Wildcard, Ace, King, Queen, Jack, NoFace(-100)]),
     [-1, 0, 1, 13, 12, 11, -100],
   ),
 )
 
 test(
-  "ordinalToDenomination",
+  "ordinalToRank",
   () => assertEquals(
-    map(ordinalToDenomination, List.concat(List.range(11, 15), [0, -1, 8])),
-    [Jack, Queen, King, Ace, Wildcard, InvalidDenomination, NoFace(8)],
+    map(ordinalToRank, List.concat(List.range(11, 15), [0, -1, 8])),
+    [Jack, Queen, King, Ace, Wildcard, InvalidRank, NoFace(8)],
   ),
 )
 
-test("isSuit", () => assertEquals(isSuit(Joker, Card(Joker, InvalidDenomination)), true))
+test("isSuit", () => assertEquals(isSuit(Joker, Card(Joker, InvalidRank)), true))
 
 test(
   "filterBySuit",
@@ -201,12 +198,7 @@ test(
   () => assertEquals(
     map(
       isFaceCard,
-      [
-        Card(Joker, NoFace(7)),
-        Card(Joker, InvalidDenomination),
-        Card(Joker, Wildcard),
-        Card(Joker, Ace),
-      ],
+      [Card(Joker, NoFace(7)), Card(Joker, InvalidRank), Card(Joker, Wildcard), Card(Joker, Ace)],
     ),
     [false, false, false, true],
   ),
@@ -217,7 +209,7 @@ test(
   () => assertEquals(
     getFaceCards([
       Card(Joker, NoFace(7)),
-      Card(Joker, InvalidDenomination),
+      Card(Joker, InvalidRank),
       Card(Joker, Wildcard),
       Card(Joker, Ace),
     ]),
@@ -230,7 +222,7 @@ test(
   () => assertEquals(
     getNonFaceCards([
       Card(Joker, NoFace(7)),
-      Card(Joker, InvalidDenomination),
+      Card(Joker, InvalidRank),
       Card(Joker, Wildcard),
       Card(Joker, Ace),
     ]),
@@ -248,7 +240,7 @@ test(
         Card(Diamonds, Ace),
         Card(Hearts, King),
         Card(Spades, Jack),
-        Card(Joker, InvalidDenomination),
+        Card(Joker, InvalidRank),
         Card(Joker, Wildcard),
         Card(Diamonds, Queen),
         Card(Hearts, NoFace(10)),
@@ -266,7 +258,7 @@ test(
       Card(Hearts, NoFace(10)),
       Card(Joker, NoFace(7)),
       Card(Joker, Wildcard),
-      Card(Joker, InvalidDenomination),
+      Card(Joker, InvalidRank),
     ],
   ),
 )
@@ -281,7 +273,7 @@ test(
         Card(Diamonds, Ace),
         Card(Hearts, King),
         Card(Spades, Jack),
-        Card(Joker, InvalidDenomination),
+        Card(Joker, InvalidRank),
         Card(Joker, Wildcard),
         Card(Diamonds, Queen),
         Card(Hearts, NoFace(10)),
@@ -299,7 +291,7 @@ test(
       Card(Diamonds, Ace),
       Card(Joker, Ace),
       Card(Joker, Wildcard),
-      Card(Joker, InvalidDenomination),
+      Card(Joker, InvalidRank),
     ],
   ),
 )
@@ -312,7 +304,7 @@ test(
       Card(Diamonds, Ace),
       Card(Hearts, King),
       Card(Spades, Jack),
-      Card(Joker, InvalidDenomination),
+      Card(Joker, InvalidRank),
       Card(Joker, Wildcard),
       Card(Diamonds, Queen),
       Card(Hearts, NoFace(10)),
@@ -329,7 +321,7 @@ test(
       Card(Spades, NoFace(8)),
       Card(Joker, NoFace(7)),
       Card(Joker, Wildcard),
-      Card(Joker, InvalidDenomination),
+      Card(Joker, InvalidRank),
     ],
   ),
 )
@@ -342,7 +334,7 @@ test(
       Card(Diamonds, Ace),
       Card(Hearts, King),
       Card(Spades, Jack),
-      Card(Joker, InvalidDenomination),
+      Card(Joker, InvalidRank),
       Card(Joker, Wildcard),
       Card(Diamonds, Queen),
       Card(Hearts, NoFace(10)),
@@ -359,7 +351,7 @@ test(
       Card(Diamonds, Ace),
       Card(Joker, Ace),
       Card(Joker, Wildcard),
-      Card(Joker, InvalidDenomination),
+      Card(Joker, InvalidRank),
     ],
   ),
 )
@@ -379,7 +371,7 @@ test(
         Card(Diamonds, Ace),
         Card(Joker, Ace),
         Card(Joker, Wildcard),
-        Card(Joker, InvalidDenomination),
+        Card(Joker, InvalidRank),
       ],
     ),
     true,
@@ -410,7 +402,7 @@ test(
         Card(Diamonds, Ace),
         Card(Joker, Ace),
         Card(Joker, Wildcard),
-        Card(Joker, InvalidDenomination),
+        Card(Joker, InvalidRank),
       ],
     ),
     [

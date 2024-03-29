@@ -157,8 +157,7 @@ export weighHand = (trump, cards, bets) => {
 winningCards :: Suit -> List Card -> List Card
 export winningCards = (trump, cards) => {
   aceOfTrump = Deck.Card(trump, Ace)
-  hasAce = Deck.includes(aceOfTrump, cards)
-  return if (!hasAce) {
+  return if (!Deck.includes(aceOfTrump, cards)) {
     []
   } else {
     pipe(
@@ -167,7 +166,7 @@ export winningCards = (trump, cards) => {
       List.reduce(
         (stack, card) => pipe(
           List.first,
-          fromMaybe(Deck.Card(Deck.Joker, Deck.InvalidDenomination)),
+          fromMaybe(Deck.Card(Deck.Joker, Deck.InvalidRank)),
           Deck.isConsecutiveSameSuit(true, card),
           (yes) => yes ? List.append(card, stack) : stack,
         )(stack),
@@ -189,7 +188,7 @@ export judgeByWeight = (rand, state, bets, weights) => {
   currentSum = __sum(bets)
   IO.cTrace(`>>>`, currentSum)
   upperLimit = max - currentSum
-  // likely bets: trump face cards
+  // sureBets = winningCards(
 
   return Random.integer(weights.trumpFaceCards, upperLimit, rand)
 }
