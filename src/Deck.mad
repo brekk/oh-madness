@@ -139,6 +139,11 @@ export includes = (c, cs) => where(c) {
   Card(d, v) =>
     Fn.any(where { Card(d2, v2) => d == d2 && v == v2 }, cs)
 }
+includesRank :: Card -> List Card -> Boolean
+export includesRank = (c, cs) => where(c) {
+  Card(_, v) =>
+    Fn.any(where { Card(_, v2) => v == v2 }, cs)
+}
 
 
 cut :: Integer -> List a -> Maybe #[List a, List a]
@@ -150,16 +155,6 @@ export cut = (a, xs) => {
     Nothing
   }
 }
-
-// recut :: Integer -> Integer -> List a -> Maybe (List (List a))
-// export recut = (per, times, xs) => if (per > 0 && times > 0 && per * times <= List.length(xs)) {
-//   pipe(
-//     List.repeatWith((i) => List.slice(i * per, ((i + 1) * per) - 1, xs)),
-//     Just,
-//   )(times)
-// } else {
-//   Nothing
-// }
 
 // remove if bifunctor tuples land
 mapFst :: (a -> c) -> #[a, b] -> #[c, b]
@@ -267,36 +262,34 @@ IO.trace("post!"),
  * Finds "straights" of cards: cards in consecutive order
  *  
  */
+// this is incomplete / incorrect currently
 getConsecutiveRuns :: Boolean -> Boolean -> List Card -> List (List Card)
-export getConsecutiveRuns = (matchSuit, aceHigh, cards) => {
-  conseq = isConsecutive(matchSuit, aceHigh)
-  return pipe(
-    sortDesc(matchSuit),
-    List.reduce(
-      (stack, card) => {
-        matched = false
-        restack = map(
-          Fn.when(
-            Fn.any(conseq(card)),
-            pipe(
-              List.append(card),
-              (x) => {
-                matched := true
-                return x
-              },
-            ),
+export getConsecutiveRuns = (matchSuit, aceHigh, cards) => pipe(
+  sortDesc(matchSuit),
+  List.reduce(
+    (stack, card) => {
+      matched = false
+      restack = map(
+        Fn.when(
+          Fn.any(isConsecutive(matchSuit, aceHigh, card)),
+          pipe(
+            List.append(card),
+            (x) => {
+              matched := true
+              return x
+            },
           ),
-        )(stack)
-        return if (matched) {
-          restack
-        } else {
-          List.append([card], stack)
-        }
-      },
-      [],
-    ),
-  )(cards)
-}
+        ),
+      )(stack)
+      return if (matched) {
+        restack
+      } else {
+        List.append([card], stack)
+      }
+    },
+    [],
+  ),
+)(cards)
 
 export getStraightFlushes = getConsecutiveRuns(true)
 export getStraights = getConsecutiveRuns(false)
