@@ -28,6 +28,7 @@ import {
   cut,
   deal,
   filterBySuit,
+  getConsecutiveRuns,
   getFaceCards,
   getNonFaceCards,
   getOrdinal,
@@ -439,22 +440,25 @@ test(
   },
 )
 
-// test(
-//   "getStraights",
-//   () => assertEquals(
-//     getStraights(
-//       true,
-//       true,
-//       [
-//         Card(Diamonds, Ace),
-//         Card(Diamonds, King),
-//         Card(Diamonds, Queen),
-//         Card(Diamonds, NoFace(2)),
-//         Card(Diamonds, NoFace(4)),
-//         Card(Diamonds, NoFace(6)),
-//         Card(Diamonds, NoFace(5)),
-//       ],
-//     ),
-//     [],
-//   ),
-// )
+test(
+  "getStraights",
+  () => assertEquals(
+    getConsecutiveRuns(
+      true,
+      true,
+      [
+        Card(Diamonds, Ace),
+        Card(Diamonds, King),
+        Card(Diamonds, Queen),
+        Card(Diamonds, NoFace(2)),
+        Card(Diamonds, NoFace(4)),
+        Card(Diamonds, NoFace(6)),
+        Card(Diamonds, NoFace(5)),
+      ],
+    ),
+    [
+      [Card(Diamonds, Ace), Card(Diamonds, King), Card(Diamonds, Queen)],
+      [Card(Diamonds, NoFace(6)), Card(Diamonds, NoFace(5)), Card(Diamonds, NoFace(4))],
+    ],
+  ),
+)

@@ -1,6 +1,7 @@
 import type { Maybe } from "Maybe"
 import type { Random } from "Random"
 
+import Compare from "Compare"
 import { EQ, GT, LT } from "Compare"
 import Fn from "Function"
 import IO from "IO"
@@ -245,12 +246,66 @@ export isConsecutive = (matchSuit, aceHigh, c1, c2) => {
 export isConsecutiveSameSuit = isConsecutive(true)
 export isConsecutiveAnySuit = isConsecutive(false)
 
+/*Fn.ifElse(
+List.isEmpty,
+List.append([card]),
+map(
+pipe(
+Fn.when(
+pipe(
+Fn.any(conseq(card)),
+IO.trace("checked!"),
+),
+List.append(card),
+),
+IO.trace("post!"),
+),
+),
+)(stack)*/
+
 /**
  * Finds "straights" of cards: cards in consecutive order
  *  
  */
-// getStraights :: Boolean -> Boolean -> List Card -> List (List Card)
-// export getStraights = (matchSuit, aceHigh, cards) => {
-//   ord = getOrdinalRank(aceHigh)
-//   conseq = isConsecutive(matchSuit, aceHigh)
-// }
+getConsecutiveRuns :: Boolean -> Boolean -> List Card -> List (List Card)
+export getConsecutiveRuns = (matchSuit, aceHigh, cards) => {
+  conseq = isConsecutive(matchSuit, aceHigh)
+  return pipe(
+    sortDesc(matchSuit),
+    List.reduce(
+      (stack, card) => {
+        matched = false
+        restack = map(
+          Fn.when(
+            Fn.any(conseq(card)),
+            pipe(
+              List.append(card),
+              (x) => {
+                matched := true
+                return x
+              },
+            ),
+          ),
+        )(stack)
+        return if (matched) {
+          restack
+        } else {
+          List.append([card], stack)
+        }
+      },
+      [],
+    ),
+  )(cards)
+}
+
+export getStraightFlushes = getConsecutiveRuns(true)
+export getStraights = getConsecutiveRuns(false)
+
+filterListsByLimit :: Integer -> List (List Card) -> List (List Card)
+export filterListsByLimit = (limit, stacks) => List.reject(
+  pipe(
+    List.length,
+    Compare.lt($, limit),
+  ),
+  stacks,
+)
