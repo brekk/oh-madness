@@ -77,7 +77,7 @@ export initialDeal = (rand, playerNames) => {
         Right({
           players: pipe(
             List.zip(playerNames),
-            map(where { #[name, hand] => Player(name, hand, 0, 0) }),
+            map(where { #[name, hand] => Player(name, hand, 0, 0, 0) }),
           )(hands),
           trump: pipe(
             List.first,

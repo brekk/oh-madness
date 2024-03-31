@@ -2,34 +2,40 @@ import type { Card } from "./Card"
 
 
 
-export type Player = Player(String, List Card, Integer, Integer)
+export type Player = Player(String, List Card, Integer, Integer, Integer)
 
 name :: Player -> String
 export name = where {
-  Player(x, _, _, _) =>
+  Player(x, _, _, _, _) =>
     x
 }
 
 hand :: Player -> List Card
 export hand = where {
-  Player(_, cards, _, _) =>
+  Player(_, cards, _, _, _) =>
     cards
 }
 
 bet :: Player -> Integer
 export bet = where {
-  Player(_, _, x, _) =>
+  Player(_, _, x, _, _) =>
     x
+}
+
+tricks :: Player -> Integer
+export tricks = where {
+  Player(_, _, _, t, _) =>
+    t
 }
 
 points :: Player -> Integer
 export points = where {
-  Player(_, _, _, x) =>
+  Player(_, _, _, _, x) =>
     x
 }
 
-countTricks :: Player -> Integer -> Player
-export countTricks = (player, tricks) => where(player) {
-  Player(n, _, b, p) =>
-    Player(n, [], 0, (b == tricks ? tricks + 10 : tricks) + p)
+countTricks :: Player -> Player
+export countTricks = where {
+  Player(n, _, b, t, p) =>
+    Player(n, [], 0, 0, (b == t ? t + 10 : t) + p)
 }

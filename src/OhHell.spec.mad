@@ -93,6 +93,7 @@ test(
             ],
             0,
             0,
+            0,
           ),
           Player(
             "Arnaud",
@@ -110,6 +111,7 @@ test(
             ],
             0,
             0,
+            0,
           ),
           Player(
             "Hlolli",
@@ -125,6 +127,7 @@ test(
               Card(Diamonds, NoFace(4)),
               Card(Spades, King),
             ],
+            0,
             0,
             0,
           ),

@@ -3,19 +3,28 @@ import type { Player } from "./Player"
 import Random from "Random"
 import { assertEquals, test } from "Test"
 
-import { Player, bet, countTricks, hand, name, points } from "./Player"
+import { Player, bet, countTricks, hand, name, points, tricks } from "./Player"
 
 
 
-test("name", () => assertEquals(name(Player("cool", [], 0, 0)), "cool"))
+test("name", () => assertEquals(name(Player("cool", [], 0, 0, 0)), "cool"))
 
-test("hand", () => assertEquals(hand(Player("cool", [], 0, 0)), []))
+test("hand", () => assertEquals(hand(Player("cool", [], 0, 0, 0)), []))
 test(
   "bet",
   () => {
     rand = Random.generateFromString("cool")
     int = Random.integer(1, 100, rand)
-    return assertEquals(bet(Player("cool", [], int, 0)), int)
+    return assertEquals(bet(Player("cool", [], int, 0, 0)), int)
+  },
+)
+
+test(
+  "tricks",
+  () => {
+    rand = Random.generateFromString("cool")
+    int = Random.integer(1, 100, rand)
+    return assertEquals(tricks(Player("cool", [], 0, int, 0)), int)
   },
 )
 
@@ -25,16 +34,16 @@ test(
   () => {
     rand = Random.generateFromString("cool")
     int = Random.integer(1, 100, rand)
-    return assertEquals(points(Player("cool", [], 0, int)), int)
+    return assertEquals(points(Player("cool", [], 0, 0, int)), int)
   },
 )
 
 test(
   "countTricks - made bet",
-  () => assertEquals(countTricks(Player("Brekk", [], 5, 0), 5), Player("Brekk", [], 0, 15)),
+  () => assertEquals(countTricks(Player("Brekk", [], 5, 5, 0)), Player("Brekk", [], 0, 0, 15)),
 )
 
 test(
   "countTricks - unmet bet",
-  () => assertEquals(countTricks(Player("Brekk", [], 5, 0), 13), Player("Brekk", [], 0, 13)),
+  () => assertEquals(countTricks(Player("Brekk", [], 5, 13, 0)), Player("Brekk", [], 0, 0, 13)),
 )
