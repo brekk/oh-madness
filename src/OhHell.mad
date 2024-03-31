@@ -64,8 +64,6 @@ export roundsPerTotalPlayers = (i) => {
   }
 }
 
-__sum :: List Integer -> Integer
-export __sum = List.reduce(Math.add, 0)
 
 initialDeal :: Random -> List String -> Either GameError GameState
 export initialDeal = (rand, playerNames) => {
@@ -98,8 +96,6 @@ export initialDeal = (rand, playerNames) => {
   )(Deck.DECK)
 }
 
-canBet :: Integer -> List Integer -> Boolean
-export canBet = (goal, xs) => __sum(xs) != goal
 
 __largest :: List Integer -> Integer
 export __largest = pipe(
@@ -153,6 +149,9 @@ export winningCards = (trump, cards) => {
   }
 }
 
+canBet :: Integer -> List Integer -> Boolean
+export canBet = (goal, xs) => List.reduce(Math.add, 0, xs) != goal
+
 judgeByWeight :: Random -> GameState -> List Integer -> HandWeights -> Integer
 export judgeByWeight = (rand, state, bets, weights) => {
   totalPlayers = List.length(state.players)
@@ -160,7 +159,7 @@ export judgeByWeight = (rand, state, bets, weights) => {
     List.nth(state.round),
     fromMaybe(totalPlayers),
   )(state.cardsPerRound)
-  currentSum = __sum(bets)
+  currentSum = List.reduce(Math.add, 0, bets)
   upperLimit = max - currentSum
   // sureBets = winningCards(state.trump
 

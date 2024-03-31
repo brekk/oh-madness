@@ -3,7 +3,7 @@ import type { Player } from "./Player"
 import Random from "Random"
 import { assertEquals, test } from "Test"
 
-import { Player, bet, hand, name, points } from "./Player"
+import { Player, bet, countTricks, hand, name, points } from "./Player"
 
 
 
@@ -27,4 +27,14 @@ test(
     int = Random.integer(1, 100, rand)
     return assertEquals(points(Player("cool", [], 0, int)), int)
   },
+)
+
+test(
+  "countTricks - made bet",
+  () => assertEquals(countTricks(Player("Brekk", [], 5, 0), 5), Player("Brekk", [], 0, 15)),
+)
+
+test(
+  "countTricks - unmet bet",
+  () => assertEquals(countTricks(Player("Brekk", [], 5, 0), 13), Player("Brekk", [], 0, 13)),
 )

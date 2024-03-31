@@ -9,7 +9,6 @@ import { Ace, Card, Clubs, Diamonds, Hearts, Jack, King, NoFace, Queen, Spades }
 import {
   GenericError,
   __largest,
-  __sum,
   canBet,
   cardsPerTotalPlayers,
   getHumanError,
@@ -34,8 +33,6 @@ test(
     [[0], [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10], [0]],
   ),
 )
-
-test("__sum", () => assertEquals(__sum(List.range(0, 10)), 45))
 
 test("canBet", () => assertEquals(canBet(109, roundsPerTotalPlayers(3)), false))
 
