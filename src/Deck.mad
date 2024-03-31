@@ -1,5 +1,6 @@
 import type { Maybe } from "Maybe"
-import type { Random } from "Random"
+
+import type { Card, Suit } from "./Card"
 
 import Compare from "Compare"
 import { EQ, GT, LT } from "Compare"
@@ -8,77 +9,36 @@ import IO from "IO"
 import List from "List"
 import Math from "Math"
 import { Just, Nothing } from "Maybe"
-import Random from "Random"
-import Terminal from "Terminal"
+import Short from "Short"
+
+import {
+  Ace,
+  Card,
+  Clubs,
+  Diamonds,
+  Hearts,
+  InvalidRank,
+  Jack,
+  Joker,
+  King,
+  NoFace,
+  Queen,
+  Spades,
+  Wildcard,
+} from "./Card"
+import Card from "./Card"
 
 
-
-export type Suit = Clubs | Diamonds | Hearts | Spades | Joker
-export type Rank = NoFace(Integer) | Jack | Queen | King | Ace | Wildcard | InvalidRank
-
-export type Card = Card(Suit, Rank)
-
-getSuit :: Card -> Suit
-export getSuit = where {
-  Card(s, _) =>
-    s
-}
-
-getRank :: Card -> Rank
-export getRank = where {
-  Card(_, v) =>
-    v
-}
-
-getOrdinalRank :: Boolean -> Rank -> Integer
-export getOrdinalRank = (aceHigh, d) => where(d) {
-  NoFace(x) =>
-    x
-
-  Jack =>
-    11
-
-  Queen =>
-    12
-
-  King =>
-    13
-
-  Ace =>
-    aceHigh ? 14 : 1
-
-  Wildcard =>
-    0
-
-  InvalidRank =>
-    -1
-}
-
-
-export getOrdinal = getOrdinalRank(true)
-export getOrdinalLow = getOrdinalRank(false)
-
-
-ordinalToRank :: Integer -> Rank
-export ordinalToRank = (i) => if (i == 14 || i == 1) {
-  Ace
-} else if (i == 13) {
-  King
-} else if (i == 12) {
-  Queen
-} else if (i == 11) {
-  Jack
-} else if (i == 0) {
-  Wildcard
-} else if (i < 0 || i > 14) {
-  InvalidRank
-} else {
-  NoFace(i)
-}
 
 __makeFullSuit :: Suit -> List Card
 export __makeFullSuit = (s) => [
-  ...map((v) => Card(s, NoFace(v)), List.range(2, 11)),
+  ...map(
+    pipe(
+      Short.fromInteger,
+      (v) => Card(s, NoFace(v)),
+    ),
+    List.range(2, 11),
+  ),
   Card(s, Jack),
   Card(s, Queen),
   Card(s, King),
@@ -101,8 +61,8 @@ export sortDescWithTrump = (aceHigh, trumpSuit, cards) => List.sortBy(
   (a, b) => where(#[a, b]) {
     #[Card(d1, v1), Card(d2, v2)] =>
       do {
-        x = getOrdinalRank(aceHigh, v1)
-        y = getOrdinalRank(aceHigh, v2)
+        x = Card.ordinalRank(aceHigh, v1)
+        y = Card.ordinalRank(aceHigh, v2)
         trump1 = d1 == trumpSuit
         trump2 = d2 == trumpSuit
         return if (trump1 && !trump2) {
@@ -124,8 +84,8 @@ export sortDesc = (aceHigh, cards) => List.sortBy(
   (a, b) => where(#[a, b]) {
     #[Card(d1, v1), Card(d2, v2)] =>
       do {
-        x = getOrdinalRank(aceHigh, v1)
-        y = getOrdinalRank(aceHigh, v2)
+        x = Card.ordinalRank(aceHigh, v1)
+        y = Card.ordinalRank(aceHigh, v2)
         return x == y ? EQ : x < y ? GT : LT
       }
   },
@@ -134,26 +94,15 @@ export sortDesc = (aceHigh, cards) => List.sortBy(
 export sort = sortDesc(true)
 export sortLow = sortDesc(false)
 
-includes :: Card -> List Card -> Boolean
-export includes = (c, cs) => where(c) {
+has :: Card -> List Card -> Boolean
+export has = (c, cs) => where(c) {
   Card(d, v) =>
-    Fn.any(where { Card(d2, v2) => d == d2 && v == v2 }, cs)
+    List.any(where { Card(d2, v2) => d == d2 && v == v2 }, cs)
 }
-includesRank :: Card -> List Card -> Boolean
-export includesRank = (c, cs) => where(c) {
+anyMatchingRank :: Card -> List Card -> Boolean
+export anyMatchingRank = (c, cs) => where(c) {
   Card(_, v) =>
-    Fn.any(where { Card(_, v2) => v == v2 }, cs)
-}
-
-
-cut :: Integer -> List a -> Maybe #[List a, List a]
-export cut = (a, xs) => {
-  len = List.length(xs)
-  return if (a <= len && a > -1) {
-    Just(#[List.slice(0, a - 1, xs), List.slice(a, len, xs)])
-  } else {
-    Nothing
-  }
+    List.any(where { Card(_, v2) => v == v2 }, cs)
 }
 
 // remove if bifunctor tuples land
@@ -177,91 +126,29 @@ export deal = (perPlayer, totalPlayers, cards) => {
     Nothing
   } else {
     pipe(
-      cut(toDeal),
+      List.cut(toDeal),
       map(mapFst(__recut(perPlayer, totalPlayers))),
     )(cards)
   }
 }
 
-isSuit :: Suit -> Card -> Boolean
-export isSuit = (s, c) => pipe(
-  getSuit,
-  Fn.equals(s),
-)(c)
+
 
 filterBySuit :: Suit -> List Card -> List Card
-export filterBySuit = (s, cs) => List.filter(isSuit(s), cs)
+export filterBySuit = (s, cs) => List.filter(Card.isSuit(s), cs)
 
 rejectBySuit :: Suit -> List Card -> List Card
-export rejectBySuit = (s, cs) => List.reject(isSuit(s), cs)
-
-isFaceCard :: Card -> Boolean
-export isFaceCard = where {
-  Card(_, NoFace(_)) =>
-    false
-
-  Card(_, InvalidRank) =>
-    false
-
-  Card(_, Wildcard) =>
-    false
-
-  _ =>
-    true
-}
-isNonStandardRank :: Card -> Boolean
-export isNonStandardRank = where {
-  Card(_, InvalidRank) =>
-    true
-
-  Card(_, Wildcard) =>
-    true
-
-  _ =>
-    false
-}
+export rejectBySuit = (s, cs) => List.reject(Card.isSuit(s), cs)
 
 getFaceCards :: List Card -> List Card
-export getFaceCards = List.filter(isFaceCard)
+export getFaceCards = List.filter(Card.isFaceCard)
 
 getNonFaceCards :: List Card -> List Card
-export getNonFaceCards = pipe(
-  List.reject(isFaceCard),
-  List.reject(isNonStandardRank),
-)
-
-isConsecutive :: Boolean -> Boolean -> Card -> Card -> Boolean
-export isConsecutive = (matchSuit, aceHigh, c1, c2) => {
-  ord = getOrdinalRank(aceHigh)
-  return where(#[c1, c2]) {
-    #[Card(s1, v1), Card(s2, v2)] =>
-      (matchSuit ? s1 == s2 : true) && Math.abs(ord(v1) - ord(v2)) == 1
-  }
-}
-export isConsecutiveSameSuit = isConsecutive(true)
-export isConsecutiveAnySuit = isConsecutive(false)
-
-/*Fn.ifElse(
-List.isEmpty,
-List.append([card]),
-map(
-pipe(
-Fn.when(
-pipe(
-Fn.any(conseq(card)),
-IO.trace("checked!"),
-),
-List.append(card),
-),
-IO.trace("post!"),
-),
-),
-)(stack)*/
+export getNonFaceCards = List.filter(Card.isNoFaceCard)
 
 /**
  * Finds "straights" of cards: cards in consecutive order
  *  
- */
 // this is incomplete / incorrect currently
 getConsecutiveRuns :: Boolean -> Boolean -> List Card -> List (List Card)
 export getConsecutiveRuns = (matchSuit, aceHigh, cards) => pipe(
@@ -271,7 +158,7 @@ export getConsecutiveRuns = (matchSuit, aceHigh, cards) => pipe(
       matched = false
       restack = map(
         Fn.when(
-          Fn.any(isConsecutive(matchSuit, aceHigh, card)),
+          List.any(isConsecutive(matchSuit, aceHigh, card)),
           pipe(
             List.append(card),
             (x) => {
@@ -290,15 +177,18 @@ export getConsecutiveRuns = (matchSuit, aceHigh, cards) => pipe(
     [],
   ),
 )(cards)
+*/
 
-export getStraightFlushes = getConsecutiveRuns(true)
-export getStraights = getConsecutiveRuns(false)
+dedupe :: List Card -> List Card
+export dedupe = List.uniqueBy(Card.sameCard)
 
-filterListsByLimit :: Integer -> List (List Card) -> List (List Card)
-export filterListsByLimit = (limit, stacks) => List.reject(
-  pipe(
-    List.length,
-    Compare.lt($, limit),
+findSameRank :: List Card -> List (List Card)
+export findSameRank = pipe(
+  List.groupBy(Card.sameRank),
+  List.reject(
+    pipe(
+      List.length,
+      Fn.equals(1),
+    ),
   ),
-  stacks,
 )

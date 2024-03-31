@@ -11,8 +11,6 @@ import {
   Ace,
   Card,
   Clubs,
-  DECK,
-  DECK_WITH_JOKERS,
   Diamonds,
   Hearts,
   InvalidRank,
@@ -23,24 +21,24 @@ import {
   Queen,
   Spades,
   Wildcard,
+  club,
+  diamond,
+  heart,
+  spade,
+} from "./Card"
+import {
+  DECK,
+  DECK_WITH_JOKERS,
   __makeFullSuit,
   __recut,
-  cut,
+  anyMatchingRank,
   deal,
+  dedupe,
   filterBySuit,
-  getConsecutiveRuns,
+  findSameRank,
   getFaceCards,
   getNonFaceCards,
-  getOrdinal,
-  getOrdinalLow,
-  getRank,
-  getSuit,
-  includes,
-  isConsecutiveAnySuit,
-  isConsecutiveSameSuit,
-  isFaceCard,
-  isSuit,
-  ordinalToRank,
+  has,
   rejectBySuit,
   sort,
   sortLow,
@@ -152,33 +150,6 @@ test(
   ),
 )
 
-test("getSuit", () => assertEquals(getSuit(Card(Diamonds, Ace)), Diamonds))
-test("getRank", () => assertEquals(getRank(Card(Diamonds, InvalidRank)), InvalidRank))
-test(
-  "getOrdinalRank - aceHigh",
-  () => assertEquals(
-    map(getOrdinal, [InvalidRank, Wildcard, Ace, King, Queen, Jack, NoFace(-100)]),
-    [-1, 0, 14, 13, 12, 11, -100],
-  ),
-)
-
-test(
-  "getOrdinalRank - aceLow",
-  () => assertEquals(
-    map(getOrdinalLow, [InvalidRank, Wildcard, Ace, King, Queen, Jack, NoFace(-100)]),
-    [-1, 0, 1, 13, 12, 11, -100],
-  ),
-)
-
-test(
-  "ordinalToRank",
-  () => assertEquals(
-    map(ordinalToRank, List.concat(List.range(11, 15), [0, -1, 8])),
-    [Jack, Queen, King, Ace, Wildcard, InvalidRank, NoFace(8)],
-  ),
-)
-
-test("isSuit", () => assertEquals(isSuit(Joker, Card(Joker, InvalidRank)), true))
 
 test(
   "filterBySuit",
@@ -192,16 +163,6 @@ test(
   () => assertEquals(
     rejectBySuit(Joker, [Card(Joker, Wildcard), Card(Diamonds, NoFace(1000))]),
     [Card(Diamonds, NoFace(1000))],
-  ),
-)
-test(
-  "isFaceCard",
-  () => assertEquals(
-    map(
-      isFaceCard,
-      [Card(Joker, NoFace(7)), Card(Joker, InvalidRank), Card(Joker, Wildcard), Card(Joker, Ace)],
-    ),
-    [false, false, false, true],
   ),
 )
 
@@ -358,9 +319,9 @@ test(
 )
 
 test(
-  "includes",
+  "has",
   () => assertEquals(
-    includes(
+    has(
       Card(Joker, Wildcard),
       [
         Card(Hearts, King),
@@ -378,14 +339,6 @@ test(
     true,
   ),
 )
-
-// remove these if `List.cut` lands in prelude
-test(
-  "cut",
-  () => assertEquals(cut(6, List.range(0, 11)), Just(#[[0, 1, 2, 3, 4, 5], [6, 7, 8, 9, 10]])),
-)
-
-test("cut - bad", () => assertEquals(cut(-6, List.range(0, 11)), Nothing))
 
 test(
   "__recut",
@@ -414,51 +367,64 @@ test(
   ),
 )
 
-test(
-  "isConsecutiveSameSuit",
-  () => do {
-    _ <- assertEquals(
-      isConsecutiveSameSuit(true, Card(Joker, NoFace(4)), Card(Joker, NoFace(5))),
-      true,
-    )
-    return assertEquals(
-      isConsecutiveSameSuit(true, Card(Joker, NoFace(4)), Card(Joker, NoFace(100))),
-      false,
-    )
-  },
-)
+
+
+// test(
+//   "getStraights",
+//   () => assertEquals(
+//     getConsecutiveRuns(
+//       true,
+//       true,
+//       [
+//         Card(Diamonds, Ace),
+//         Card(Diamonds, King),
+//         Card(Diamonds, Queen),
+//         Card(Diamonds, NoFace(2)),
+//         Card(Diamonds, NoFace(4)),
+//         Card(Diamonds, NoFace(6)),
+//         Card(Diamonds, NoFace(5)),
+//       ],
+//     ),
+//     [
+//       [Card(Diamonds, Ace), Card(Diamonds, King), Card(Diamonds, Queen)],
+//       [Card(Diamonds, NoFace(6)), Card(Diamonds, NoFace(5)), Card(Diamonds, NoFace(4))],
+//     ],
+//   ),
+// )
 
 test(
-  "isConsecutiveAnySuit",
-  () => do {
-    _ <- assertEquals(
-      isConsecutiveAnySuit(true, Card(Diamonds, NoFace(4)), Card(Joker, NoFace(5))),
-      true,
-    )
-    _ <- assertEquals(isConsecutiveAnySuit(false, Card(Joker, Ace), Card(Joker, NoFace(2))), true)
-    return assertEquals(isConsecutiveAnySuit(false, Card(Joker, Ace), Card(Diamonds, King)), false)
-  },
-)
-
-test(
-  "getStraights",
+  "dedupe",
   () => assertEquals(
-    getConsecutiveRuns(
-      true,
-      true,
-      [
-        Card(Diamonds, Ace),
-        Card(Diamonds, King),
-        Card(Diamonds, Queen),
-        Card(Diamonds, NoFace(2)),
-        Card(Diamonds, NoFace(4)),
-        Card(Diamonds, NoFace(6)),
-        Card(Diamonds, NoFace(5)),
-      ],
-    ),
-    [
-      [Card(Diamonds, Ace), Card(Diamonds, King), Card(Diamonds, Queen)],
-      [Card(Diamonds, NoFace(6)), Card(Diamonds, NoFace(5)), Card(Diamonds, NoFace(4))],
-    ],
+    dedupe([
+      Card(Joker, Wildcard),
+      Card(Spades, Ace),
+      Card(Joker, Wildcard),
+      Card(Spades, Ace),
+      Card(Joker, Wildcard),
+      Card(Spades, Ace),
+      Card(Joker, Wildcard),
+      Card(Spades, Ace),
+      Card(Joker, Wildcard),
+      Card(Spades, Ace),
+    ]),
+    [Card(Joker, Wildcard), Card(Spades, Ace)],
+  ),
+)
+
+test("anyMatchingRank", () => assertEquals(anyMatchingRank(spade(Ace), [spade(Ace)]), true))
+
+test(
+  "findSameRank",
+  () => assertEquals(
+    findSameRank([
+      heart(Ace),
+      spade(Ace),
+      club(Ace),
+      diamond(Ace),
+      heart(King),
+      diamond(King),
+      diamond(NoFace(4)),
+    ]),
+    [[heart(Ace), spade(Ace), club(Ace), diamond(Ace)], [heart(King), diamond(King)]],
   ),
 )

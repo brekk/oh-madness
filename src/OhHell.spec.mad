@@ -5,14 +5,11 @@ import List from "List"
 import Random from "Random"
 import { assertEquals, test } from "Test"
 
-import { Ace, Card, Clubs, Diamonds, Hearts, Jack, King, NoFace, Queen, Spades } from "./Deck"
+import { Ace, Card, Clubs, Diamonds, Hearts, Jack, King, NoFace, Queen, Spades } from "./Card"
 import {
   ActivePlayer,
-  Bet,
-  Error,
   GenericError,
   Initial,
-  Played,
   Player,
   __largest,
   __sum,
@@ -20,8 +17,6 @@ import {
   cardsPerTotalPlayers,
   getHumanError,
   initialDeal,
-  isTrump,
-  judgeByWeight,
   prepForBetting,
   roundsPerTotalPlayers,
   weighHand,
@@ -61,7 +56,6 @@ test(
   },
 )
 
-test("isTrump", () => assertEquals(isTrump(Diamonds, Card(Diamonds, Ace)), true))
 
 test("canBet", () => assertEquals(canBet(109, roundsPerTotalPlayers(3)), false))
 

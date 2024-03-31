@@ -1,17 +1,16 @@
 import type { Either } from "Either"
 
-import type { Card, Suit } from "./Deck"
+import type { Card, Suit } from "./Card"
 
 import { EQ, GT, LT } from "Compare"
 import { Left, Right } from "Either"
-import Fn from "Function"
 import IO from "IO"
 import List from "List"
 import Math from "Math"
 import { Just, Nothing, fromMaybe } from "Maybe"
 import Random from "Random"
 
-import { Ace } from "./Deck"
+import Card from "./Card"
 import Deck from "./Deck"
 
 
@@ -24,8 +23,25 @@ export alias InitialState = {
   players :: List Player,
   trump :: Suit,
 }
+export alias HandWeights = {
+  faceCards :: Integer,
+  highestBet :: Integer,
+  trumpCards :: Integer,
+  trumpFaceCards :: Integer,
+}
 
 export type GameError = Error(Integer, String) | GenericError
+
+export type PlayerState = Initial | Bet(Integer) | Played
+export type ActivePlayer = ActivePlayer(Player, PlayerState, Integer)
+
+alias PlayState = {
+  ...InitialState,
+  bets :: List Integer,
+  players :: List ActivePlayer,
+  round :: Integer,
+  trump :: Suit,
+}
 
 getHumanError :: GameError -> String
 export getHumanError = where {
@@ -63,11 +79,11 @@ export __sum = List.reduce(Math.add, 0)
 
 initialDeal :: Random -> List String -> Either GameError InitialState
 export initialDeal = (rand, playerNames) => {
-  totalPlayers = List.length(playerNames)
-  cardsPerPlayer = cardsPerTotalPlayers(totalPlayers)
+  total = List.length(playerNames)
+  cardsPerPlayer = cardsPerTotalPlayers(total)
   return pipe(
     Random.shuffle($, rand),
-    Deck.deal(cardsPerPlayer, totalPlayers),
+    Deck.deal(cardsPerPlayer, total),
     where {
       Just(#[hands, undealt]) =>
         Right({
@@ -77,29 +93,17 @@ export initialDeal = (rand, playerNames) => {
           )(hands),
           trump: pipe(
             List.first,
-            map(Deck.getSuit),
-            fromMaybe(Deck.Joker),
+            map(Card.suit),
+            fromMaybe(Card.Joker),
           )(undealt),
           cardsPerPlayer,
-          cardsPerRound: roundsPerTotalPlayers(totalPlayers),
+          cardsPerRound: roundsPerTotalPlayers(total),
         })
 
       Nothing =>
-        Left(Error(2, `Unable to deal hands for ${show(totalPlayers)} players.`))
+        Left(Error(2, `Unable to deal hands for ${show(total)} players.`))
     },
   )(Deck.DECK)
-}
-
-// ActivePlayer
-export type PlayerState = Initial | Bet(Integer) | Played
-export type ActivePlayer = ActivePlayer(Player, PlayerState, Integer)
-
-alias PlayState = {
-  ...InitialState,
-  bets :: List Integer,
-  players :: List ActivePlayer,
-  round :: Integer,
-  trump :: Suit,
 }
 
 prepForBetting :: InitialState -> PlayState
@@ -107,22 +111,10 @@ export prepForBetting = (state) => (
   { ...state, bets: [], players: map((p) => ActivePlayer(p, Initial, 0), state.players), round: 0 }
 )
 
-isTrump :: Suit -> Card -> Boolean
-export isTrump = (s, c) => pipe(
-  Deck.getSuit,
-  Fn.equals(s),
-)(c)
-
 
 canBet :: Integer -> List Integer -> Boolean
 export canBet = (goal, xs) => __sum(xs) != goal
 
-export alias HandWeights = {
-  faceCards :: Integer,
-  highestBet :: Integer,
-  trumpCards :: Integer,
-  trumpFaceCards :: Integer,
-}
 
 __largest :: List Integer -> Integer
 export __largest = pipe(
@@ -156,8 +148,8 @@ export weighHand = (trump, cards, bets) => {
  */
 winningCards :: Suit -> List Card -> List Card
 export winningCards = (trump, cards) => {
-  aceOfTrump = Deck.Card(trump, Ace)
-  return if (!Deck.includes(aceOfTrump, cards)) {
+  aceOfTrump = Card.Card(trump, Card.Ace)
+  return if (!Deck.has(aceOfTrump, cards)) {
     []
   } else {
     pipe(
@@ -166,8 +158,8 @@ export winningCards = (trump, cards) => {
       List.reduce(
         (stack, card) => pipe(
           List.first,
-          fromMaybe(Deck.Card(Deck.Joker, Deck.InvalidRank)),
-          Deck.isConsecutiveSameSuit(true, card),
+          fromMaybe(Card.Card(Card.Joker, Card.InvalidRank)),
+          Card.consecutiveFlush(true, card),
           (yes) => yes ? List.append(card, stack) : stack,
         )(stack),
         [aceOfTrump],
@@ -175,7 +167,6 @@ export winningCards = (trump, cards) => {
     )(cards)
   }
 }
-
 
 judgeByWeight :: Random -> PlayState -> List Integer -> HandWeights -> Integer
 export judgeByWeight = (rand, state, bets, weights) => {
