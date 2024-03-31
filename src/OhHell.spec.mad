@@ -14,7 +14,6 @@ import {
   cardsPerTotalPlayers,
   getHumanError,
   initialDeal,
-  prepForBetting,
   roundsPerTotalPlayers,
   weighHand,
   winningCards,
@@ -37,23 +36,6 @@ test(
 )
 
 test("__sum", () => assertEquals(__sum(List.range(0, 10)), 45))
-
-test(
-  "prepForBetting",
-  () => {
-    input = {
-      cardsPerPlayer: 1,
-      cardsPerRound: [1],
-      players: [Player("Brekk", [], 0, 0)],
-      trump: Diamonds,
-    }
-    return assertEquals(
-      prepForBetting(input),
-      { ...input, bets: [], players: [Player("Brekk", [], 0, 0)], round: 0 },
-    )
-  },
-)
-
 
 test("canBet", () => assertEquals(canBet(109, roundsPerTotalPlayers(3)), false))
 
@@ -151,6 +133,8 @@ test(
           ),
         ],
         trump: Diamonds,
+        bets: [],
+        round: 0,
       }),
     )
   },

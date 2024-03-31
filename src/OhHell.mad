@@ -17,10 +17,12 @@ import { Player } from "./Player"
 
 
 
-export alias InitialState = {
+export alias GameState = {
+  bets :: List Integer,
   cardsPerPlayer :: Integer,
   cardsPerRound :: List Integer,
   players :: List Player,
+  round :: Integer,
   trump :: Suit,
 }
 export alias HandWeights = {
@@ -31,9 +33,6 @@ export alias HandWeights = {
 }
 
 export type GameError = Error(Integer, String) | GenericError
-
-
-alias PlayState = { ...InitialState, bets :: List Integer, round :: Integer, trump :: Suit }
 
 getHumanError :: GameError -> String
 export getHumanError = where {
@@ -68,7 +67,7 @@ export roundsPerTotalPlayers = (i) => {
 __sum :: List Integer -> Integer
 export __sum = List.reduce(Math.add, 0)
 
-initialDeal :: Random -> List String -> Either GameError InitialState
+initialDeal :: Random -> List String -> Either GameError GameState
 export initialDeal = (rand, playerNames) => {
   total = List.length(playerNames)
   cardsPerPlayer = cardsPerTotalPlayers(total)
@@ -89,6 +88,8 @@ export initialDeal = (rand, playerNames) => {
           )(undealt),
           cardsPerPlayer,
           cardsPerRound: roundsPerTotalPlayers(total),
+          bets: [],
+          round: 0,
         })
 
       Nothing =>
@@ -96,10 +97,6 @@ export initialDeal = (rand, playerNames) => {
     },
   )(Deck.DECK)
 }
-
-prepForBetting :: InitialState -> PlayState
-export prepForBetting = (state) => ({ ...state, bets: [], round: 0 })
-
 
 canBet :: Integer -> List Integer -> Boolean
 export canBet = (goal, xs) => __sum(xs) != goal
@@ -156,7 +153,7 @@ export winningCards = (trump, cards) => {
   }
 }
 
-judgeByWeight :: Random -> PlayState -> List Integer -> HandWeights -> Integer
+judgeByWeight :: Random -> GameState -> List Integer -> HandWeights -> Integer
 export judgeByWeight = (rand, state, bets, weights) => {
   totalPlayers = List.length(state.players)
   max = pipe(

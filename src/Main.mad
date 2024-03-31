@@ -18,7 +18,6 @@ main = () => {
   // IO.trace("SHOW!", map(Deck.showCard, Deck.DECK_WITH_JOKERS))
   pipe(
     OhHell.initialDeal(gen),
-    map(OhHell.prepForBetting),
     map(
       (state) => List.reduce(
         (agg, player) => where(player) {
@@ -51,22 +50,22 @@ main = () => {
     ),
   )(["Brekk", "Arnaud", "Hlolli"])
   /*
-                                pipe(
-                                  Deck.getConsecutiveRuns(false, false),
-                                  // Deck.filterListsByLimit(4),
-                                  map(map(showCard)),
-                                  IO.pTrace("still not comprehensive, b/c it shortcuts"),
-                                )([
-                                  Card(Diamonds, Ace),
-                                  Card(Diamonds, King),
-                                  Card(Diamonds, Jack),
-                                  Card(Diamonds, Queen),
-                                  Card(Spades, NoFace(3)),
-                                  Card(Diamonds, NoFace(2)),
-                                  Card(Spades, NoFace(2)),
-                                  Card(Diamonds, NoFace(4)),
-                                  Card(Diamonds, NoFace(6)),
-                                  Card(Diamonds, NoFace(5)),
-                                ])
-                                */
+                                  pipe(
+                                    Deck.getConsecutiveRuns(false, false),
+                                    // Deck.filterListsByLimit(4),
+                                    map(map(showCard)),
+                                    IO.pTrace("still not comprehensive, b/c it shortcuts"),
+                                  )([
+                                    Card(Diamonds, Ace),
+                                    Card(Diamonds, King),
+                                    Card(Diamonds, Jack),
+                                    Card(Diamonds, Queen),
+                                    Card(Spades, NoFace(3)),
+                                    Card(Diamonds, NoFace(2)),
+                                    Card(Spades, NoFace(2)),
+                                    Card(Diamonds, NoFace(4)),
+                                    Card(Diamonds, NoFace(6)),
+                                    Card(Diamonds, NoFace(5)),
+                                  ])
+                                  */
 }
