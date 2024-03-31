@@ -1,0 +1,29 @@
+import type { Card } from "./Card"
+
+
+
+export type Player = Player(String, List Card, Integer, Integer)
+
+name :: Player -> String
+export name = where {
+  Player(x, _, _, _) =>
+    x
+}
+
+hand :: Player -> List Card
+export hand = where {
+  Player(_, cards, _, _) =>
+    cards
+}
+
+bet :: Player -> Integer
+export bet = where {
+  Player(_, _, x, _) =>
+    x
+}
+
+points :: Player -> Integer
+export points = where {
+  Player(_, _, _, x) =>
+    x
+}

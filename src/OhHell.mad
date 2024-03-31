@@ -1,6 +1,7 @@
 import type { Either } from "Either"
 
 import type { Card, Suit } from "./Card"
+import type { Player } from "./Player"
 
 import { EQ, GT, LT } from "Compare"
 import { Left, Right } from "Either"
@@ -12,10 +13,9 @@ import Random from "Random"
 
 import Card from "./Card"
 import Deck from "./Deck"
+import { Player } from "./Player"
 
 
-
-export type Player = Player(String, List Card)
 
 export alias InitialState = {
   cardsPerPlayer :: Integer,
@@ -32,16 +32,8 @@ export alias HandWeights = {
 
 export type GameError = Error(Integer, String) | GenericError
 
-export type PlayerState = Initial | Bet(Integer) | Played
-export type ActivePlayer = ActivePlayer(Player, PlayerState, Integer)
 
-alias PlayState = {
-  ...InitialState,
-  bets :: List Integer,
-  players :: List ActivePlayer,
-  round :: Integer,
-  trump :: Suit,
-}
+alias PlayState = { ...InitialState, bets :: List Integer, round :: Integer, trump :: Suit }
 
 getHumanError :: GameError -> String
 export getHumanError = where {
@@ -52,7 +44,6 @@ export getHumanError = where {
     "An error occurred!"
 }
 
-// If three to five play, 10 cards are dealt to each player in the first deal; if six play, 8 cards, and, if seven play, 7 cards.
 cardsPerTotalPlayers :: Integer -> Integer
 export cardsPerTotalPlayers = (i) => if (i >= 3 && i <= 5) {
   10
@@ -89,7 +80,7 @@ export initialDeal = (rand, playerNames) => {
         Right({
           players: pipe(
             List.zip(playerNames),
-            map(where { #[name, hand] => Player(name, hand) }),
+            map(where { #[name, hand] => Player(name, hand, 0, 0) }),
           )(hands),
           trump: pipe(
             List.first,
@@ -107,14 +98,11 @@ export initialDeal = (rand, playerNames) => {
 }
 
 prepForBetting :: InitialState -> PlayState
-export prepForBetting = (state) => (
-  { ...state, bets: [], players: map((p) => ActivePlayer(p, Initial, 0), state.players), round: 0 }
-)
+export prepForBetting = (state) => ({ ...state, bets: [], round: 0 })
 
 
 canBet :: Integer -> List Integer -> Boolean
 export canBet = (goal, xs) => __sum(xs) != goal
-
 
 __largest :: List Integer -> Integer
 export __largest = pipe(
@@ -175,11 +163,9 @@ export judgeByWeight = (rand, state, bets, weights) => {
     List.nth(state.round),
     fromMaybe(totalPlayers),
   )(state.cardsPerRound)
-  IO.cTrace(`max`, max)
   currentSum = __sum(bets)
-  IO.cTrace(`>>>`, currentSum)
   upperLimit = max - currentSum
-  // sureBets = winningCards(
+  // sureBets = winningCards(state.trump
 
   return Random.integer(weights.trumpFaceCards, upperLimit, rand)
 }

@@ -1,5 +1,5 @@
-import type { Card, Rank, Suit } from "./Deck"
-import type { ActivePlayer, Player, PlayerState } from "./OhHell"
+import type { Card, Rank, Suit } from "./Card"
+import type { Player } from "./Player"
 
 import List from "List"
 import String from "String"
@@ -19,9 +19,9 @@ import {
   Queen,
   Spades,
   Wildcard,
-  sortWithTrump,
-} from "./Deck"
-import { ActivePlayer, Bet, Initial, Played, Player } from "./OhHell"
+} from "./Card"
+import { sortWithTrump } from "./Deck"
+import { Player } from "./Player"
 
 
 
@@ -90,26 +90,11 @@ showHand = (trump, hand) => pipe(
   String.join(" "),
 )(hand)
 
+showBet :: Integer -> String
+export showBet = (x) => `${show(x)} ⌻`
+
 showPlayer :: Suit -> Player -> String
 export showPlayer = (trump, player) => where(player) {
-  Player(name, hand) =>
-    `${name}: ► ${showHand(trump, hand)}`
-}
-
-showPlayerState :: PlayerState -> String
-showPlayerState = where {
-  Initial =>
-    "⎕ "
-
-  Bet(x) =>
-    `${show(x)}⌻`
-
-  Played =>
-    "⌼"
-}
-
-showActivePlayer :: Suit -> ActivePlayer -> String
-export showActivePlayer = (trump, player) => where(player) {
-  ActivePlayer(Player(name, hand), state, points) =>
-    `${name} ▶ ${showPlayerState(state)}  ⁄ ${show(points)}⌼ \n↳ ${showHand(trump, hand)}`
+  Player(name, hand, bet, points) =>
+    `${name}:  ${showBet(bet)}  ⦚ ${show(points)} ⌼\n↳ ${showHand(trump, hand)}`
 }

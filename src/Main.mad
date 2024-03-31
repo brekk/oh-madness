@@ -3,10 +3,11 @@ import List from "List"
 import Random from "Random"
 import String from "String"
 
+import { Ace, Card, Diamonds, Jack, King, NoFace, Queen, Spades } from "./Card"
 import Deck from "./Deck"
-import { Ace, Card, Diamonds, Jack, King, NoFace, Queen, Spades } from "./Deck"
 import OhHell from "./OhHell"
-import { showActivePlayer, showCard } from "./Render"
+import { Player } from "./Player"
+import { showCard, showPlayer } from "./Render"
 
 
 
@@ -21,20 +22,16 @@ main = () => {
     map(
       (state) => List.reduce(
         (agg, player) => where(player) {
-          OhHell.ActivePlayer(OhHell.Player(name, hand), _, points) =>
+          Player(name, hand, _, points) =>
             pipe(
               OhHell.weighHand(state.trump, hand),
               IO.cTrace(`${name}: ->`),
               // (weights) => weights.trumpFaceCards,
               OhHell.judgeByWeight(gen, state, agg.bets),
-              IO.cTrace("bet bet bet"),
               (bet) => (
                 {
                   ...agg,
-                  players: [
-                    ...agg.players,
-                    OhHell.ActivePlayer(OhHell.Player(name, hand), OhHell.Bet(bet), points),
-                  ],
+                  players: [...agg.players, Player(name, hand, bet, points)],
                   bets: [...agg.bets, bet],
                 }
               ),
@@ -47,29 +44,29 @@ main = () => {
     map(
       (state) => pipe(
         .players,
-        map(showActivePlayer(state.trump)),
+        map(showPlayer(state.trump)),
         String.join("\n"),
         IO.putLine,
       )(state),
     ),
   )(["Brekk", "Arnaud", "Hlolli"])
   /*
-        pipe(
-          Deck.getConsecutiveRuns(false, false),
-          // Deck.filterListsByLimit(4),
-          map(map(showCard)),
-          IO.pTrace("still not comprehensive, b/c it shortcuts"),
-        )([
-          Card(Diamonds, Ace),
-          Card(Diamonds, King),
-          Card(Diamonds, Jack),
-          Card(Diamonds, Queen),
-          Card(Spades, NoFace(3)),
-          Card(Diamonds, NoFace(2)),
-          Card(Spades, NoFace(2)),
-          Card(Diamonds, NoFace(4)),
-          Card(Diamonds, NoFace(6)),
-          Card(Diamonds, NoFace(5)),
-        ])
-        */
+                                pipe(
+                                  Deck.getConsecutiveRuns(false, false),
+                                  // Deck.filterListsByLimit(4),
+                                  map(map(showCard)),
+                                  IO.pTrace("still not comprehensive, b/c it shortcuts"),
+                                )([
+                                  Card(Diamonds, Ace),
+                                  Card(Diamonds, King),
+                                  Card(Diamonds, Jack),
+                                  Card(Diamonds, Queen),
+                                  Card(Spades, NoFace(3)),
+                                  Card(Diamonds, NoFace(2)),
+                                  Card(Spades, NoFace(2)),
+                                  Card(Diamonds, NoFace(4)),
+                                  Card(Diamonds, NoFace(6)),
+                                  Card(Diamonds, NoFace(5)),
+                                ])
+                                */
 }

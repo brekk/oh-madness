@@ -1,0 +1,30 @@
+import type { Player } from "./Player"
+
+import Random from "Random"
+import { assertEquals, test } from "Test"
+
+import { Player, bet, hand, name, points } from "./Player"
+
+
+
+test("name", () => assertEquals(name(Player("cool", [], 0, 0)), "cool"))
+
+test("hand", () => assertEquals(hand(Player("cool", [], 0, 0)), []))
+test(
+  "bet",
+  () => {
+    rand = Random.generateFromString("cool")
+    int = Random.integer(1, 100, rand)
+    return assertEquals(bet(Player("cool", [], int, 0)), int)
+  },
+)
+
+
+test(
+  "points",
+  () => {
+    rand = Random.generateFromString("cool")
+    int = Random.integer(1, 100, rand)
+    return assertEquals(points(Player("cool", [], 0, int)), int)
+  },
+)
