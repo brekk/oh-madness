@@ -38,20 +38,16 @@ main = () => {
   // IO.trace("SHOW!", map(Deck.showCard, Deck.DECK_WITH_JOKERS))
   pipe(
     OhHell.initialDeal(gen),
-    // map(
-    //   (state) => List.reduce(
-    //     (agg, player) => 
-    //     { ...state, players: [] },
-    //     state.players,
-    //   ),
-    // ),
     map(
-      (state) => pipe(
-        .players,
-        map(showPlayer(state.trump)),
-        String.join("\n"),
-        IO.putLine,
-      )(state),
+      pipe(
+        OhHell.runBets(gen),
+        (state) => pipe(
+          .players,
+          map(showPlayer(state.trump)),
+          String.join("\n"),
+          IO.putLine,
+        )(state),
+      ),
     ),
   )(["Brekk", "Arnaud", "Hlolli"])
 }

@@ -176,30 +176,26 @@ export judgeByWeight = (rand, state, player, weights) => {
   return Random.integer(weights.trumpFaceCards, upperLimit, rand)
 }
 
+betForPlayer :: Random -> GameState -> Player -> GameState
+export betForPlayer = (rand, state, player) => where(player) {
+  Player.Player(name, hand, _, _, _) =>
+    pipe(
+      .bets,
+      weighHand(state.trump, hand),
+      judgeByWeight(rand, state, player),
+      (bet) => (
+        {
+          ...state,
+          bets: [...state.bets, bet],
+          players: [...state.players, Player.setBet(player, bet)],
+        }
+      ),
+    )(state)
+}
+
 runBets :: Random -> GameState -> GameState
 export runBets = (rand, state) => {
-  trump = state.trump
-  // whycome yu no happy?
   players = state.players
-  return List.reduce(
-    (stepState, player) => {
-      return where(player) {
-        Player.Player(name, hand, _, _, _) =>
-          pipe(
-            .bets,
-            weighHand(trump, hand),
-            judgeByWeight(rand, stepState, player),
-            (bet) => (
-              {
-                ...stepState,
-                bets: [...stepState.bets, bet],
-                players: [...stepState.players, Player.setBet(player, bet)],
-              }
-            ),
-          )(stepState)
-      }
-    },
-    { ...state, players: [] },
-    state.players,
-  )
+  bettingState = { ...state, players: [] }
+  return List.reduce(betForPlayer(rand), bettingState, players)
 }
