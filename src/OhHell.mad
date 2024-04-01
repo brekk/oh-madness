@@ -200,6 +200,6 @@ export runBets = (rand, state) => {
       }
     },
     { ...state, players: [] },
-    players,
+    state.players,
   )
 }
