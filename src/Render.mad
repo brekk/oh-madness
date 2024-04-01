@@ -90,11 +90,14 @@ showHand = (trump, hand) => pipe(
   String.join(" "),
 )(hand)
 
-showBet :: Integer -> String
-export showBet = (x) => `${show(x)} ⌻`
+showActiveBet :: Integer -> Integer -> String
+export showActiveBet = (tricks, bet) => `${show(tricks)} ⁄${show(bet)} ⌻`
+
+showPoints :: Integer -> String
+export showPoints = (x) => `${show(x)} ⌼`
 
 showPlayer :: Suit -> Player -> String
 export showPlayer = (trump, player) => where(player) {
-  Player(name, hand, bet, points) =>
-    `${name}:  ${showBet(bet)}  ⦚ ${show(points)} ⌼\n↳ ${showHand(trump, hand)}`
+  Player(name, hand, bet, tricks, points) =>
+    `${name}:  ${showActiveBet(tricks, bet)}   ${showPoints(points)}\n↳ ${showHand(trump, hand)}`
 }

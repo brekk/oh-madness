@@ -132,8 +132,6 @@ export deal = (perPlayer, totalPlayers, cards) => {
   }
 }
 
-
-
 filterBySuit :: Suit -> List Card -> List Card
 export filterBySuit = (s, cs) => List.filter(Card.isSuit(s), cs)
 

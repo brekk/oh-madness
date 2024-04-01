@@ -13,7 +13,7 @@ import Random from "Random"
 
 import Card from "./Card"
 import Deck from "./Deck"
-import { Player } from "./Player"
+import Player from "./Player"
 
 
 
@@ -23,6 +23,7 @@ export alias GameState = {
   cardsPerRound :: List Integer,
   players :: List Player,
   round :: Integer,
+  totalPlayers :: Integer,
   trump :: Suit,
 }
 export alias HandWeights = {
@@ -77,7 +78,7 @@ export initialDeal = (rand, playerNames) => {
         Right({
           players: pipe(
             List.zip(playerNames),
-            map(where { #[name, hand] => Player(name, hand, 0, 0, 0) }),
+            map(where { #[name, hand] => Player.Player(name, hand, 0, 0, 0) }),
           )(hands),
           trump: pipe(
             List.first,
@@ -86,8 +87,9 @@ export initialDeal = (rand, playerNames) => {
           )(undealt),
           cardsPerPlayer,
           cardsPerRound: roundsPerTotalPlayers(total),
-          bets: [],
           round: 0,
+          totalPlayers: List.length(playerNames),
+          bets: [],
         })
 
       Nothing =>
@@ -152,16 +154,52 @@ export winningCards = (trump, cards) => {
 canBet :: Integer -> List Integer -> Boolean
 export canBet = (goal, xs) => List.reduce(Math.add, 0, xs) != goal
 
-judgeByWeight :: Random -> GameState -> List Integer -> HandWeights -> Integer
-export judgeByWeight = (rand, state, bets, weights) => {
-  totalPlayers = List.length(state.players)
-  max = pipe(
-    List.nth(state.round),
-    fromMaybe(totalPlayers),
-  )(state.cardsPerRound)
-  currentSum = List.reduce(Math.add, 0, bets)
-  upperLimit = max - currentSum
-  // sureBets = winningCards(state.trump
+maxBet :: GameState -> Integer
+maxBet = (state) => pipe(
+  List.nth(state.round),
+  fromMaybe(state.totalPlayers),
+)(state.cardsPerRound)
 
+getBets :: GameState -> List Integer
+getBets = pipe(
+  .players,
+  map(Player.bet),
+)
+
+judgeByWeight :: Random -> GameState -> Player -> HandWeights -> Integer
+export judgeByWeight = (rand, state, player, weights) => {
+  max = maxBet(state)
+  currentSum = Player.countOtherBets(state.players, player)
+  upperLimit = max - currentSum
+  sureBets = winningCards(state.trump, Player.hand(player))
+  IO.trace(">>> sure bet!", sureBets)
   return Random.integer(weights.trumpFaceCards, upperLimit, rand)
+}
+
+runBets :: Random -> GameState -> GameState
+export runBets = (rand, state) => {
+  trump = state.trump
+  // whycome yu no happy?
+  players = state.players
+  return List.reduce(
+    (stepState, player) => {
+      return where(player) {
+        Player.Player(name, hand, _, _, _) =>
+          pipe(
+            .bets,
+            weighHand(trump, hand),
+            judgeByWeight(rand, stepState, player),
+            (bet) => (
+              {
+                ...stepState,
+                bets: [...stepState.bets, bet],
+                players: [...stepState.players, Player.setBet(player, bet)],
+              }
+            ),
+          )(stepState)
+      }
+    },
+    { ...state, players: [] },
+    players,
+  )
 }

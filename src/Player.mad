@@ -1,5 +1,9 @@
 import type { Card } from "./Card"
 
+import Fn from "Function"
+import List from "List"
+import Math from "Math"
+
 
 
 export type Player = Player(String, List Card, Integer, Integer, Integer)
@@ -39,3 +43,21 @@ export countTricks = where {
   Player(n, _, b, t, p) =>
     Player(n, [], 0, 0, (b == t ? t + 10 : t) + p)
 }
+
+setBet :: Player -> Integer -> Player
+export setBet = (player, i) => where(player) {
+  Player(n, h, _, t, p) =>
+    Player(n, h, i, t, p)
+}
+
+countOtherBets :: List Player -> Player -> Integer
+export countOtherBets = (players, toExclude) => pipe(
+  List.reject(
+    pipe(
+      name,
+      Fn.equals(name(toExclude)),
+    ),
+  ),
+  map(bet),
+  List.reduce(Math.add, 0),
+)(players)

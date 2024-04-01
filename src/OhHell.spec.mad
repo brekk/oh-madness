@@ -133,7 +133,7 @@ test(
           ),
         ],
         trump: Diamonds,
-        bets: [],
+        totalPlayers: 3,
         round: 0,
       }),
     )
