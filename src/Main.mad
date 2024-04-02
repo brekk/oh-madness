@@ -1,9 +1,10 @@
 import IO from "IO"
 import List from "List"
+import Maybe from "Maybe"
 import Random from "Random"
 import String from "String"
 
-import { Ace, Card, Diamonds, Jack, King, NoFace, Queen, Spades } from "./Card"
+import { Ace, Card, Diamonds, Hearts, Jack, King, NoFace, Queen, Spades } from "./Card"
 import Deck from "./Deck"
 import OhHell from "./OhHell"
 import { Player } from "./Player"
@@ -40,7 +41,15 @@ main = () => {
     OhHell.initialDeal(gen),
     map(
       pipe(
-        OhHell.runBets(gen),
+        OhHell.betting(gen),
+        (state) => {
+          brekk = pipe(
+            OhHell.getPlayerByName(state),
+            Maybe.fromMaybe(Player("Devil", [], 0, 0, 0)),
+          )("Brekk")
+          return OhHell.playCard(brekk, Card(Hearts, Queen), state)
+        },
+        IO.pTrace("played!"),
         Render.showGameForPlayer("Brekk"),
         IO.putLine,
       ),

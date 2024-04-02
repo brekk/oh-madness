@@ -1,4 +1,5 @@
 import type { Either } from "Either"
+import type { Maybe } from "Maybe"
 
 import type { Card, Suit } from "./Card"
 import type { Player } from "./Player"
@@ -21,6 +22,7 @@ export alias GameState = {
   bets :: List Integer,
   cardsPerPlayer :: Integer,
   cardsPerRound :: List Integer,
+  playedCards :: List Player.PlayedCard,
   players :: List Player,
   round :: Integer,
   totalPlayers :: Integer,
@@ -34,6 +36,7 @@ export alias HandWeights = {
 }
 
 export type GameError = Error(Integer, String) | GenericError
+
 
 getHumanError :: GameError -> String
 export getHumanError = where {
@@ -90,6 +93,7 @@ export initialDeal = (rand, playerNames) => {
           round: 0,
           totalPlayers: List.length(playerNames),
           bets: [],
+          playedCards: [],
         })
 
       Nothing =>
@@ -98,12 +102,26 @@ export initialDeal = (rand, playerNames) => {
   )(Deck.DECK)
 }
 
+// this is a convenience method, likely we will remove it
+getPlayerByName :: GameState -> String -> Maybe Player
+export getPlayerByName = (state, name) => List.find(
+  where {
+    Player.Player(n, _, _, _, _) =>
+      n == name
+  },
+  state.players,
+)
 
 __largest :: List Integer -> Integer
 export __largest = pipe(
   List.sortBy((a, b) => a == b ? EQ : a < b ? GT : LT),
-  List.first,
-  fromMaybe(0),
+  where {
+    [a, ...z] =>
+      a
+
+    [] =>
+      0
+  },
 )
 
 weighHand :: Suit -> List Card -> List Integer -> HandWeights
@@ -192,9 +210,28 @@ export betForPlayer = (rand, state, player) => where(player) {
     )(state)
 }
 
-runBets :: Random -> GameState -> GameState
-export runBets = (rand, state) => List.reduce(
+betting :: Random -> GameState -> GameState
+export betting = (rand, state) => List.reduce(
   betForPlayer(rand),
   { ...state, players: [] },
   state.players,
 )
+
+playCard :: Player -> Card -> GameState -> GameState
+export playCard = (player, card, state) => pipe(
+  Player.playCard(card),
+  (played) => ({ ...state, playedCards: [...state.playedCards, played] }),
+)(player)
+
+// heather eat your heart out
+getPlayedBy :: String -> GameState -> List Card
+export getPlayedBy = (playerName, state) => pipe(
+  .playedCards,
+  List.reduce(
+    (matched, pCard) => where(pCard) {
+      Player.PlayedCard(by, card) =>
+        by == playerName ? List.append(card, matched) : matched
+    },
+    [],
+  ),
+)(state)

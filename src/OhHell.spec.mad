@@ -74,6 +74,7 @@ test(
     return assertEquals(
       initialDeal(rand, ["Brekk", "Arnaud", "Hlolli"]),
       Either.Right({
+        bets: [],
         cardsPerPlayer: 10,
         cardsPerRound: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         players: [
@@ -132,9 +133,10 @@ test(
             0,
           ),
         ],
-        trump: Diamonds,
-        totalPlayers: 3,
         round: 0,
+        totalPlayers: 3,
+        trump: Diamonds,
+        playedCards: [],
       }),
     )
   },

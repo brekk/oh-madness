@@ -1,8 +1,9 @@
 import type { Card, Rank, Suit } from "./Card"
 import type { GameState } from "./OhHell"
-import type { Player } from "./Player"
+import type { PlayedCard, Player } from "./Player"
 
 import { always } from "Function"
+import IO from "IO"
 import List from "List"
 import { fromMaybe } from "Maybe"
 import String from "String"
@@ -24,6 +25,7 @@ import {
   Wildcard,
 } from "./Card"
 import { sortWithTrump } from "./Deck"
+import Player from "./Player"
 import P from "./Player"
 
 
@@ -119,7 +121,7 @@ showPlayerSummary = (player) => {
   gap = `│${spaces(53)}│`
   return where(player) {
     P.Player(name, hand, bet, tricks, points) =>
-      `${gap}\n│ ${name}${spaces(39 - String.length(name))}${showActiveBet(tricks, bet)}   ${
+      `│ ${name}${spaces(39 - String.length(name))}${showActiveBet(tricks, bet)}   ${
         showPoints(points)
       } │`
   }
@@ -142,6 +144,9 @@ bannerLine = (c, x) => pipe(
   String.fromList,
 )(x)
 
+
+// omniscient view
+/*
 showGame :: GameState -> String
 export showGame = (state) => {
   lhs = 10
@@ -163,6 +168,49 @@ ${
   }
 └${horizontal}┘`
 }
+*/
+
+/*
+pipe(
+      .players,
+      map((p) => P.name(p) == playerName ? showFullPlayer(state.trump, p) : showPlayerSummary(p)),
+      String.join("\n"),
+    )(state)
+*/
+
+showPlayedHandFor :: List PlayedCard -> Player -> String
+export showPlayedHandFor = (playedCards, player) => pipe(
+  List.filter(Player.cardPlayedBy(Player.name(player))),
+  map(
+    pipe(
+      Player.cardFromPlayed,
+      showCard,
+    ),
+  ),
+  String.join(" "),
+)(playedCards)
+
+summarizePlayState :: GameState -> String
+summarizePlayState = (state) => pipe(
+  List.reduce(
+    (playerSummaries, player) => pipe(
+      showPlayedHandFor(state.playedCards),
+      (playedHand) => {
+        none = String.isEmpty(playedHand)
+        len = String.length(playedHand) + 3
+        IO.trace(">>>", #[len, playedHand])
+        return List.append(
+          `${showPlayerSummary(player)}\n│${none ? "" : ` ↳ ${playedHand}`}${
+            spaces((none ? 53 : 62 - len))
+          }│`,
+          playerSummaries,
+        )
+      },
+    )(player),
+    [],
+  ),
+  String.join("\n"),
+)(state.players)
 
 showGameForPlayer :: String -> GameState -> String
 export showGameForPlayer = (playerName, state) => {
@@ -176,12 +224,6 @@ export showGameForPlayer = (playerName, state) => {
     __colorCard(state.trump, __showSuit(state.trump))
   } ┃
 ┡${heavyHorizontal}┩
-${
-    pipe(
-      .players,
-      map((p) => P.name(p) == playerName ? showFullPlayer(state.trump, p) : showPlayerSummary(p)),
-      String.join("\n"),
-    )(state)
-  }
+${summarizePlayState(state)}
 └${horizontal}┘`
 }

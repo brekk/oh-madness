@@ -61,3 +61,24 @@ export countOtherBets = (players, toExclude) => pipe(
   map(bet),
   List.reduce(Math.add, 0),
 )(players)
+
+// Keep track of who played what card
+export type PlayedCard = PlayedCard(String, Card)
+
+playCard :: Card -> Player -> PlayedCard
+export playCard = (card, player) => where(player) {
+  Player(playerName, _, _, _, _) =>
+    PlayedCard(playerName, card)
+}
+
+cardPlayedBy :: String -> PlayedCard -> Boolean
+export cardPlayedBy = (playerName, pCard) => where(pCard) {
+  PlayedCard(by, _) =>
+    by == playerName
+}
+
+cardFromPlayed :: PlayedCard -> Card
+export cardFromPlayed = where {
+  PlayedCard(_, c) =>
+    c
+}

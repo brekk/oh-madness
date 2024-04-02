@@ -9,6 +9,7 @@ export type Rank = NoFace(Short) | Jack | Queen | King | Ace | Wildcard | Invali
 
 export type Card = Card(Suit, Rank)
 
+
 spade :: Rank -> Card
 export spade = Card(Spades)
 
@@ -23,7 +24,6 @@ export club = Card(Clubs)
 
 joker :: Rank -> Card
 export joker = Card(Joker)
-
 
 suit :: Card -> Suit
 export suit = where {
