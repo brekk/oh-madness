@@ -1,7 +1,10 @@
 import type { Card, Rank, Suit } from "./Card"
+import type { GameState } from "./OhHell"
 import type { Player } from "./Player"
 
+import { always } from "Function"
 import List from "List"
+import { fromMaybe } from "Maybe"
 import String from "String"
 import Terminal from "Terminal"
 
@@ -21,7 +24,7 @@ import {
   Wildcard,
 } from "./Card"
 import { sortWithTrump } from "./Deck"
-import { Player } from "./Player"
+import P from "./Player"
 
 
 
@@ -96,8 +99,89 @@ export showActiveBet = (tricks, bet) => `${show(tricks)} ⁄${show(bet)} ⌻`
 showPoints :: Integer -> String
 export showPoints = (x) => `${show(x)} ⌼`
 
-showPlayer :: Suit -> Player -> String
-export showPlayer = (trump, player) => where(player) {
-  Player(name, hand, bet, tricks, points) =>
-    `${name}:  ${showActiveBet(tricks, bet)}   ${showPoints(points)}\n↳ ${showHand(trump, hand)}`
+spaces :: Integer -> String
+spaces = pipe(
+  List.repeatWith(always(" ")),
+  String.join(""),
+)
+
+showPlayerHand :: Suit -> Player -> String
+export showPlayerHand = (trump, player) => {
+  gap = `│${spaces(53)}│`
+  return where(player) {
+    P.Player(name, hand, bet, tricks, points) =>
+      `│ ↳ ${showHand(trump, hand)} ${spaces(10)}│\n${gap}`
+  }
+}
+
+showPlayerSummary :: Player -> String
+showPlayerSummary = (player) => {
+  gap = `│${spaces(53)}│`
+  return where(player) {
+    P.Player(name, hand, bet, tricks, points) =>
+      `${gap}\n│ ${name}${spaces(39 - String.length(name))}${showActiveBet(tricks, bet)}   ${
+        showPoints(points)
+      } │`
+  }
+}
+
+showFullPlayer :: Suit -> Player -> String
+export showFullPlayer = (trump, player) => `${showPlayerSummary(player)}
+${showPlayerHand(trump, player)}`
+
+showRounds :: List Integer -> Integer -> String
+showRounds = (rounds, round) => pipe(
+  List.length,
+  List.repeatWith((i) => (i <= round ? "✦" : "✧")),
+  String.join(" "),
+)(rounds)
+
+bannerLine :: Char -> Integer -> String
+bannerLine = (c, x) => pipe(
+  List.repeatWith(always(c)),
+  String.fromList,
+)(x)
+
+showGame :: GameState -> String
+export showGame = (state) => {
+  lhs = 10
+  rhs = 5
+  width = (List.length(state.cardsPerRound) * 2) + lhs + rhs
+  heavyHorizontal = bannerLine('━', width)
+  horizontal = bannerLine('─', width)
+  return `┏${heavyHorizontal}┓
+┃ Oh Hell ┊ ${showRounds(state.cardsPerRound, state.round)} ┊ ${
+    __colorCard(state.trump, __showSuit(state.trump))
+  } ┃
+┡${heavyHorizontal}┩
+${
+    pipe(
+      .players,
+      map(showFullPlayer(state.trump)),
+      String.join("\n"),
+    )(state)
+  }
+└${horizontal}┘`
+}
+
+showGameForPlayer :: String -> GameState -> String
+export showGameForPlayer = (playerName, state) => {
+  lhs = 10
+  rhs = 5
+  width = (List.length(state.cardsPerRound) * 2) + lhs + rhs
+  heavyHorizontal = bannerLine('━', width)
+  horizontal = bannerLine('─', width)
+  return `┏${heavyHorizontal}┓
+┃ Oh Hell ┊ ${showRounds(state.cardsPerRound, state.round)} ┊ ${
+    __colorCard(state.trump, __showSuit(state.trump))
+  } ┃
+┡${heavyHorizontal}┩
+${
+    pipe(
+      .players,
+      map((p) => P.name(p) == playerName ? showFullPlayer(state.trump, p) : showPlayerSummary(p)),
+      String.join("\n"),
+    )(state)
+  }
+└${horizontal}┘`
 }

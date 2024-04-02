@@ -172,7 +172,6 @@ export judgeByWeight = (rand, state, player, weights) => {
   currentSum = Player.countOtherBets(state.players, player)
   upperLimit = max - currentSum
   sureBets = winningCards(state.trump, Player.hand(player))
-  IO.trace(">>> sure bet!", sureBets)
   return Random.integer(weights.trumpFaceCards, upperLimit, rand)
 }
 
@@ -194,8 +193,8 @@ export betForPlayer = (rand, state, player) => where(player) {
 }
 
 runBets :: Random -> GameState -> GameState
-export runBets = (rand, state) => {
-  players = state.players
-  bettingState = { ...state, players: [] }
-  return List.reduce(betForPlayer(rand), bettingState, players)
-}
+export runBets = (rand, state) => List.reduce(
+  betForPlayer(rand),
+  { ...state, players: [] },
+  state.players,
+)

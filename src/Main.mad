@@ -7,7 +7,7 @@ import { Ace, Card, Diamonds, Jack, King, NoFace, Queen, Spades } from "./Card"
 import Deck from "./Deck"
 import OhHell from "./OhHell"
 import { Player } from "./Player"
-import { showCard, showPlayer } from "./Render"
+import Render from "./Render"
 
 
 
@@ -41,13 +41,9 @@ main = () => {
     map(
       pipe(
         OhHell.runBets(gen),
-        (state) => pipe(
-          .players,
-          map(showPlayer(state.trump)),
-          String.join("\n"),
-          IO.putLine,
-        )(state),
+        Render.showGameForPlayer("Brekk"),
+        IO.putLine,
       ),
     ),
-  )(["Brekk", "Arnaud", "Hlolli"])
+  )(["Brekk", "Arnaud", "Computer"])
 }
