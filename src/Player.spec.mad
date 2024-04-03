@@ -6,6 +6,7 @@ import { Ace, Card, King, Spades, spade } from "./Card"
 import {
   PlayedCard,
   Player,
+  addTrick,
   bet,
   cardFromPlayed,
   cardPlayedBy,
@@ -14,9 +15,10 @@ import {
   discard,
   hand,
   hasCard,
-  isName,
+  isNamed,
   name,
   playCard,
+  playerNameFromPlayedCard,
   points,
   setBet,
   tricks,
@@ -109,7 +111,7 @@ test(
   },
 )
 
-test("isName", () => assertEquals(isName("Brekk", Player("Brekk", [], 0, 0, 0)), true))
+test("isNamed", () => assertEquals(isNamed("Brekk", Player("Brekk", [], 0, 0, 0)), true))
 
 test(
   "playCard",
@@ -138,4 +140,14 @@ test(
 test(
   "cardFromPlayed",
   () => assertEquals(cardFromPlayed(PlayedCard("Zipzap", spade(Ace))), spade(Ace)),
+)
+
+test(
+  "addTrick",
+  () => assertEquals(addTrick(Player("xxx", [], 0, 10, 0)), Player("xxx", [], 0, 11, 0)),
+)
+
+test(
+  "playerNameFromPlayedCard",
+  () => assertEquals(playerNameFromPlayedCard(PlayedCard("zipzap", spade(Ace))), "zipzap"),
 )
