@@ -1,8 +1,13 @@
+import type { Maybe } from "Maybe"
+
 import type { Card } from "./Card"
 
 import Fn from "Function"
 import List from "List"
 import Math from "Math"
+import { Just, Nothing } from "Maybe"
+
+import Deck from "./Deck"
 
 
 
@@ -14,11 +19,21 @@ export name = where {
     x
 }
 
+isName :: String -> Player -> Boolean
+export isName = (n, p) => name(p) == n
+
+
 hand :: Player -> List Card
 export hand = where {
   Player(_, cards, _, _, _) =>
     cards
 }
+
+hasCard :: Card -> Player -> Boolean
+export hasCard = (card, player) => pipe(
+  hand,
+  Deck.has(card),
+)(player)
 
 bet :: Player -> Integer
 export bet = where {
@@ -62,14 +77,20 @@ export countOtherBets = (players, toExclude) => pipe(
   List.reduce(Math.add, 0),
 )(players)
 
+discard :: Card -> Player -> Player
+export discard = (card, player) => where(player) {
+  Player(n, cards, b, t, p) =>
+    Player(n, Deck.remove(card, cards), b, t, p)
+}
+
 // Keep track of who played what card
 export type PlayedCard = PlayedCard(String, Card)
 
-playCard :: Card -> Player -> PlayedCard
-export playCard = (card, player) => where(player) {
-  Player(playerName, _, _, _, _) =>
-    PlayedCard(playerName, card)
-}
+playCard :: Card -> Player -> Maybe PlayedCard
+export playCard = (card, player) => hasCard(card, player)
+  ? Just(PlayedCard(name(player), card))
+  : Nothing
+
 
 cardPlayedBy :: String -> PlayedCard -> Boolean
 export cardPlayedBy = (playerName, pCard) => where(pCard) {

@@ -99,6 +99,10 @@ export has = (c, cs) => where(c) {
   Card(d, v) =>
     List.any(where { Card(d2, v2) => d == d2 && v == v2 }, cs)
 }
+
+remove :: Card -> List Card -> List Card
+export remove = (c, cs) => List.reject(Card.sameCard(c))(cs)
+
 anyMatchingRank :: Card -> List Card -> Boolean
 export anyMatchingRank = (c, cs) => where(c) {
   Card(_, v) =>

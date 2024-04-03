@@ -1,15 +1,22 @@
-import type { Player } from "./Player"
-
+import { Just, Nothing } from "Maybe"
 import Random from "Random"
 import { assertEquals, test } from "Test"
 
+import { Ace, Card, King, Spades, spade } from "./Card"
 import {
+  PlayedCard,
   Player,
   bet,
+  cardFromPlayed,
+  cardPlayedBy,
   countOtherBets,
   countTricks,
+  discard,
   hand,
+  hasCard,
+  isName,
   name,
+  playCard,
   points,
   setBet,
   tricks,
@@ -84,4 +91,51 @@ test(
       16,
     )
   },
+)
+
+test(
+  "discard",
+  () => assertEquals(
+    discard(Card(Spades, Ace), Player("Brekk", [spade(Ace), spade(King)], 0, 0, 0)),
+    Player("Brekk", [spade(King)], 0, 0, 0),
+  ),
+)
+
+test(
+  "hasCard",
+  () => do {
+    _ <- assertEquals(hasCard(spade(King), Player("Brekk", [], 0, 0, 0)), false)
+    return assertEquals(hasCard(spade(King), Player("Brekk", [spade(King)], 0, 0, 0)), true)
+  },
+)
+
+test("isName", () => assertEquals(isName("Brekk", Player("Brekk", [], 0, 0, 0)), true))
+
+test(
+  "playCard",
+  () => assertEquals(
+    playCard(spade(King), Player("Brekk", [spade(King)], 0, 0, 0)),
+    Just(PlayedCard("Brekk", spade(King))),
+  ),
+)
+
+
+test(
+  "playCard - no match",
+  () => assertEquals(playCard(spade(Ace), Player("Brekk", [spade(King)], 0, 0, 0)), Nothing),
+)
+
+test(
+  "cardPlayedBy",
+  () => assertEquals(cardPlayedBy("Brekk", PlayedCard("Brekk", spade(Ace))), true),
+)
+
+test(
+  "cardPlayedBy - false",
+  () => assertEquals(cardPlayedBy("Brekk", PlayedCard("Computer", spade(Ace))), false),
+)
+
+test(
+  "cardFromPlayed",
+  () => assertEquals(cardFromPlayed(PlayedCard("Zipzap", spade(Ace))), spade(Ace)),
 )

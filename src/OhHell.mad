@@ -6,6 +6,7 @@ import type { Player } from "./Player"
 
 import { EQ, GT, LT } from "Compare"
 import { Left, Right } from "Either"
+import Fn from "Function"
 import IO from "IO"
 import List from "List"
 import Math from "Math"
@@ -173,54 +174,85 @@ canBet :: Integer -> List Integer -> Boolean
 export canBet = (goal, xs) => List.reduce(Math.add, 0, xs) != goal
 
 maxBet :: GameState -> Integer
-maxBet = (state) => pipe(
+export maxBet = (state) => pipe(
   List.nth(state.round),
   fromMaybe(state.totalPlayers),
 )(state.cardsPerRound)
 
-getBets :: GameState -> List Integer
-getBets = pipe(
-  .players,
-  map(Player.bet),
-)
+// getBets :: GameState -> List Integer
+// export getBets = pipe(
+//   .players,
+//   map(Player.bet),
+// )
 
-judgeByWeight :: Random -> GameState -> Player -> HandWeights -> Integer
-export judgeByWeight = (rand, state, player, weights) => {
+judgeByWeight :: GameState -> Player -> HandWeights -> #[Integer, Integer]
+export judgeByWeight = (state, player, weights) => {
   max = maxBet(state)
   currentSum = Player.countOtherBets(state.players, player)
   upperLimit = max - currentSum
   sureBets = winningCards(state.trump, Player.hand(player))
-  return Random.integer(weights.trumpFaceCards, upperLimit, rand)
+  // return Random.integer(weights.trumpFaceCards, upperLimit, rand)
+  return #[weights.trumpFaceCards, upperLimit]
 }
 
-betForPlayer :: Random -> GameState -> Player -> GameState
+randomIntTuple :: Random -> #[Integer, Integer] -> Integer
+export randomIntTuple = (r, az) => where(az) {
+  #[a, z] =>
+    Random.integer(a, z, r)
+}
+
+betForPlayer :: Random -> GameState -> Player -> #[Player, Integer]
 export betForPlayer = (rand, state, player) => where(player) {
   Player.Player(name, hand, _, _, _) =>
     pipe(
       .bets,
       weighHand(state.trump, hand),
-      judgeByWeight(rand, state, player),
-      (bet) => (
-        {
-          ...state,
-          bets: [...state.bets, bet],
-          players: [...state.players, Player.setBet(player, bet)],
-        }
-      ),
+      judgeByWeight(state, player),
+      randomIntTuple(rand),
+      (bet) => #[player, bet],
     )(state)
 }
 
 betting :: Random -> GameState -> GameState
 export betting = (rand, state) => List.reduce(
-  betForPlayer(rand),
+  (s, p) => pipe(
+    betForPlayer(rand, s),
+    where {
+      #[player, bet] =>
+        ({ ...state, bets: [...s.bets, bet], players: [...s.players, Player.setBet(player, bet)] })
+    },
+  )(p),
   { ...state, players: [] },
   state.players,
 )
 
+updatePlayer :: Player -> List Player -> List Player
+export updatePlayer = (p, ps) => map(
+  Fn.when(
+    pipe(
+      Player.name,
+      Player.isName,
+    )(p),
+    (_) => p,
+  ),
+)(ps)
+
 playCard :: Player -> Card -> GameState -> GameState
 export playCard = (player, card, state) => pipe(
   Player.playCard(card),
-  (played) => ({ ...state, playedCards: [...state.playedCards, played] }),
+  where {
+    Just(played) =>
+      (
+        {
+          ...state,
+          players: updatePlayer(Player.discard(card, player), state.players),
+          playedCards: [...state.playedCards, played],
+        }
+      )
+
+    Nothing =>
+      state
+  },
 )(player)
 
 // heather eat your heart out

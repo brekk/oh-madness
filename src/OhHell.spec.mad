@@ -1,25 +1,111 @@
-import type { Player } from "./Player"
-
 import Either from "Either"
 import List from "List"
 import Random from "Random"
 import { assertEquals, test } from "Test"
 
-import { Ace, Card, Clubs, Diamonds, Hearts, Jack, King, NoFace, Queen, Spades } from "./Card"
+import {
+  Ace,
+  Card,
+  Clubs,
+  Diamonds,
+  Hearts,
+  Jack,
+  King,
+  NoFace,
+  Queen,
+  Spades,
+  spade,
+} from "./Card"
 import {
   GenericError,
   __largest,
+  betForPlayer,
+  betting,
   canBet,
   cardsPerTotalPlayers,
   getHumanError,
+  getPlayedBy,
   initialDeal,
+  judgeByWeight,
+  maxBet,
+  playCard,
+  randomIntTuple,
   roundsPerTotalPlayers,
+  updatePlayer,
   weighHand,
   winningCards,
 } from "./OhHell"
-import { Player } from "./Player"
+import { PlayedCard, Player, discard } from "./Player"
 
 
+
+stateFixture = () => (
+  {
+    bets: [],
+    cardsPerPlayer: 10,
+    cardsPerRound: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+    playedCards: [],
+    players: [
+      Player(
+        "Brekk",
+        [
+          Card(Spades, NoFace(2)),
+          Card(Hearts, NoFace(2)),
+          Card(Spades, NoFace(8)),
+          Card(Hearts, NoFace(8)),
+          Card(Diamonds, NoFace(7)),
+          Card(Spades, NoFace(6)),
+          Card(Hearts, Queen),
+          Card(Clubs, Queen),
+          Card(Diamonds, NoFace(8)),
+          Card(Diamonds, NoFace(6)),
+        ],
+        8,
+        0,
+        0,
+      ),
+      Player(
+        "Arnaud",
+        [
+          Card(Spades, NoFace(7)),
+          Card(Clubs, NoFace(5)),
+          Card(Clubs, King),
+          Card(Clubs, NoFace(6)),
+          Card(Hearts, King),
+          Card(Clubs, NoFace(10)),
+          Card(Clubs, NoFace(3)),
+          Card(Diamonds, NoFace(9)),
+          Card(Diamonds, Ace),
+          Card(Hearts, NoFace(5)),
+        ],
+        1,
+        0,
+        0,
+      ),
+      Player(
+        "Computer",
+        [
+          Card(Clubs, Ace),
+          Card(Clubs, NoFace(4)),
+          Card(Diamonds, NoFace(3)),
+          Card(Hearts, NoFace(6)),
+          Card(Spades, Queen),
+          Card(Diamonds, Jack),
+          Card(Clubs, NoFace(2)),
+          Card(Spades, Ace),
+          Card(Clubs, NoFace(8)),
+          Card(Spades, King),
+        ],
+        0,
+        0,
+        0,
+      ),
+    ],
+    round: 0,
+    totalPlayers: 3,
+    trump: Hearts,
+  }
+)
 
 test(
   "cardsPerTotalPlayers",
@@ -37,6 +123,7 @@ test(
 test("canBet", () => assertEquals(canBet(109, roundsPerTotalPlayers(3)), false))
 
 test("__largest", () => assertEquals(__largest(List.range(0, 10)), 9))
+test("__largest - empty", () => assertEquals(__largest([]), 0))
 
 test(
   "weighHand",
@@ -149,6 +236,375 @@ test(
     return assertEquals(
       winningCards(Diamonds, [Card(Diamonds, Ace), Card(Spades, Jack), Card(Diamonds, King)]),
       [Card(Diamonds, Ace), Card(Diamonds, King)],
+    )
+  },
+)
+
+test(
+  "maxBet",
+  () => assertEquals(
+    maxBet({
+      bets: [1, 1, 3],
+      cardsPerPlayer: 1,
+      cardsPerRound: [],
+      playedCards: [],
+      players: [Player("A", [], 0, 0, 0), Player("B", [], 0, 0, 0), Player("C", [], 0, 0, 0)],
+      round: 0,
+      totalPlayers: 3,
+      trump: Spades,
+    }),
+    3,
+  ),
+)
+
+test(
+  "randomIntTuple",
+  () => {
+    rand = Random.generate(4000)
+    return assertEquals(randomIntTuple(rand, #[1, 30]), 3)
+  },
+)
+
+test(
+  "judgeByWeight",
+  () => assertEquals(
+    judgeByWeight(
+      {
+        bets: [1, 1, 3],
+        cardsPerPlayer: 1,
+        cardsPerRound: [],
+        playedCards: [],
+        players: [Player("A", [], 0, 0, 0), Player("B", [], 0, 0, 0), Player("C", [], 0, 0, 0)],
+        round: 0,
+        totalPlayers: 3,
+        trump: Spades,
+      },
+      Player("Brekk", [], 0, 0, 0),
+      { faceCards: 4, highestBet: 3, trumpCards: 1, trumpFaceCards: 0 },
+    ),
+    #[0, 3],
+  ),
+)
+
+test(
+  "betForPlayer",
+  () => {
+    rand = Random.generate(500)
+    playerA = Player("A", [spade(Ace), spade(King), spade(Queen)], 0, 0, 0)
+    return assertEquals(
+      betForPlayer(
+        rand,
+        {
+          bets: [1, 1, 3],
+          cardsPerPlayer: 1,
+          cardsPerRound: [],
+          playedCards: [],
+          players: [playerA, Player("B", [], 0, 0, 0), Player("C", [], 0, 0, 0)],
+          round: 0,
+          totalPlayers: 3,
+          trump: Spades,
+        },
+        playerA,
+      ),
+      #[playerA, 3],
+    )
+  },
+)
+
+test(
+  "betting",
+  () => {
+    rand = Random.generateFromString("oh-madness-0.0.0")
+    return assertEquals(
+      betting(
+        rand,
+        {
+          bets: [],
+          cardsPerPlayer: 10,
+          cardsPerRound: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+          playedCards: [],
+          players: [
+            Player(
+              "Brekk",
+              [
+                Card(Spades, NoFace(2)),
+                Card(Hearts, NoFace(2)),
+                Card(Spades, NoFace(8)),
+                Card(Hearts, NoFace(8)),
+                Card(Diamonds, NoFace(7)),
+                Card(Spades, NoFace(6)),
+                Card(Hearts, Queen),
+                Card(Clubs, Queen),
+                Card(Diamonds, NoFace(8)),
+                Card(Diamonds, NoFace(6)),
+              ],
+              8,
+              0,
+              0,
+            ),
+            Player(
+              "Arnaud",
+              [
+                Card(Spades, NoFace(7)),
+                Card(Clubs, NoFace(5)),
+                Card(Clubs, King),
+                Card(Clubs, NoFace(6)),
+                Card(Hearts, King),
+                Card(Clubs, NoFace(10)),
+                Card(Clubs, NoFace(3)),
+                Card(Diamonds, NoFace(9)),
+                Card(Diamonds, Ace),
+                Card(Hearts, NoFace(5)),
+              ],
+              1,
+              0,
+              0,
+            ),
+            Player(
+              "Computer",
+              [
+                Card(Clubs, Ace),
+                Card(Clubs, NoFace(4)),
+                Card(Diamonds, NoFace(3)),
+                Card(Hearts, NoFace(6)),
+                Card(Spades, Queen),
+                Card(Diamonds, Jack),
+                Card(Clubs, NoFace(2)),
+                Card(Spades, Ace),
+                Card(Clubs, NoFace(8)),
+                Card(Spades, King),
+              ],
+              0,
+              0,
+              0,
+            ),
+          ],
+          round: 0,
+          totalPlayers: 3,
+          trump: Hearts,
+        },
+      ),
+      {
+        bets: [3, 6, 0],
+        cardsPerPlayer: 10,
+        cardsPerRound: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        playedCards: [],
+        players: [
+          Player(
+            "Brekk",
+            [
+              Card(Spades, NoFace(2)),
+              Card(Hearts, NoFace(2)),
+              Card(Spades, NoFace(8)),
+              Card(Hearts, NoFace(8)),
+              Card(Diamonds, NoFace(7)),
+              Card(Spades, NoFace(6)),
+              Card(Hearts, Queen),
+              Card(Clubs, Queen),
+              Card(Diamonds, NoFace(8)),
+              Card(Diamonds, NoFace(6)),
+            ],
+            3,
+            0,
+            0,
+          ),
+          Player(
+            "Arnaud",
+            [
+              Card(Spades, NoFace(7)),
+              Card(Clubs, NoFace(5)),
+              Card(Clubs, King),
+              Card(Clubs, NoFace(6)),
+              Card(Hearts, King),
+              Card(Clubs, NoFace(10)),
+              Card(Clubs, NoFace(3)),
+              Card(Diamonds, NoFace(9)),
+              Card(Diamonds, Ace),
+              Card(Hearts, NoFace(5)),
+            ],
+            6,
+            0,
+            0,
+          ),
+          Player(
+            "Computer",
+            [
+              Card(Clubs, Ace),
+              Card(Clubs, NoFace(4)),
+              Card(Diamonds, NoFace(3)),
+              Card(Hearts, NoFace(6)),
+              Card(Spades, Queen),
+              Card(Diamonds, Jack),
+              Card(Clubs, NoFace(2)),
+              Card(Spades, Ace),
+              Card(Clubs, NoFace(8)),
+              Card(Spades, King),
+            ],
+            0,
+            0,
+            0,
+          ),
+        ],
+        round: 0,
+        totalPlayers: 3,
+        trump: Hearts,
+      },
+    )
+  },
+)
+
+test(
+  "updatePlayer + Player.discard",
+  () => {
+    brekk = Player("Brekk", [spade(Ace)], 0, 0, 0)
+    return assertEquals(
+      updatePlayer(discard(spade(Ace), brekk), [brekk]),
+      [Player("Brekk", [], 0, 0, 0)],
+    )
+  },
+)
+
+test(
+  "playCard",
+  () => {
+    state = stateFixture()
+    brekk = Player(
+      "Brekk",
+      [
+        Card(Spades, NoFace(2)),
+        Card(Hearts, NoFace(2)),
+        Card(Spades, NoFace(8)),
+        Card(Hearts, NoFace(8)),
+        Card(Diamonds, NoFace(7)),
+        Card(Spades, NoFace(6)),
+        Card(Hearts, Queen),
+        Card(Clubs, Queen),
+        Card(Diamonds, NoFace(8)),
+        Card(Diamonds, NoFace(6)),
+      ],
+      8,
+      0,
+      0,
+    )
+    return assertEquals(
+      playCard(brekk, Card(Hearts, Queen), state),
+      {
+        bets: [],
+        cardsPerPlayer: 10,
+        cardsPerRound: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        playedCards: [PlayedCard("Brekk", Card(Hearts, Queen))],
+        players: [
+          Player(
+            "Brekk",
+            [
+              Card(Spades, NoFace(2)),
+              Card(Hearts, NoFace(2)),
+              Card(Spades, NoFace(8)),
+              Card(Hearts, NoFace(8)),
+              Card(Diamonds, NoFace(7)),
+              Card(Spades, NoFace(6)),
+              Card(Clubs, Queen),
+              Card(Diamonds, NoFace(8)),
+              Card(Diamonds, NoFace(6)),
+            ],
+            8,
+            0,
+            0,
+          ),
+          Player(
+            "Arnaud",
+            [
+              Card(Spades, NoFace(7)),
+              Card(Clubs, NoFace(5)),
+              Card(Clubs, King),
+              Card(Clubs, NoFace(6)),
+              Card(Hearts, King),
+              Card(Clubs, NoFace(10)),
+              Card(Clubs, NoFace(3)),
+              Card(Diamonds, NoFace(9)),
+              Card(Diamonds, Ace),
+              Card(Hearts, NoFace(5)),
+            ],
+            1,
+            0,
+            0,
+          ),
+          Player(
+            "Computer",
+            [
+              Card(Clubs, Ace),
+              Card(Clubs, NoFace(4)),
+              Card(Diamonds, NoFace(3)),
+              Card(Hearts, NoFace(6)),
+              Card(Spades, Queen),
+              Card(Diamonds, Jack),
+              Card(Clubs, NoFace(2)),
+              Card(Spades, Ace),
+              Card(Clubs, NoFace(8)),
+              Card(Spades, King),
+            ],
+            0,
+            0,
+            0,
+          ),
+        ],
+        round: 0,
+        totalPlayers: 3,
+        trump: Hearts,
+      },
+    )
+  },
+)
+
+
+test(
+  "playCard - can't play a card that's not yours",
+  () => {
+    state = stateFixture()
+    brekk = Player(
+      "Brekk",
+      [
+        Card(Spades, NoFace(2)),
+        Card(Hearts, NoFace(2)),
+        Card(Spades, NoFace(8)),
+        Card(Hearts, NoFace(8)),
+        Card(Diamonds, NoFace(7)),
+        Card(Spades, NoFace(6)),
+        Card(Hearts, Queen),
+        Card(Clubs, Queen),
+        Card(Diamonds, NoFace(8)),
+        Card(Diamonds, NoFace(6)),
+      ],
+      8,
+      0,
+      0,
+    )
+    return assertEquals(playCard(brekk, Card(Hearts, NoFace(10)), state), state)
+  },
+)
+
+test(
+  "getPlayedBy",
+  () => {
+    state = {
+      ...stateFixture(),
+      playedCards: [
+        PlayedCard("Brekk", Card(Spades, NoFace(2))),
+        PlayedCard("Brekk", Card(Hearts, NoFace(2))),
+        PlayedCard("Brekk", Card(Spades, NoFace(8))),
+        PlayedCard("Brekk", Card(Hearts, NoFace(8))),
+        PlayedCard("Brekk", Card(Diamonds, NoFace(7))),
+      ],
+    }
+    return assertEquals(
+      getPlayedBy("Brekk", state),
+      [
+        Card(Spades, NoFace(2)),
+        Card(Hearts, NoFace(2)),
+        Card(Spades, NoFace(8)),
+        Card(Hearts, NoFace(8)),
+        Card(Diamonds, NoFace(7)),
+      ],
     )
   },
 )
