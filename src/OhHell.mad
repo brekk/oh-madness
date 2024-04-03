@@ -19,6 +19,8 @@ import Player from "./Player"
 
 
 
+export type GameStatus = Dealt | Bets(Integer) | CardsPlayed(Integer) | CountRound
+
 export alias GameState = {
   bets :: List Integer,
   cardsPerPlayer :: Integer,
@@ -26,6 +28,7 @@ export alias GameState = {
   playedCards :: List Player.PlayedCard,
   players :: List Player,
   round :: Integer,
+  status :: GameStatus,
   totalPlayers :: Integer,
   trump :: Suit,
 }
@@ -95,6 +98,7 @@ export initialDeal = (rand, playerNames) => {
           totalPlayers: List.length(playerNames),
           bets: [],
           playedCards: [],
+          status: Dealt,
         })
 
       Nothing =>
@@ -185,6 +189,7 @@ export maxBet = (state) => pipe(
 //   map(Player.bet),
 // )
 
+// this has some of the needed mechanics but isn't at all yet correct
 judgeByWeight :: GameState -> Player -> HandWeights -> #[Integer, Integer]
 export judgeByWeight = (state, player, weights) => {
   max = maxBet(state)
@@ -219,7 +224,11 @@ export betting = (rand, state) => List.reduce(
     betForPlayer(rand, s),
     where {
       #[player, bet] =>
-        ({ ...state, bets: [...s.bets, bet], players: [...s.players, Player.setBet(player, bet)] })
+        do {
+          bets = [...s.bets, bet]
+          status = Bets(List.length(bets))
+          return ({ ...state, bets, status, players: [...s.players, Player.setBet(player, bet)] })
+        }
     },
   )(p),
   { ...state, players: [] },
@@ -242,13 +251,16 @@ export playCard = (player, card, state) => pipe(
   Player.playCard(card),
   where {
     Just(played) =>
-      (
-        {
+      do {
+        playedCards = [...state.playedCards, played]
+        status = CardsPlayed(List.length(playedCards))
+        return {
           ...state,
           players: updatePlayer(Player.discard(card, player), state.players),
-          playedCards: [...state.playedCards, played],
+          playedCards,
+          status,
         }
-      )
+      }
 
     Nothing =>
       state

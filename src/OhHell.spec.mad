@@ -17,6 +17,10 @@ import {
   spade,
 } from "./Card"
 import {
+  Bets,
+  CardsPlayed,
+  CountRound,
+  Dealt,
   GenericError,
   __largest,
   betForPlayer,
@@ -41,7 +45,7 @@ import { PlayedCard, Player, discard } from "./Player"
 
 stateFixture = () => (
   {
-    bets: [],
+    bets: [8, 1, 0],
     cardsPerPlayer: 10,
     cardsPerRound: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     playedCards: [],
@@ -104,6 +108,7 @@ stateFixture = () => (
     round: 0,
     totalPlayers: 3,
     trump: Hearts,
+    status: Bets(3),
   }
 )
 
@@ -162,6 +167,7 @@ test(
       initialDeal(rand, ["Brekk", "Arnaud", "Hlolli"]),
       Either.Right({
         bets: [],
+        status: Dealt,
         cardsPerPlayer: 10,
         cardsPerRound: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         players: [
@@ -252,6 +258,7 @@ test(
       round: 0,
       totalPlayers: 3,
       trump: Spades,
+      status: Dealt,
     }),
     3,
   ),
@@ -274,15 +281,16 @@ test(
         cardsPerPlayer: 1,
         cardsPerRound: [],
         playedCards: [],
-        players: [Player("A", [], 0, 0, 0), Player("B", [], 0, 0, 0), Player("C", [], 0, 0, 0)],
+        players: [Player("A", [], 1, 0, 0), Player("B", [], 1, 0, 0), Player("C", [], 3, 0, 0)],
         round: 0,
         totalPlayers: 3,
         trump: Spades,
+        status: Bets(3),
       },
-      Player("Brekk", [], 0, 0, 0),
+      Player("A", [], 1, 0, 0),
       { faceCards: 4, highestBet: 3, trumpCards: 1, trumpFaceCards: 0 },
     ),
-    #[0, 3],
+    #[0, -1],
   ),
 )
 
@@ -290,7 +298,7 @@ test(
   "betForPlayer",
   () => {
     rand = Random.generate(500)
-    playerA = Player("A", [spade(Ace), spade(King), spade(Queen)], 0, 0, 0)
+    playerA = Player("A", [spade(Ace), spade(King), spade(Queen)], 1, 0, 0)
     return assertEquals(
       betForPlayer(
         rand,
@@ -299,14 +307,15 @@ test(
           cardsPerPlayer: 1,
           cardsPerRound: [],
           playedCards: [],
-          players: [playerA, Player("B", [], 0, 0, 0), Player("C", [], 0, 0, 0)],
+          players: [playerA, Player("B", [], 1, 0, 0), Player("C", [], 3, 0, 0)],
           round: 0,
           totalPlayers: 3,
           trump: Spades,
+          status: Bets(3),
         },
         playerA,
       ),
-      #[playerA, 3],
+      #[playerA, 2],
     )
   },
 )
@@ -382,6 +391,7 @@ test(
           round: 0,
           totalPlayers: 3,
           trump: Hearts,
+          status: Dealt,
         },
       ),
       {
@@ -448,6 +458,7 @@ test(
         round: 0,
         totalPlayers: 3,
         trump: Hearts,
+        status: Bets(3),
       },
     )
   },
@@ -467,7 +478,7 @@ test(
 test(
   "playCard",
   () => {
-    state = stateFixture()
+    state = { ...stateFixture(), bets: [8, 1, 0] }
     brekk = Player(
       "Brekk",
       [
@@ -489,7 +500,7 @@ test(
     return assertEquals(
       playCard(brekk, Card(Hearts, Queen), state),
       {
-        bets: [],
+        bets: [8, 1, 0],
         cardsPerPlayer: 10,
         cardsPerRound: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
         playedCards: [PlayedCard("Brekk", Card(Hearts, Queen))],
@@ -551,6 +562,7 @@ test(
         round: 0,
         totalPlayers: 3,
         trump: Hearts,
+        status: CardsPlayed(1),
       },
     )
   },
