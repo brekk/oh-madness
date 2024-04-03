@@ -12,30 +12,15 @@ import Render from "./Render"
 
 
 
-/*
-pipe(
-  Deck.getConsecutiveRuns(false, false),
-  // Deck.filterListsByLimit(4),
-  map(map(showCard)),
-  IO.pTrace("still not comprehensive, b/c it shortcuts"),
-)([
-  Card(Diamonds, Ace),
-  Card(Diamonds, King),
-  Card(Diamonds, Jack),
-  Card(Diamonds, Queen),
-  Card(Spades, NoFace(3)),
-  Card(Diamonds, NoFace(2)),
-  Card(Spades, NoFace(2)),
-  Card(Diamonds, NoFace(4)),
-  Card(Diamonds, NoFace(6)),
-  Card(Diamonds, NoFace(5)),
-])
-*/
-
 convenientPlayerGet = (state, player) => pipe(
   OhHell.getPlayerByName(state),
   Maybe.fromMaybe(Player("Devil", [], 0, 0, 0)),
 )(player)
+
+tapPrintState = (x) => {
+  IO.putLine(Render.showGameForPlayer("Brekk", x))
+  return x
+}
 
 
 main = () => {
@@ -49,6 +34,7 @@ main = () => {
       pipe(
         OhHell.betting(gen),
         (state) => {
+          IO.pTrace(">>>", state)
           getPlayer = convenientPlayerGet(state)
           brekk = getPlayer("Brekk")
           arnaud = getPlayer("Arnaud")
@@ -59,9 +45,21 @@ main = () => {
             OhHell.playCard(comp, Card(Clubs, Ace)),
           )(state)
         },
-        IO.pTrace("played!"),
-        Render.showGameForPlayer("Brekk"),
-        IO.putLine,
+        tapPrintState,
+        OhHell.countRound,
+        tapPrintState,
+        /*(state) => {
+                  getPlayer = convenientPlayerGet(state)
+                  brekk = getPlayer("Brekk")
+                  arnaud = getPlayer("Arnaud")
+                  comp = getPlayer("Computer")
+                  return pipe(
+                    OhHell.playCard(brekk, Card(Hearts, Queen)),
+                    OhHell.playCard(arnaud, Card(Spades, NoFace(7))),
+                    OhHell.playCard(comp, Card(Clubs, Ace)),
+                  )(state)
+                },*/
+
       ),
     ),
   )(["Brekk", "Arnaud", "Computer"])

@@ -2,7 +2,7 @@ import type { Either } from "Either"
 import type { Maybe } from "Maybe"
 
 import type { Card, Suit } from "./Card"
-import type { Player } from "./Player"
+import type { PlayedCard, Player } from "./Player"
 
 import { EQ, GT, LT } from "Compare"
 import { Left, Right } from "Either"
@@ -107,7 +107,6 @@ export initialDeal = (rand, playerNames) => {
   )(Deck.DECK)
 }
 
-// this is a convenience method, likely we will remove it
 getPlayerByName :: GameState -> String -> Maybe Player
 export getPlayerByName = (state, name) => List.find(
   where {
@@ -240,11 +239,14 @@ export updatePlayer = (p, ps) => map(
   Fn.when(
     pipe(
       Player.name,
-      Player.isName,
+      Player.isNamed,
     )(p),
     (_) => p,
   ),
 )(ps)
+
+updatePlayerByName :: String -> (Player -> Player) -> List Player -> List Player
+export updatePlayerByName = (name, mod, players) => map(Fn.when(Player.isNamed(name), mod))(players)
 
 playCard :: Player -> Card -> GameState -> GameState
 export playCard = (player, card, state) => pipe(
@@ -278,4 +280,45 @@ export getPlayedBy = (playerName, state) => pipe(
     },
     [],
   ),
+)(state)
+
+sortPlayed :: Suit -> List PlayedCard -> List PlayedCard
+export sortPlayed = (trump, cards) => List.sortBy(
+  (a, b) => where(#[a, b]) {
+    #[Player.PlayedCard(_, Card.Card(s1, c1)), Player.PlayedCard(_, Card.Card(s2, c2))] =>
+      do {
+        x = Card.ordinalRank(true, c1)
+        y = Card.ordinalRank(true, c2)
+        xTrump = s1 == trump
+        yTrump = s2 == trump
+        return if (xTrump && !yTrump) {
+          LT
+        } else if (yTrump && !xTrump) {
+          GT
+        } else {
+          x == y ? EQ : x < y ? GT : LT
+        }
+      }
+  },
+  cards,
+)
+
+countRound :: GameState -> GameState
+export countRound = (state) => pipe(
+  .playedCards,
+  sortPlayed(state.trump),
+  List.first,
+  where {
+    Just(Player.PlayedCard(name, _)) =>
+      (
+        {
+          ...state,
+          players: updatePlayerByName(name, Player.addTrick, state.players),
+          round: state.round + 1,
+        }
+      )
+
+    Nothing =>
+      state
+  },
 )(state)

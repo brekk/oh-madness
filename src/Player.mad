@@ -19,8 +19,8 @@ export name = where {
     x
 }
 
-isName :: String -> Player -> Boolean
-export isName = (n, p) => name(p) == n
+isNamed :: String -> Player -> Boolean
+export isNamed = (n, p) => name(p) == n
 
 
 hand :: Player -> List Card
@@ -45,6 +45,12 @@ tricks :: Player -> Integer
 export tricks = where {
   Player(_, _, _, t, _) =>
     t
+}
+
+addTrick :: Player -> Player
+export addTrick = where {
+  Player(a, b, c, t, e) =>
+    Player(a, b, c, t + 1, e)
 }
 
 points :: Player -> Integer
@@ -102,4 +108,10 @@ cardFromPlayed :: PlayedCard -> Card
 export cardFromPlayed = where {
   PlayedCard(_, c) =>
     c
+}
+
+playerNameFromPlayedCard :: PlayedCard -> String
+export playerNameFromPlayedCard = where {
+  PlayedCard(n, _) =>
+    n
 }

@@ -198,7 +198,6 @@ summarizePlayState = (state) => pipe(
       (playedHand) => {
         none = String.isEmpty(playedHand)
         len = String.length(playedHand) + 3
-        IO.trace(">>>", #[len, playedHand])
         return List.append(
           `${showPlayerSummary(player)}\n│${none ? "" : ` ↳ ${playedHand}`}${
             spaces((none ? 53 : 62 - len))
