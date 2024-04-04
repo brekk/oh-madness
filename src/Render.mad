@@ -1,6 +1,6 @@
-import type { Card, Rank, Suit } from "./Card"
-import type { GameState } from "./OhHell"
-import type { PlayedCard, Player } from "./Player"
+import type { Card, Rank, Suit } from "@/Card"
+import type { GameState } from "@/OhHell"
+import type { PlayedCard, Player } from "@/Player"
 
 import { always } from "Function"
 import IO from "IO"
@@ -23,10 +23,10 @@ import {
   Queen,
   Spades,
   Wildcard,
-} from "./Card"
-import { sortWithTrump } from "./Deck"
-import Player from "./Player"
-import P from "./Player"
+} from "@/Card"
+import { sortWithTrump } from "@/Deck"
+import Player from "@/Player"
+import P from "@/Player"
 
 
 

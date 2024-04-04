@@ -2,8 +2,9 @@ import { Just, Nothing } from "Maybe"
 import Random from "Random"
 import { assertEquals, test } from "Test"
 
-import { Ace, Card, King, Spades, spade } from "./Card"
+import { Ace, Card, King, Spades, spade } from "@/Card"
 import {
+  Bot,
   PlayedCard,
   Player,
   addTrick,
@@ -22,44 +23,56 @@ import {
   points,
   setBet,
   tricks,
-} from "./Player"
+} from "@/Player"
 
 
 
 test("name", () => assertEquals(name(Player("cool", [], 0, 0, 0)), "cool"))
+test("name - bot", () => assertEquals(name(Bot(Player("cool", [], 0, 0, 0))), "cool"))
 
 test("hand", () => assertEquals(hand(Player("cool", [], 0, 0, 0)), []))
+test("hand - bot", () => assertEquals(hand(Bot(Player("cool", [], 0, 0, 0))), []))
 test(
   "bet",
-  () => {
+  () => do {
     rand = Random.generateFromString("cool")
     int = Random.integer(1, 100, rand)
-    return assertEquals(bet(Player("cool", [], int, 0, 0)), int)
+    player = Player("cool", [], int, 0, 0)
+    _ <- assertEquals(bet(player), int)
+    return assertEquals(bet(Bot(player)), int)
   },
 )
 
 test(
   "tricks",
-  () => {
+  () => do {
     rand = Random.generateFromString("cool")
     int = Random.integer(1, 100, rand)
-    return assertEquals(tricks(Player("cool", [], 0, int, 0)), int)
+    player = Player("cool", [], 0, int, 0)
+    _ <- assertEquals(tricks(player), int)
+    return assertEquals(tricks(Bot(player)), int)
   },
 )
 
 
 test(
   "points",
-  () => {
+  () => do {
     rand = Random.generateFromString("cool")
     int = Random.integer(1, 100, rand)
-    return assertEquals(points(Player("cool", [], 0, 0, int)), int)
+    player = Player("cool", [], 0, 0, int)
+    _ <- assertEquals(points(player), int)
+    return assertEquals(points(Bot(player)), int)
   },
 )
 
 test(
   "countTricks - made bet",
-  () => assertEquals(countTricks(Player("Brekk", [], 5, 5, 0)), Player("Brekk", [], 0, 0, 15)),
+  () => do {
+    player = Player("Brekk", [], 5, 5, 0)
+    _ <- assertEquals(countTricks(Bot(player)), Bot(Player("Brekk", [], 0, 0, 15)))
+    return assertEquals(countTricks(player), Player("Brekk", [], 0, 0, 15))
+  },
 )
 
 test(
@@ -69,8 +82,9 @@ test(
 
 test(
   "setBet",
-  () => {
+  () => do {
     p = Player("Brekk", [], 100, 20, 30)
+    _ <- assertEquals(setBet(Bot(p), 40), Bot(Player("Brekk", [], 40, 20, 30)))
     return assertEquals(setBet(p, 40), Player("Brekk", [], 40, 20, 30))
   },
 )
@@ -83,7 +97,7 @@ test(
       countOtherBets(
         [
           Player("One", [], 4, 0, 0),
-          Player("Two", [], 4, 0, 0),
+          Bot(Player("Two", [], 4, 0, 0)),
           Player("Three", [], 4, 0, 0),
           Player("Four", [], 4, 0, 0),
           five,
@@ -98,20 +112,20 @@ test(
 test(
   "discard",
   () => assertEquals(
-    discard(Card(Spades, Ace), Player("Brekk", [spade(Ace), spade(King)], 0, 0, 0)),
-    Player("Brekk", [spade(King)], 0, 0, 0),
+    discard(Card(Spades, Ace), Bot(Player("Brekk", [spade(Ace), spade(King)], 0, 0, 0))),
+    Bot(Player("Brekk", [spade(King)], 0, 0, 0)),
   ),
 )
 
 test(
   "hasCard",
   () => do {
-    _ <- assertEquals(hasCard(spade(King), Player("Brekk", [], 0, 0, 0)), false)
-    return assertEquals(hasCard(spade(King), Player("Brekk", [spade(King)], 0, 0, 0)), true)
+    _ <- assertEquals(hasCard(spade(King), Bot(Player("Brekk", [], 0, 0, 0))), false)
+    return assertEquals(hasCard(spade(King), Bot(Player("Brekk", [spade(King)], 0, 0, 0))), true)
   },
 )
 
-test("isNamed", () => assertEquals(isNamed("Brekk", Player("Brekk", [], 0, 0, 0)), true))
+test("isNamed", () => assertEquals(isNamed("Brekk", Bot(Player("Brekk", [], 0, 0, 0))), true))
 
 test(
   "playCard",
@@ -144,7 +158,7 @@ test(
 
 test(
   "addTrick",
-  () => assertEquals(addTrick(Player("xxx", [], 0, 10, 0)), Player("xxx", [], 0, 11, 0)),
+  () => assertEquals(addTrick(Bot(Player("xxx", [], 0, 10, 0))), Bot(Player("xxx", [], 0, 11, 0))),
 )
 
 test(

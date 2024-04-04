@@ -1,22 +1,25 @@
 import type { Maybe } from "Maybe"
 
-import type { Card } from "./Card"
+import type { Card } from "@/Card"
 
 import Fn from "Function"
 import List from "List"
 import Math from "Math"
 import { Just, Nothing } from "Maybe"
 
-import Deck from "./Deck"
+import Deck from "@/Deck"
 
 
 
-export type Player = Player(String, List Card, Integer, Integer, Integer)
+export type Player = Player(String, List Card, Integer, Integer, Integer) | Bot(Player)
 
 name :: Player -> String
 export name = where {
   Player(x, _, _, _, _) =>
     x
+
+  Bot(p) =>
+    name(p)
 }
 
 isNamed :: String -> Player -> Boolean
@@ -27,6 +30,9 @@ hand :: Player -> List Card
 export hand = where {
   Player(_, cards, _, _, _) =>
     cards
+
+  Bot(p) =>
+    hand(p)
 }
 
 hasCard :: Card -> Player -> Boolean
@@ -39,36 +45,54 @@ bet :: Player -> Integer
 export bet = where {
   Player(_, _, x, _, _) =>
     x
+
+  Bot(p) =>
+    bet(p)
 }
 
 tricks :: Player -> Integer
 export tricks = where {
   Player(_, _, _, t, _) =>
     t
+
+  Bot(p) =>
+    tricks(p)
 }
 
 addTrick :: Player -> Player
 export addTrick = where {
   Player(a, b, c, t, e) =>
     Player(a, b, c, t + 1, e)
+
+  Bot(p) =>
+    Bot(addTrick(p))
 }
 
 points :: Player -> Integer
 export points = where {
   Player(_, _, _, _, x) =>
     x
+
+  Bot(p) =>
+    points(p)
 }
 
 countTricks :: Player -> Player
 export countTricks = where {
   Player(n, _, b, t, p) =>
     Player(n, [], 0, 0, (b == t ? t + 10 : t) + p)
+
+  Bot(p) =>
+    Bot(countTricks(p))
 }
 
 setBet :: Player -> Integer -> Player
 export setBet = (player, i) => where(player) {
   Player(n, h, _, t, p) =>
     Player(n, h, i, t, p)
+
+  Bot(p) =>
+    Bot(setBet(p, i))
 }
 
 countOtherBets :: List Player -> Player -> Integer
@@ -87,6 +111,9 @@ discard :: Card -> Player -> Player
 export discard = (card, player) => where(player) {
   Player(n, cards, b, t, p) =>
     Player(n, Deck.remove(card, cards), b, t, p)
+
+  Bot(p) =>
+    Bot(discard(card, p))
 }
 
 // Keep track of who played what card

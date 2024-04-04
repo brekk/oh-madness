@@ -1,8 +1,8 @@
 import type { Either } from "Either"
 import type { Maybe } from "Maybe"
 
-import type { Card, Suit } from "./Card"
-import type { PlayedCard, Player } from "./Player"
+import type { Card, Suit } from "@/Card"
+import type { PlayedCard, Player } from "@/Player"
 
 import { EQ, GT, LT } from "Compare"
 import { Left, Right } from "Either"
@@ -13,9 +13,9 @@ import Math from "Math"
 import { Just, Nothing, fromMaybe } from "Maybe"
 import Random from "Random"
 
-import Card from "./Card"
-import Deck from "./Deck"
-import Player from "./Player"
+import Card from "@/Card"
+import Deck from "@/Deck"
+import Player from "@/Player"
 
 
 
@@ -215,6 +215,9 @@ export betForPlayer = (rand, state, player) => where(player) {
       randomIntTuple(rand),
       (bet) => #[player, bet],
     )(state)
+
+  Player.Bot(p) =>
+    betForPlayer(rand, state, p)
 }
 
 betting :: Random -> GameState -> GameState
@@ -233,6 +236,10 @@ export betting = (rand, state) => List.reduce(
   { ...state, players: [] },
   state.players,
 )
+
+// autoPlay :: Random -> GameState -> GameState
+// export autoPlay = (rand, state) => List.reduce((s, p) => {
+// })
 
 updatePlayer :: Player -> List Player -> List Player
 export updatePlayer = (p, ps) => map(

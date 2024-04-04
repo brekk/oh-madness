@@ -1,6 +1,6 @@
 // import type { Maybe } from "Maybe"
 
-// import type { Card, Rank, Suit } from "./Deck"
+// import type { Card, Rank, Suit } from "@/Deck"
 
 import List from "List"
 import { Just, Nothing } from "Maybe"
@@ -25,7 +25,7 @@ import {
   diamond,
   heart,
   spade,
-} from "./Card"
+} from "@/Card"
 import {
   DECK,
   DECK_WITH_JOKERS,
@@ -44,7 +44,7 @@ import {
   sortLow,
   sortLowWithTrump,
   sortWithTrump,
-} from "./Deck"
+} from "@/Deck"
 
 
 

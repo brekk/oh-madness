@@ -15,7 +15,7 @@ import {
   Queen,
   Spades,
   spade,
-} from "./Card"
+} from "@/Card"
 import {
   Bets,
   CardsPlayed,
@@ -38,8 +38,8 @@ import {
   updatePlayer,
   weighHand,
   winningCards,
-} from "./OhHell"
-import { PlayedCard, Player, discard } from "./Player"
+} from "@/OhHell"
+import { PlayedCard, Player, discard } from "@/Player"
 
 
 

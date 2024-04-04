@@ -4,11 +4,11 @@ import Maybe from "Maybe"
 import Random from "Random"
 import String from "String"
 
-import { Ace, Card, Clubs, Diamonds, Hearts, Jack, King, NoFace, Queen, Spades } from "./Card"
-import Deck from "./Deck"
-import OhHell from "./OhHell"
-import { Player } from "./Player"
-import Render from "./Render"
+import { Ace, Card, Clubs, Diamonds, Hearts, Jack, King, NoFace, Queen, Spades } from "@/Card"
+import Deck from "@/Deck"
+import OhHell from "@/OhHell"
+import { Player } from "@/Player"
+import Render from "@/Render"
 
 
 
@@ -21,13 +21,20 @@ tapPrintState = (x) => {
   IO.putLine(Render.showGameForPlayer("Brekk", x))
   return x
 }
-
+/*(state) => {
+  getPlayer = convenientPlayerGet(state)
+  brekk = getPlayer("Brekk")
+  arnaud = getPlayer("Arnaud")
+  comp = getPlayer("Computer")
+  return pipe(
+  OhHell.playCard(brekk, Card(Hearts, Queen)),
+    OhHell.playCard(arnaud, Card(Spades, NoFace(7))),
+    OhHell.playCard(comp, Card(Clubs, Ace)),
+  )(state)
+},*/
 
 main = () => {
   gen = Random.generateFromString("oh-madness-0.0.0")
-  // shuffled = Deck.shuffle(seed, Deck.DECK)
-  // IO.cTrace("initial deal!", shuffled)
-  // IO.trace("SHOW!", map(Deck.showCard, Deck.DECK_WITH_JOKERS))
   pipe(
     OhHell.initialDeal(gen),
     map(
@@ -48,18 +55,6 @@ main = () => {
         tapPrintState,
         OhHell.countRound,
         tapPrintState,
-        /*(state) => {
-                  getPlayer = convenientPlayerGet(state)
-                  brekk = getPlayer("Brekk")
-                  arnaud = getPlayer("Arnaud")
-                  comp = getPlayer("Computer")
-                  return pipe(
-                    OhHell.playCard(brekk, Card(Hearts, Queen)),
-                    OhHell.playCard(arnaud, Card(Spades, NoFace(7))),
-                    OhHell.playCard(comp, Card(Clubs, Ace)),
-                  )(state)
-                },*/
-
       ),
     ),
   )(["Brekk", "Arnaud", "Computer"])
