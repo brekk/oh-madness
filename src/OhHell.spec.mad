@@ -1,5 +1,9 @@
+import type { Card } from "@/Card"
+import type { PlayedCard } from "@/Player"
+
 import Either from "Either"
 import List from "List"
+import { Nothing, fromMaybe } from "Maybe"
 import Random from "Random"
 import { assertEquals, test } from "Test"
 
@@ -29,8 +33,10 @@ import {
   betting,
   canBet,
   cardsPerTotalPlayers,
+  countRound,
   getHumanError,
   getPlayedBy,
+  getPlayerByName,
   initialDeal,
   judgeByWeight,
   maxBet,
@@ -42,9 +48,12 @@ import {
   weighHand,
   winningCards,
 } from "@/OhHell"
-import { PlayedCard, Player, discard } from "@/Player"
+import { Bot, PlayedCard, Player, discard, tricks } from "@/Player"
 
 
+
+pCard :: Card -> PlayedCard
+pCard = (c) => PlayedCard("tester", c)
 
 stateFixture = () => (
   {
@@ -301,7 +310,7 @@ test(
   "betForPlayer",
   () => {
     rand = Random.generate(500)
-    playerA = Player("A", [spade(Ace), spade(King), spade(Queen)], 1, 0, 0)
+    playerA = Bot(Player("A", [spade(Ace), spade(King), spade(Queen)], 1, 0, 0))
     return assertEquals(
       betForPlayer(
         rand,
@@ -318,7 +327,7 @@ test(
         },
         playerA,
       ),
-      #[playerA, 2],
+      2,
     )
   },
 )
@@ -627,7 +636,6 @@ test(
 test(
   "sortPlayed",
   () => {
-    pCard = (c) => PlayedCard("tester", c)
     cards = map(
       pCard,
       [
@@ -660,5 +668,34 @@ test(
         PlayedCard("tester", Card(Hearts, NoFace(2))),
       ],
     )
+  },
+)
+
+test(
+  "countRound",
+  () => {
+    state = {
+      ...stateFixture(),
+      playedCards: [
+        PlayedCard("Brekk", spade(Ace)),
+        PlayedCard("Arnaud", spade(NoFace(2))),
+        pCard(spade(NoFace(2))),
+      ],
+    }
+    counted = countRound(state)
+    winner = pipe(
+      getPlayerByName(counted),
+      fromMaybe(Player("tester", [], 0, 0, 0)),
+    )("Brekk")
+    return assertEquals(tricks(winner), 1)
+  },
+)
+
+
+test(
+  "countRound - incorrect",
+  () => {
+    state = { ...stateFixture(), playedCards: [] }
+    return assertEquals(countRound(state), state)
   },
 )

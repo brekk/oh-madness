@@ -163,8 +163,32 @@ export worstCardInHand = (trump, p) => pipe(
 optimalPlay :: Suit -> Player -> Maybe Card
 export optimalPlay = (trump, player) => where(player) {
   Player(_, _, b, t, _) =>
-    (t + 1 <= b ? bestCardInHand(trump, player) : worstCardInHand(trump, player))
+    (t + 1 < b || t > b ? bestCardInHand(trump, player) : worstCardInHand(trump, player))
 
   Bot(p) =>
     optimalPlay(trump, p)
 }
+
+isBot :: Player -> Boolean
+export isBot = where {
+  Bot(_) =>
+    true
+
+  _ =>
+    false
+}
+
+isHuman :: Player -> Boolean
+export isHuman = where {
+  Bot(_) =>
+    false
+
+  _ =>
+    true
+}
+
+humanMap :: (Player -> Player) -> Player -> Player
+export humanMap = (fn, player) => Fn.when(isHuman, fn, player)
+
+botMap :: (Player -> Player) -> Player -> Player
+export botMap = (fn, player) => Fn.when(isBot, fn, player)

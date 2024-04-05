@@ -199,32 +199,31 @@ export randomIntTuple = (r, az) => where(az) {
     Random.integer(a, z, r)
 }
 
-betForPlayer :: Random -> GameState -> Player -> #[Player, Integer]
-export betForPlayer = (rand, state, player) => where(player) {
-  Player.Player(name, hand, _, _, _) =>
-    pipe(
-      .bets,
-      weighHand(state.trump, hand),
-      judgeByWeight(state, player),
-      randomIntTuple(rand),
-      (bet) => #[player, bet],
-    )(state)
 
-  Player.Bot(p) =>
-    betForPlayer(rand, state, p)
-}
+betForPlayer :: Random -> GameState -> Player -> Integer
+export betForPlayer = (rand, state, player) => pipe(
+  where {
+    Player.Player(name, hand, _, _, _) =>
+      pipe(
+        .bets,
+        weighHand(state.trump, hand),
+        judgeByWeight(state, player),
+        randomIntTuple(rand),
+      )(state)
+
+    Player.Bot(p) =>
+      betForPlayer(rand, state, p)
+  },
+)(player)
 
 betting :: Random -> GameState -> GameState
 export betting = (rand, state) => List.reduce(
   (s, p) => pipe(
     betForPlayer(rand, s),
-    where {
-      #[player, bet] =>
-        do {
-          bets = [...s.bets, bet]
-          status = Bets(List.length(bets))
-          return ({ ...state, bets, status, players: [...s.players, Player.setBet(player, bet)] })
-        }
+    (bet) => {
+      bets = [...s.bets, bet]
+      status = Bets(List.length(bets))
+      return ({ ...state, bets, status, players: [...s.players, Player.setBet(p, bet)] })
     },
   )(p),
   { ...state, players: [] },
@@ -254,7 +253,9 @@ export updatePlayer = (p, ps) => map(
 )(ps)
 
 updatePlayerByName :: String -> (Player -> Player) -> List Player -> List Player
-export updatePlayerByName = (name, mod, players) => map(Fn.when(Player.isNamed(name), mod))(players)
+export updatePlayerByName = (name, modifyPlayer, players) => map(
+  Fn.when(Player.isNamed(name), modifyPlayer),
+)(players)
 
 playCard :: Player -> Card -> GameState -> GameState
 export playCard = (player, card, state) => pipe(
@@ -292,22 +293,7 @@ export getPlayedBy = (playerName, state) => pipe(
 
 sortPlayed :: Suit -> List PlayedCard -> List PlayedCard
 export sortPlayed = (trump, cards) => List.sortBy(
-  (a, b) => where(#[a, b]) {
-    #[Player.PlayedCard(_, Card.Card(s1, c1)), Player.PlayedCard(_, Card.Card(s2, c2))] =>
-      do {
-        x = Card.ordinalRank(true, c1)
-        y = Card.ordinalRank(true, c2)
-        xTrump = s1 == trump
-        yTrump = s2 == trump
-        return if (xTrump && !yTrump) {
-          LT
-        } else if (yTrump && !xTrump) {
-          GT
-        } else {
-          x == y ? EQ : x < y ? GT : LT
-        }
-      }
-  },
+  (a, b) => Deck.compareWithTrump(true, trump, Player.cardFromPlayed(a), Player.cardFromPlayed(b)),
   cards,
 )
 
@@ -316,8 +302,9 @@ export countRound = (state) => pipe(
   .playedCards,
   sortPlayed(state.trump),
   List.first,
+  map(Player.playerNameFromPlayedCard),
   where {
-    Just(Player.PlayedCard(name, _)) =>
+    Just(name) =>
       (
         {
           ...state,

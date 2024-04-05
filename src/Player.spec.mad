@@ -2,13 +2,15 @@ import { Just, Nothing } from "Maybe"
 import Random from "Random"
 import { assertEquals, test } from "Test"
 
-import { Ace, Card, King, Spades, spade } from "@/Card"
+import { Ace, Card, Diamonds, Hearts, King, NoFace, Spades, diamond, spade } from "@/Card"
 import {
   Bot,
   PlayedCard,
   Player,
   addTrick,
+  bestCardInHand,
   bet,
+  botMap,
   cardFromPlayed,
   cardPlayedBy,
   countOtherBets,
@@ -16,13 +18,18 @@ import {
   discard,
   hand,
   hasCard,
+  humanMap,
+  isBot,
+  isHuman,
   isNamed,
   name,
+  optimalPlay,
   playCard,
   playerNameFromPlayedCard,
   points,
   setBet,
   tricks,
+  worstCardInHand,
 } from "@/Player"
 
 
@@ -164,4 +171,68 @@ test(
 test(
   "playerNameFromPlayedCard",
   () => assertEquals(playerNameFromPlayedCard(PlayedCard("zipzap", spade(Ace))), "zipzap"),
+)
+
+test(
+  "bestCardInHand",
+  () => assertEquals(
+    bestCardInHand(Spades, Player("Tester", [spade(Ace), diamond(NoFace(2))], 0, 0, 0)),
+    Just(spade(Ace)),
+  ),
+)
+
+test(
+  "worstCardInHand",
+  () => assertEquals(
+    worstCardInHand(Hearts, Player("Tester", [spade(Ace), diamond(NoFace(2))], 0, 0, 0)),
+    Just(diamond(NoFace(2))),
+  ),
+)
+
+test(
+  "optimalPlay",
+  () => do {
+    _ <- assertEquals(
+      optimalPlay(Diamonds, Bot(Player("Tester", [spade(Ace), diamond(NoFace(2))], 0, 0, 0))),
+      Just(diamond(NoFace(2))),
+    )
+    return assertEquals(
+      optimalPlay(Diamonds, Bot(Player("Tester", [spade(Ace), diamond(NoFace(2))], 4, 0, 0))),
+      Just(diamond(NoFace(2))),
+    )
+  },
+)
+
+test(
+  "isBot",
+  () => do {
+    _ <- assertEquals(isBot(Player("NonBot", [], 0, 0, 0)), false)
+    return assertEquals(isBot(Bot(Player("Bot", [], 0, 0, 0))), true)
+  },
+)
+
+test(
+  "isHuman",
+  () => do {
+    _ <- assertEquals(isHuman(Player("NonBot", [], 0, 0, 0)), true)
+    return assertEquals(isHuman(Bot(Player("Bot", [], 0, 0, 0))), false)
+  },
+)
+
+test(
+  "humanMap",
+  () => do {
+    human = Player("human", [], 0, 0, 0)
+    _ <- assertEquals(humanMap(addTrick, Bot(human)), Bot(human))
+    return assertEquals(humanMap(addTrick, human), Player("human", [], 0, 1, 0))
+  },
+)
+
+test(
+  "botMap",
+  () => do {
+    p = Player("Bot", [], 0, 0, 0)
+    _ <- assertEquals(botMap(addTrick, Bot(p)), Bot(Player("Bot", [], 0, 1, 0)))
+    return assertEquals(botMap(addTrick, p), p)
+  },
 )
