@@ -1,6 +1,6 @@
 import type { Maybe } from "Maybe"
 
-import type { Card } from "@/Card"
+import type { Card, Suit } from "@/Card"
 
 import Fn from "Function"
 import List from "List"
@@ -141,4 +141,30 @@ playerNameFromPlayedCard :: PlayedCard -> String
 export playerNameFromPlayedCard = where {
   PlayedCard(n, _) =>
     n
+}
+
+// these aren't yet dealing with many of the edge cases:
+// you must follow suit if possible
+bestCardInHand :: Suit -> Player -> Maybe Card
+export bestCardInHand = (trump, p) => pipe(
+  hand,
+  Deck.sortWithTrump(trump),
+  List.first,
+)(p)
+
+worstCardInHand :: Suit -> Player -> Maybe Card
+export worstCardInHand = (trump, p) => pipe(
+  hand,
+  Deck.sortLowWithTrump(trump),
+  List.first,
+)(p)
+
+
+optimalPlay :: Suit -> Player -> Maybe Card
+export optimalPlay = (trump, player) => where(player) {
+  Player(_, _, b, t, _) =>
+    (t + 1 <= b ? bestCardInHand(trump, player) : worstCardInHand(trump, player))
+
+  Bot(p) =>
+    optimalPlay(trump, p)
 }

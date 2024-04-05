@@ -14,6 +14,8 @@ import {
   NoFace,
   Queen,
   Spades,
+  diamond,
+  heart,
   spade,
 } from "@/Card"
 import {
@@ -35,6 +37,7 @@ import {
   playCard,
   randomIntTuple,
   roundsPerTotalPlayers,
+  sortPlayed,
   updatePlayer,
   weighHand,
   winningCards,
@@ -616,6 +619,45 @@ test(
         Card(Spades, NoFace(8)),
         Card(Hearts, NoFace(8)),
         Card(Diamonds, NoFace(7)),
+      ],
+    )
+  },
+)
+
+test(
+  "sortPlayed",
+  () => {
+    pCard = (c) => PlayedCard("tester", c)
+    cards = map(
+      pCard,
+      [
+        spade(Ace),
+        heart(NoFace(2)),
+        diamond(NoFace(6)),
+        heart(NoFace(3)),
+        diamond(Ace),
+        heart(NoFace(4)),
+        spade(King),
+        heart(NoFace(5)),
+        spade(Jack),
+        spade(NoFace(10)),
+        spade(NoFace(3)),
+      ],
+    )
+    return assertEquals(
+      sortPlayed(Spades, cards),
+      [
+        PlayedCard("tester", Card(Spades, Ace)),
+        PlayedCard("tester", Card(Spades, King)),
+        PlayedCard("tester", Card(Spades, Jack)),
+        PlayedCard("tester", Card(Spades, NoFace(10))),
+        PlayedCard("tester", Card(Spades, NoFace(3))),
+        PlayedCard("tester", Card(Diamonds, Ace)),
+        PlayedCard("tester", Card(Diamonds, NoFace(6))),
+        PlayedCard("tester", Card(Hearts, NoFace(5))),
+        PlayedCard("tester", Card(Hearts, NoFace(4))),
+        PlayedCard("tester", Card(Hearts, NoFace(3))),
+        PlayedCard("tester", Card(Hearts, NoFace(2))),
       ],
     )
   },

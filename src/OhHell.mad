@@ -108,13 +108,7 @@ export initialDeal = (rand, playerNames) => {
 }
 
 getPlayerByName :: GameState -> String -> Maybe Player
-export getPlayerByName = (state, name) => List.find(
-  where {
-    Player.Player(n, _, _, _, _) =>
-      n == name
-  },
-  state.players,
-)
+export getPlayerByName = (state, name) => List.find(Player.isNamed(name), state.players)
 
 __largest :: List Integer -> Integer
 export __largest = pipe(
@@ -188,7 +182,7 @@ export maxBet = (state) => pipe(
 //   map(Player.bet),
 // )
 
-// this has some of the needed mechanics but isn't at all yet correct
+// this has some of the needed mechanics but isn't yet at all correct
 judgeByWeight :: GameState -> Player -> HandWeights -> #[Integer, Integer]
 export judgeByWeight = (state, player, weights) => {
   max = maxBet(state)
@@ -237,9 +231,16 @@ export betting = (rand, state) => List.reduce(
   state.players,
 )
 
-// autoPlay :: Random -> GameState -> GameState
-// export autoPlay = (rand, state) => List.reduce((s, p) => {
-// })
+autoPlay :: Random -> GameState -> GameState
+export autoPlay = (rand, state) => List.reduce(
+  (s, player) => pipe(
+    Player.optimalPlay(state.trump),
+    map(playCard(player, $, s)),
+    fromMaybe(state),
+  )(player),
+  { ...state, players: [] },
+  state.players,
+)
 
 updatePlayer :: Player -> List Player -> List Player
 export updatePlayer = (p, ps) => map(
