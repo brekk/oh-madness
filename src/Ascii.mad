@@ -1,0 +1,84 @@
+import { always } from "Function"
+import List from "List"
+import String from "String"
+
+
+
+export alias Border = {
+  b :: Char,
+  bl :: Char,
+  br :: Char,
+  l :: Char,
+  r :: Char,
+  t :: Char,
+  tl :: Char,
+  tr :: Char,
+}
+
+createBorder :: Char -> Char -> Char -> Char -> Char -> Char -> Char -> Char -> Border
+export createBorder = (tl, t, tr, l, r, bl, b, br) => ({ tl, t, tr, l, r, bl, b, br })
+
+export type Alignment = AlignLeft | AlignCenter | AlignRight | JustifyLeft | JustifyRight
+
+export alias ContentBox = {
+  alignment :: Alignment,
+  border :: Border,
+  content :: String,
+  padding :: Integer,
+}
+
+export type Box = Box(ContentBox)
+
+create :: Integer -> Border -> Alignment -> String -> Box
+export create = (padding, border, alignment, content) => Box({
+  border,
+  alignment,
+  content,
+  padding,
+})
+
+export unpadded = create(0)
+export basic = create(1, createBorder('┌', '─', '┐', '│', '│', '└', '─', '┘'), AlignLeft)
+
+sequence :: Char -> Integer -> String
+export sequence = (char, length) => pipe(
+  List.repeatWith(always(char)),
+  String.fromList,
+)(length)
+
+render :: Box -> String
+export render = where {
+  Box({ border, alignment, content, padding }) =>
+    where(border) {
+      { b, bl, br, l, r, t, tl, tr } =>
+        do {
+          innerLength = String.length(content) + (padding * 2)
+          draw = sequence($, innerLength)
+          top = pipe(
+            draw,
+            String.appendChar(tr),
+            String.pushChar(tl),
+          )(t)
+          bottom = pipe(
+            draw,
+            String.appendChar(br),
+            String.pushChar(bl),
+          )(b)
+          hPad = sequence(' ', padding)
+          borderedLine = pipe(
+            draw,
+            String.appendChar(r),
+            String.pushChar(l),
+          )(' ')
+          vPad = padding == 0
+            ? ""
+            : pipe(
+              List.repeatWith(always(borderedLine)),
+              String.join("\n"),
+              String.appendChar('\n'),
+              String.pushChar('\n'),
+            )(padding)
+          return top ++ vPad ++ hPad ++ content ++ hPad ++ vPad ++ bottom
+        }
+    }
+}
