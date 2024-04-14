@@ -6,6 +6,7 @@ import RegExp from "./RegExp"
 
 
 
+// This will need to wait until we support longer unicode escape chars
 // test(
 //   "emojiGlobal",
 //   () => do {

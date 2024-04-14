@@ -1,0 +1,153 @@
+import type { EastAsianCharCategory } from "@/EastAsianLang"
+
+import List from "List"
+import { assertEquals, test } from "Test"
+
+import {
+  Ambiguous,
+  FullWidth,
+  HalfWidth,
+  Narrow,
+  Neutral,
+  Wide,
+  getAmbiguousWidth,
+  getCategory,
+  getWidth,
+  isAmbiguous,
+  isFullWidth,
+  isHalfWidth,
+  isNarrow,
+  isWide,
+} from "@/EastAsianLang"
+import { codePointAt } from "@/String"
+
+
+
+ambigPoint = pipe(
+  codePointAt($, 0),
+  isAmbiguous,
+)
+
+fullPoint = pipe(
+  codePointAt($, 0),
+  isFullWidth,
+)
+
+widePoint = pipe(
+  codePointAt($, 0),
+  isWide,
+)
+
+halfWidePoint = pipe(
+  codePointAt($, 0),
+  isHalfWidth,
+)
+
+narrowPoint = pipe(
+  codePointAt($, 0),
+  isNarrow,
+)
+
+test(
+  "isAmbiguous - char",
+  () => assertEquals(
+    List.all(
+      ambigPoint,
+      ["⛣", "⛫", "⛨", "⛩", "⛴", "⛶", "⛹", "⛻", "⛼", "⛾", "⛿", "✽", "❶", "⭖", "㉈"],
+    ),
+    true,
+  ),
+)
+
+test(
+  "isAmbiguous",
+  () => assertEquals(
+    List.all(
+      isAmbiguous,
+      [0xf8ff, 0xfe0f, 0x1f10a, 0x1f12d, 0x1f169, 0x1f18d, 0x1f1ac, 0xe01ef, 0xffffd, 0x10fffd],
+    ),
+    true,
+  ),
+)
+
+test(
+  "isFullWidth",
+  () => assertEquals(List.all(fullPoint, ["\u3000", "\uff01", "\uff60", "￠"]), true),
+)
+
+test(
+  "isWide - char",
+  () => assertEquals(
+    List.all(
+      widePoint,
+      [
+        "\u1100",
+        "\u231A",
+        "\u231B",
+        "\u2329",
+        "\u232A",
+        "\u23E9",
+        "\u23EC",
+        "\u23F0",
+        "\u23F3",
+        "\u25FD",
+        "\u25FE",
+        "\u2614",
+        "\u2615",
+        "\u2648",
+      ],
+    ),
+    true,
+  ),
+)
+test("isWide", () => assertEquals(List.all(isWide, [0x3fffd]), true))
+
+test(
+  "isHalfWidth",
+  () => assertEquals(
+    List.all(
+      halfWidePoint,
+      [
+        "\u20A9",
+        "\uFF61",
+        "\uFFBE",
+        "\uFFC2",
+        "\uFFC7",
+        "\uFFCA",
+        "\uFFCF",
+        "\uFFD2",
+        "\uFFD7",
+        "\uFFDA",
+        "\uFFDC",
+        "\uFFE8",
+        "\uFFEE",
+      ],
+    ),
+    true,
+  ),
+)
+
+test(
+  "isNarrow",
+  () => assertEquals(List.all(narrowPoint, ["\u27E7", "\u27ED", "\u2985", "\u2986"]), true),
+)
+
+test(
+  "getCategory",
+  () => do {
+    _ <- assertEquals(getCategory(0xA1), Ambiguous)
+    _ <- assertEquals(getCategory(0x3000), FullWidth)
+    _ <- assertEquals(getCategory(0x1100), Wide)
+    _ <- assertEquals(getCategory(0x20), Narrow)
+    _ <- assertEquals(getCategory(0), Neutral)
+    return assertEquals(getCategory(0x20A9), HalfWidth)
+  },
+)
+
+test(
+  "getAmbiguousWidth",
+  () => do {
+    _ <- assertEquals(getAmbiguousWidth(true, 0xA1), 2)
+    return assertEquals(getWidth(0x20), 1)
+  },
+)

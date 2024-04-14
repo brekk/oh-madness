@@ -1022,9 +1022,9 @@ export isNarrow = (x) => x
     == 0x2986
 
 
-export type EastAsianCategory = Ambiguous | FullWidth | HalfWidth | Narrow | Wide | Neutral
+export type EastAsianCharCategory = Ambiguous | FullWidth | HalfWidth | Narrow | Wide | Neutral
 
-getCategory :: Short -> EastAsianCategory
+getCategory :: Short -> EastAsianCharCategory
 export getCategory = (x) => if (isAmbiguous(x)) {
   Ambiguous
 } else if (isFullWidth(x)) {
