@@ -98,6 +98,15 @@ export create = (pat, flags) => if (_validateFlags(flags)) {
   InvalidPattern
 }
 
+getRaw :: Pattern -> String
+export getRaw = where {
+  RegExp(x, _) =>
+    x
+
+  InvalidPattern =>
+    ""
+}
+
 // #iftarget js
 
 match :: Pattern -> String -> Boolean

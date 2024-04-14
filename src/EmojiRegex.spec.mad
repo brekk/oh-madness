@@ -1,0 +1,14 @@
+import { assertEquals, test } from "Test"
+
+import { emoji, emojiGlobal } from "./EmojiRegex"
+import RegExp from "./RegExp"
+
+
+
+test(
+  "emojiGlobal",
+  () => do {
+    return assertEquals(RegExp.unsafeReplace(emojiGlobal, "👍", "👎"), "👍")
+    // return assertEquals(RegExp.unsafeReplace(emojiGlobal, "🥺", "😘yes👏"), "🥺yes👏")
+  },
+)

@@ -22,6 +22,7 @@ import {
   _flagToChar,
   _isValidFlag,
   create,
+  getRaw,
   match,
   replace,
   unsafeReplace,
@@ -111,5 +112,13 @@ test(
 `
     _ <- assertEquals(unsafeReplace(create("hey", "gm"), "bye", input), `\n    yo yo yo bye nice\n`)
     return assertEquals(unsafeReplace(InvalidPattern, "bye", input), input)
+  },
+)
+
+test(
+  "getRaw",
+  () => do {
+    _ <- assertEquals(getRaw(create("cool", "g")), "cool")
+    return assertEquals(getRaw(InvalidPattern), "")
   },
 )

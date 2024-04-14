@@ -1,6 +1,7 @@
 import { assertEquals, test } from "Test"
 
 import Ansi from "./Ansi"
+import { getRaw } from "./RegExp"
 
 
 
@@ -17,5 +18,24 @@ test(
       Ansi.strip("\u001B[00;38;5;244m\u001B[m\u001B[00;38;5;33mfoo\u001B[0m"),
       "foo",
     )
+  },
+)
+
+test("ANSI", () => assertEquals(getRaw(Ansi.ANSI), Ansi.ANSI_PATTERN))
+
+test(
+  "isControlChar",
+  () => do {
+    _ <- assertEquals(Ansi.isControlChar(0x1E), true)
+    return assertEquals(Ansi.isControlChar(0x80), true)
+  },
+)
+
+
+test(
+  "isCombinatoryChar",
+  () => do {
+    _ <- assertEquals(Ansi.isCombinatoryChar(768), true)
+    return assertEquals(Ansi.isCombinatoryChar(879), true)
   },
 )
