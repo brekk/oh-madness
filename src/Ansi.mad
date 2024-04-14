@@ -1,0 +1,17 @@
+import type { Pattern } from "@/RegExp"
+
+import Pattern from "@/RegExp"
+
+
+
+ANSI_REGEX1 = "[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)"
+
+ANSI_REGEX2 = "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))"
+
+ANSI_PATTERN = `${ANSI_REGEX1}|${ANSI_REGEX2}`
+
+export ansi = Pattern.create(ANSI_PATTERN, "")
+export ansiGlobal = Pattern.create(ANSI_PATTERN, "g")
+
+stripAnsi :: String -> String
+export stripAnsi = Pattern.unsafeReplace(ansiGlobal, "")

@@ -15,8 +15,26 @@ export alias Border = {
   tr :: Char,
 }
 
+
 createBorder :: Char -> Char -> Char -> Char -> Char -> Char -> Char -> Char -> Border
 export createBorder = (tl, t, tr, l, r, bl, b, br) => ({ tl, t, tr, l, r, bl, b, br })
+
+
+export DEFAULT_BORDER = createBorder('┌', '─', '┐', '│', '│', '└', '─', '┘')
+
+export type BoundaryBorder
+  = VerticalBoundary(Char, Char, Char)
+  | HorizontalBoundary(Char, Char, Char)
+
+createVerticalBorder :: Char -> Char -> Char -> BoundaryBorder
+export createVerticalBorder = (t, c, b) => VerticalBoundary(t, c, b)
+
+export DEFAULT_VERTICAL_BORDER = createVerticalBorder('┬', '│', '┴')
+
+createHorizontalBorder :: Char -> Char -> Char -> BoundaryBorder
+export createHorizontalBorder = (l, c, r) => HorizontalBoundary(l, c, r)
+
+export DEFAULT_HORIZONTAL_BORDER = createHorizontalBorder('┝', '─', '┥')
 
 export type Alignment = AlignLeft | AlignCenter | AlignRight | JustifyLeft | JustifyRight
 
@@ -26,59 +44,64 @@ export alias ContentBox = {
   content :: String,
   padding :: Integer,
 }
+export type ContentDirection = Row | Column
+
+export alias ContainerBox = {
+  boundary :: BoundaryBorder,
+  boxes :: List ContentBox,
+  direction :: ContentDirection,
+}
 
 export type Box = Box(ContentBox)
 
-create :: Integer -> Border -> Alignment -> String -> Box
-export create = (padding, border, alignment, content) => Box({
+createBox :: Integer -> Border -> Alignment -> String -> Box
+export createBox = (padding, border, alignment, content) => Box({
   border,
   alignment,
   content,
   padding,
 })
 
-export unpadded = create(0)
-export basic = create(1, createBorder('┌', '─', '┐', '│', '│', '└', '─', '┘'), AlignLeft)
+export unpadded = createBox(0, DEFAULT_BORDER)
+export basicBox = createBox(1, DEFAULT_BORDER, AlignLeft)
 
-sequence :: Char -> Integer -> String
-export sequence = (char, length) => pipe(
-  List.repeatWith(always(char)),
-  String.fromList,
-)(length)
+// char siu!
+charSeq :: Char -> Char -> Char -> Integer -> String
+export charSeq = (left, middle, right, len) => pipe(
+  String.repeat($, len),
+  String.appendChar(right),
+  String.pushChar(left),
+)(middle)
 
-render :: Box -> String
-export render = where {
-  Box({ border, alignment, content, padding }) =>
-    where(border) {
-      { b, bl, br, l, r, t, tl, tr } =>
-        do {
-          innerLength = String.length(content) + (padding * 2)
-          draw = sequence($, innerLength)
-          top = pipe(
-            draw,
-            String.appendChar(tr),
-            String.pushChar(tl),
-          )(t)
-          bottom = pipe(
-            draw,
-            String.appendChar(br),
-            String.pushChar(bl),
-          )(b)
-          hPad = sequence(' ', padding)
-          borderedLine = pipe(
-            draw,
-            String.appendChar(r),
-            String.pushChar(l),
-          )(' ')
-          vPad = padding == 0
-            ? ""
-            : pipe(
-              List.repeatWith(always(borderedLine)),
-              String.join("\n"),
-              String.appendChar('\n'),
-              String.pushChar('\n'),
-            )(padding)
-          return top ++ vPad ++ hPad ++ content ++ hPad ++ vPad ++ bottom
-        }
+renderContentBox :: Integer -> Border -> Integer -> String -> String
+export renderContentBox = (width, border, padding, content) => where(border) {
+  { b, bl, br, l, r, t, tl, tr } =>
+    do {
+      len = String.length(content) + (padding * 2)
+      top = charSeq(tl, t, tr, len)
+      bottom = charSeq(bl, b, br, len)
+      hPad = String.repeat(' ', padding)
+      borderedLine = charSeq(l, ' ', r, len)
+      vPad = padding == 0
+        ? ""
+        : pipe(
+          List.repeatWith(always(borderedLine)),
+          String.join("\n"),
+          String.appendChar('\n'),
+          String.pushChar('\n'),
+        )(padding)
+      wrappedContent = pipe(
+        mappend(content),
+        mappend(hPad),
+        String.appendChar(r),
+        String.pushChar(l),
+      )(hPad)
+      return top ++ vPad ++ wrappedContent ++ vPad ++ bottom
     }
+}
+
+renderBox :: Box -> String
+export renderBox = where {
+  Box({ border, content, padding }) =>
+    renderContentBox(String.length(content), border, padding, content)
 }
