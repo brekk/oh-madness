@@ -1,0 +1,38 @@
+import { when } from "Function"
+import String from "String"
+
+import Ansi from "@/Ansi"
+
+
+
+type CodePoint = CodePoint(Short) | InvalidCodePoint
+
+safeCodePointAt :: String -> Integer -> CodePoint
+export safeCodePointAt = (str, i) => {
+  point = #- str.codePointAt(i) -#
+  return if (#- point === undefined -#) {
+    InvalidCodePoint
+  } else {
+    CodePoint(point)
+  }
+}
+
+pointToShort :: CodePoint -> Short
+export pointToShort = where {
+  InvalidCodePoint =>
+    -1
+
+  CodePoint(p) =>
+    p
+}
+
+codePointAt :: String -> Integer -> Short
+export codePointAt = (str, i) => pipe(
+  safeCodePointAt(str),
+  pointToShort,
+)(i)
+
+// stringWidth :: Boolean -> Boolean -> String -> Integer
+// export stringWidth = (ambiguousCharsAreNarrow, includeAnsiEscapeCodes, input) => pipe(
+//   when(() => !includeAnsiEscapeCodes, Ansi.strip),
+// )(input)

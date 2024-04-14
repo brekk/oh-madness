@@ -18,7 +18,7 @@ export type Flag
   | FlagInvalid
 
 _flagToChar :: Flag -> Char
-_flagToChar = where {
+export _flagToChar = where {
   FlagHasIndices =>
     'd'
 
@@ -50,7 +50,7 @@ _flagToChar = where {
 export type Pattern = RegExp(String, List Flag) | InvalidPattern
 
 _charToFlag :: Char -> Flag
-_charToFlag = (c) => if (c == 'd') {
+export _charToFlag = (c) => if (c == 'd') {
   FlagHasIndices
 } else if (c == 'g') {
   FlagGlobal
@@ -71,18 +71,24 @@ _charToFlag = (c) => if (c == 'd') {
 }
 
 _isValidFlag :: Char -> Boolean
-_isValidFlag = (c) => _charToFlag(c) != FlagInvalid
+export _isValidFlag = (c) => _charToFlag(c) != FlagInvalid
 
 _validateFlags :: String -> Boolean
-_validateFlags = pipe(
+export _validateFlags = pipe(
   String.toList,
   List.reduce((valid, char) => valid && _isValidFlag(char), true),
 )
 
 _convertFlagString :: String -> List Flag
-_convertFlagString = pipe(
+export _convertFlagString = pipe(
   String.toList,
   map(_charToFlag),
+)
+
+_convertFlagList :: List Flag -> String
+_convertFlagList = pipe(
+  map(_flagToChar),
+  String.fromList,
 )
 
 create :: String -> String -> Pattern
@@ -99,8 +105,11 @@ export match = (pat, input) => where(pat) {
   InvalidPattern =>
     false
 
-  RegExp(rg, flags) =>
-    (#- input.match(new RegExp(rg, flags)) !== null -#)
+  RegExp(rg, flagList) =>
+    do {
+      flags = _convertFlagList(flagList)
+      return #- input.match(new RegExp(rg, flags)) !== null -#
+    }
 }
 
 unsafeReplace :: Pattern -> String -> String -> String
@@ -108,8 +117,11 @@ export unsafeReplace = (pat, replacement, haystack) => where(pat) {
   InvalidPattern =>
     haystack
 
-  RegExp(rg, flags) =>
-    (#- haystack.replace(new RegExp(rg, flags), replacement) -#)
+  RegExp(rg, flagList) =>
+    do {
+      flags = _convertFlagList(flagList)
+      return #- haystack.replace(new RegExp(rg, flags), replacement) -#
+    }
 }
 
 replace :: Pattern -> String -> String -> Maybe String

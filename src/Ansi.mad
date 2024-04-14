@@ -10,8 +10,15 @@ ANSI_REGEX2 = "(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))"
 
 ANSI_PATTERN = `${ANSI_REGEX1}|${ANSI_REGEX2}`
 
-export ansi = Pattern.create(ANSI_PATTERN, "")
-export ansiGlobal = Pattern.create(ANSI_PATTERN, "g")
+export ANSI = Pattern.create(ANSI_PATTERN, "")
+export ANSI_GLOBAL = Pattern.create(ANSI_PATTERN, "g")
 
-stripAnsi :: String -> String
-export stripAnsi = Pattern.unsafeReplace(ansiGlobal, "")
+strip :: String -> String
+export strip = Pattern.unsafeReplace(ANSI_GLOBAL, "")
+
+isControlChar :: Short -> Boolean
+export isControlChar = (x) => x <= 0x1F || (x >= 0x7F && x <= 0x9F)
+
+// x >= 0x3_00 && x <= 0x3
+isCombinatoryChar :: Short -> Boolean
+export isCombinatoryChar = (x) => x >= 768 && x <= 879

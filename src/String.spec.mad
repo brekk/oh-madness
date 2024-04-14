@@ -1,0 +1,15 @@
+import { assertEquals, test } from "Test"
+
+import { codePointAt } from "./String"
+
+
+
+test(
+  "codePointAt",
+  () => do {
+    thumbs = "👍"
+    _ <- assertEquals(codePointAt(thumbs, 0), 128077)
+    _ <- assertEquals(codePointAt(thumbs, 1), 56397)
+    return assertEquals(codePointAt(thumbs, 2), -1)
+  },
+)
