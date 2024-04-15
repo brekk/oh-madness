@@ -62,7 +62,7 @@ export createBox = (padding, border, alignment, content) => Box({
   padding,
 })
 
-export unpadded = createBox(0, DEFAULT_BORDER)
+export unpadded = createBox(0, DEFAULT_BORDER, AlignLeft)
 export basicBox = createBox(1, DEFAULT_BORDER, AlignLeft)
 
 // char siu!
@@ -70,7 +70,7 @@ charSeq :: Char -> Char -> Char -> Integer -> String
 export charSeq = (left, middle, right, len) => pipe(
   String.repeat($, len),
   String.appendChar(right),
-  String.pushChar(left),
+  String.prependChar(left),
 )(middle)
 
 renderContentBox :: Integer -> Border -> Integer -> String -> String
@@ -83,18 +83,18 @@ export renderContentBox = (width, border, padding, content) => where(border) {
       hPad = String.repeat(' ', padding)
       borderedLine = charSeq(l, ' ', r, len)
       vPad = padding == 0
-        ? ""
+        ? "\n"
         : pipe(
           List.repeatWith(always(borderedLine)),
           String.join("\n"),
           String.appendChar('\n'),
-          String.pushChar('\n'),
+          String.prependChar('\n'),
         )(padding)
       wrappedContent = pipe(
         mappend(content),
         mappend(hPad),
         String.appendChar(r),
-        String.pushChar(l),
+        String.prependChar(l),
       )(hPad)
       return top ++ vPad ++ wrappedContent ++ vPad ++ bottom
     }

@@ -1,0 +1,10 @@
+import IO from "IO"
+
+import Ascii from "@/Ascii"
+
+
+
+main = () => {
+  Ascii.renderBox(Ascii.basicBox("Hey this is a whole box!")) |> IO.putLine
+  Ascii.renderBox(Ascii.unpadded("boxy!")) |> IO.putLine
+}

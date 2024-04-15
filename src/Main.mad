@@ -24,7 +24,6 @@ tapPrintState = (x) => {
 }
 
 main = () => {
-  Ascii.renderBox(Ascii.basicBox("Hey this is a whole box!")) |> IO.putLine
   gen = Random.generateFromString("oh-madness-0.0.0")
   pipe(
     OhHell.initialDeal(gen),

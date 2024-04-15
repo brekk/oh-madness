@@ -1,6 +1,6 @@
 import { assertEquals, test } from "Test"
 
-import { codePointAt } from "./String"
+import { codePointAt, isCombiningChar, stringWidth } from "./String"
 
 
 
@@ -11,5 +11,22 @@ test(
     _ <- assertEquals(codePointAt(thumbs, 0), 128077)
     _ <- assertEquals(codePointAt(thumbs, 1), 56397)
     return assertEquals(codePointAt(thumbs, 2), -1)
+  },
+)
+
+
+test(
+  "isCombiningChar",
+  () => do {
+    _ <- assertEquals(isCombiningChar(768), true)
+    return assertEquals(isCombiningChar(879), true)
+  },
+)
+
+test(
+  "stringWidth",
+  () => do {
+    _ <- assertEquals(stringWidth("A\uD83C\uDE00BC"), 5)
+    return assertEquals(stringWidth("“"), 2)
   },
 )

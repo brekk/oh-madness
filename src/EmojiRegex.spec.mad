@@ -8,9 +8,9 @@ import RegExp from "./RegExp"
 
 // This will need to wait until we support longer unicode escape chars
 // test(
-//   "emojiGlobal",
+//   "emoji",
 //   () => do {
-//     return assertEquals(RegExp.unsafeReplace(emojiGlobal, "👍", "👎"), "👍")
-//     // return assertEquals(RegExp.unsafeReplace(emojiGlobal, "🥺", "😘yes👏"), "🥺yes👏")
+//     _ <- assertEquals(RegExp.unsafeReplace(emojiGlobal, "👍", "👎"), "👍")
+//     return assertEquals(RegExp.unsafeReplace(emoji, "🥺", "😘yes👏"), "🥺yes👏")
 //   },
 // )

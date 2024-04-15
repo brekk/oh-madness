@@ -1,12 +1,15 @@
-import { when } from "Function"
+import { always, equals, ifElse, unless, when } from "Function"
+import List from "List"
 import String from "String"
 
 import Ansi from "@/Ansi"
+import EALang from "@/EastAsianLang"
 
 
 
 type CodePoint = CodePoint(Short) | InvalidCodePoint
 
+// TODO: figure out codePointAt for LLVM
 safeCodePointAt :: String -> Integer -> CodePoint
 export safeCodePointAt = (str, i) => {
   point = #- str.codePointAt(i) -#
@@ -32,7 +35,41 @@ export codePointAt = (str, i) => pipe(
   pointToShort,
 )(i)
 
-// stringWidth :: Boolean -> Boolean -> String -> Integer
-// export stringWidth = (ambiguousCharsAreNarrow, includeAnsiEscapeCodes, input) => pipe(
-//   when(() => !includeAnsiEscapeCodes, Ansi.strip),
-// )(input)
+isCombiningChar :: Short -> Boolean
+export isCombiningChar = (s) => s >= 0x300 && s <= 0x36F
+
+// TODO: we can't do emoji checking yet
+isEmoji :: Short -> Boolean
+isEmoji = (_) => false
+
+sumStringWidth :: Boolean -> String -> Integer
+export sumStringWidth = (ambigIsWide, str) => pipe(
+  // this isn't correct but we're working with what we have for now
+  String.split(""),
+  map(codePointAt($, 0)),
+  List.reduce(
+    (sum, codepoint) => if (isEmoji(codepoint)) {
+      sum + 2
+    } else if (Ansi.isControlChar(codepoint) || isCombiningChar(codepoint)) {
+      sum
+    } else {
+      sum + EALang.getAmbiguousWidth(ambigIsWide, codepoint)
+    },
+    0,
+  ),
+)(str)
+
+ambiguousStringWidth :: Boolean -> Boolean -> String -> Integer
+export ambiguousStringWidth = (ambigIsWide, includeAnsi, input) => pipe(
+  when(always(!includeAnsi), Ansi.strip),
+  ifElse(
+    pipe(
+      String.length,
+      equals(0),
+    ),
+    always(0),
+    sumStringWidth(ambigIsWide),
+  ),
+)(input)
+
+export stringWidth = ambiguousStringWidth(true, false)

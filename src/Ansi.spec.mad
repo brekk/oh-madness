@@ -30,12 +30,3 @@ test(
     return assertEquals(Ansi.isControlChar(0x80), true)
   },
 )
-
-
-test(
-  "isCombinatoryChar",
-  () => do {
-    _ <- assertEquals(Ansi.isCombinatoryChar(768), true)
-    return assertEquals(Ansi.isCombinatoryChar(879), true)
-  },
-)
