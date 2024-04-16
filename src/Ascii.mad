@@ -124,13 +124,15 @@ export align = (a, fill, width, strWidth, str) => {
   }
 }
 
-renderContentBox :: Integer -> Aligner -> ContentBox -> String
-export renderContentBox = (width, aligner, contentBox) => where(#[aligner, contentBox]) {
+renderContentBox :: Integer -> Integer -> Aligner -> ContentBox -> String
+export renderContentBox = (strWidth, width, aligner, contentBox) => where(#[aligner, contentBox]) {
   #[{ content: alignment }, { border, content, padding }] =>
     where(border) {
       { b, bl, br, l, r, t, tl, tr } =>
         do {
-          len = width + (padding * 2)
+          dpad = padding * 2
+          len = width + dpad
+          strLen = strWidth + dpad
           top = charSeq(tl, t, tr, len)
           bottom = charSeq(bl, b, br, len)
           hPad = String.repeat(' ', padding)
@@ -143,7 +145,7 @@ export renderContentBox = (width, aligner, contentBox) => where(#[aligner, conte
               cap('\n', '\n'),
             )(padding)
           wrappedContent = pipe(
-            mappend(align(alignment, ' ', len, len, content)),
+            mappend(align(alignment, ' ', strLen, len, content)),
             mappend(hPad),
             cap(r, l),
           )(hPad)
@@ -152,10 +154,11 @@ export renderContentBox = (width, aligner, contentBox) => where(#[aligner, conte
     }
 }
 
-renderBox :: Integer -> Aligner -> Box -> String
-export renderBox = (size, aligner, box) => where(box) {
+renderBox :: Integer -> Integer -> Aligner -> Box -> String
+export renderBox = (strSize, size, aligner, box) => where(box) {
   Box({ border, header, footer, content, padding }) =>
     renderContentBox(
+      strSize == 0 ? String.length(content) : strSize,
       size == 0 ? String.length(content) : size,
       aligner,
       { header, footer, border, padding, content },

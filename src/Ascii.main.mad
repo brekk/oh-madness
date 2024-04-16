@@ -77,7 +77,7 @@ main = () => {
   )("🥺😆👱🏽‍♂️")
 
   aligner = { header: Ascii.AlignLeft, content: Ascii.AlignCenter, footer: Ascii.AlignLeft }
-  Ascii.renderBox(8, aligner, Ascii.unpadded("", "", "hey!")) |> IO.putLine
-  Ascii.renderBox(0, aligner, Ascii.unpadded("", "", "-> 😎 <-")) |> IO.putLine
-  Ascii.renderBox(7, aligner, Ascii.basicBox("", "", "あいう★")) |> IO.putLine
+  Ascii.renderBox(4, 8, aligner, Ascii.unpadded("", "", "hey!")) |> IO.putLine
+  Ascii.renderBox(0, 0, aligner, Ascii.unpadded("", "", "-> 😎 <-")) |> IO.putLine
+  Ascii.renderBox(7, 7, aligner, Ascii.basicBox("", "", "あいう★")) |> IO.putLine
 }
