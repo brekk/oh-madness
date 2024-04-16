@@ -1,10 +1,82 @@
+import Char from "Char"
+import Dict from "Dictionary"
+import Float from "Float"
 import IO from "IO"
+import Integer from "Integer"
+import List from "List"
+import Math from "Math"
+import { fromMaybe } from "Maybe"
+import String from "String"
 
 import Ascii from "@/Ascii"
 
 
 
+hex = {{
+  0: "0",
+  1: "1",
+  2: "2",
+  3: "3",
+  4: "4",
+  5: "5",
+  6: "6",
+  7: "7",
+  8: "8",
+  9: "9",
+  10: "A",
+  11: "B",
+  12: "C",
+  13: "D",
+  14: "E",
+  15: "F",
+}}
+
+
+toHex = (x) => pipe(
+  Math.floor,
+  List.range(0),
+  List.reduce(
+    (agg, j) => if (Math.floor(agg.value) > 0) do {
+      i = Integer.fromFloat(agg.value)
+      rem = Math.mod(i, 16)
+      value = agg.value / 16
+      return { stack: [rem, ...agg.stack], value }
+    } else {
+      agg
+    },
+    { stack: [], value: x },
+  ),
+  .stack,
+  map(
+    pipe(
+      Dict.get($, hex),
+      fromMaybe("0"),
+    ),
+  ),
+  String.join(""),
+)(x / 16)
+
+
 main = () => {
-  Ascii.renderBox(Ascii.basicBox("Hey this is a whole box!")) |> IO.putLine
-  Ascii.renderBox(Ascii.unpadded("boxy!")) |> IO.putLine
+  pipe(
+    String.toList,
+    (chars) => {
+      IO.pTrace("COUNT!", List.length(chars))
+      return chars
+    },
+    IO.pTrace("CHARS!"),
+    map(Char.toShort),
+    IO.pTrace("SHORTS!"),
+    map(
+      pipe(
+        Float.fromShort,
+        toHex,
+      ),
+    ),
+    IO.pTrace("PANTS!"),
+  )("🥺😆👱🏽‍♂️")
+
+  Ascii.renderBox(Ascii.unpadded("hey!")) |> IO.putLine
+  Ascii.renderBox(Ascii.unpadded("-> 😎 <-")) |> IO.putLine
+  Ascii.renderBox(Ascii.unpadded("あいう★")) |> IO.putLine
 }

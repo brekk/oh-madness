@@ -45,7 +45,8 @@ isEmoji = (_) => false
 sumStringWidth :: Boolean -> String -> Integer
 export sumStringWidth = (ambigIsWide, str) => pipe(
   // this isn't correct but we're working with what we have for now
-  String.split(""),
+  String.toList,
+  map((c) => String.fromList([c])),
   map(codePointAt($, 0)),
   List.reduce(
     (sum, codepoint) => if (isEmoji(codepoint)) {

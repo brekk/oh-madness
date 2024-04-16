@@ -6,11 +6,10 @@ import RegExp from "./RegExp"
 
 
 
-// This will need to wait until we support longer unicode escape chars
 // test(
 //   "emoji",
 //   () => do {
-//     _ <- assertEquals(RegExp.unsafeReplace(emojiGlobal, "👍", "👎"), "👍")
+//     _ <- assertEquals(RegExp.unsafeReplace(emojiGlobal, "👍👍👍", "👎"), "👎👎👎")
 //     return assertEquals(RegExp.unsafeReplace(emoji, "🥺", "😘yes👏"), "🥺yes👏")
 //   },
 // )

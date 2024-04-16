@@ -2,3 +2,4 @@ build
 .coverage
 .tests
 .repl
+.DS_Store
