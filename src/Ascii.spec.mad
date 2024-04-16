@@ -1,0 +1,71 @@
+import { assertEquals, test } from "Test"
+
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Box,
+  DEFAULT_BORDER,
+  DEFAULT_HORIZONTAL_BORDER,
+  DEFAULT_VERTICAL_BORDER,
+  HorizontalBoundary,
+  VerticalBoundary,
+  align,
+  basicBox,
+  charSeq,
+  createBorder,
+  createBox,
+  createHorizontalBorder,
+  createVerticalBorder,
+  renderBox,
+  renderContentBox,
+  unpadded,
+} from "./Ascii"
+
+
+
+test(
+  "basicBox",
+  () => assertEquals(
+    basicBox("", "", "cool"),
+    Box({ padding: 1, header: "", footer: "", content: "cool", border: DEFAULT_BORDER }),
+  ),
+)
+
+test(
+  "createBorder",
+  () => assertEquals(
+    createBorder('1', '2', '3', '4', '5', '6', '7', '8'),
+    { tl: '1', t: '2', tr: '3', l: '4', r: '5', bl: '6', b: '7', br: '8' },
+  ),
+)
+
+test(
+  "createBox",
+  () => assertEquals(
+    createBox(30, DEFAULT_BORDER, "", "", "ultra boxy!"),
+    Box({ border: DEFAULT_BORDER, padding: 30, header: "", footer: "", content: "ultra boxy!" }),
+  ),
+)
+test(
+  "createHorizontalBorder",
+  () => assertEquals(createHorizontalBorder('x', 'y', 'z'), HorizontalBoundary('x', 'y', 'z')),
+)
+test(
+  "createVerticalBorder",
+  () => assertEquals(createVerticalBorder('a', 'b', 'c'), VerticalBoundary('a', 'b', 'c')),
+)
+
+test(
+  "align",
+  () => do {
+    _ <- assertEquals(align(AlignCenter, '-', 4, 4, "cool"), "cool")
+    _ <- assertEquals(align(AlignRight, '-', 4, 14, "cool"), "-----------cool")
+    _ <- assertEquals(align(AlignCenter, '~', 4, 14, "cool"), "~~~~~cool~~~~~")
+    return assertEquals(align(AlignLeft, '-', 4, 14, "cool"), "cool----------")
+  },
+)
+
+// test("renderBox,", () => assertEquals(renderBox,))
+// test("renderContentBox,", () => assertEquals(renderContentBox,))
+// test("unpadded,", () => assertEquals(unpadded,))
