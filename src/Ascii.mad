@@ -124,43 +124,68 @@ export align = (a, fill, width, strWidth, str) => {
   }
 }
 
-renderContentBox :: Integer -> Integer -> Aligner -> ContentBox -> String
-export renderContentBox = (strWidth, width, aligner, contentBox) => where(#[aligner, contentBox]) {
-  #[{ content: alignment }, { border, content, padding }] =>
+renderEdge :: String -> String -> Alignment -> Char -> Integer -> Integer -> Char -> Char -> String
+renderEdge = (text, pad, alignment, fill, max, len, l, r) => text != ""
+  ? pipe(
+    mappend(align(alignment, fill, max, len, text)),
+    mappend(pad),
+    cap(l, r),
+  )(pad)
+  : charSeq(l, fill, r, len)
+
+
+renderContentBox :: Integer -> Integer -> Integer -> Integer -> Aligner -> ContentBox -> String
+export renderContentBox = (
+  boxSize,
+  contentWidth,
+  headerWidth,
+  footerWidth,
+  aligner,
+  contentBox
+) => where(#[aligner, contentBox]) {
+  #[
+    { content: cAlignment, header: hAlignment, footer: fAlignment },
+    { border, header, footer, content, padding },
+  ] =>
     where(border) {
       { b, bl, br, l, r, t, tl, tr } =>
         do {
           dpad = padding * 2
-          len = width + dpad
-          strLen = strWidth + dpad
-          top = charSeq(tl, t, tr, len)
-          bottom = charSeq(bl, b, br, len)
+          len = contentWidth + dpad
+          hLen = headerWidth + dpad
+          fLen = footerWidth + dpad
+          strLen = boxSize + dpad
           hPad = String.repeat(' ', padding)
-          borderedLine = charSeq(l, ' ', r, len)
+          emptyHLine = charSeq(l, ' ', r, len)
           vPad = padding == 0
             ? "\n"
             : pipe(
-              List.repeatWith(always(borderedLine)),
+              List.repeatWith(always(emptyHLine)),
               String.join("\n"),
               cap('\n', '\n'),
             )(padding)
+          top = renderEdge(header, hPad, hAlignment, t, strLen, hLen, tl, tr)
+          bottom = renderEdge(footer, hPad, fAlignment, b, strLen, fLen, bl, br)
           wrappedContent = pipe(
-            mappend(align(alignment, ' ', strLen, len, content)),
+            mappend(align(cAlignment, ' ', strLen, len, content)),
             mappend(hPad),
-            cap(r, l),
+            cap(l, r),
           )(hPad)
           return top ++ vPad ++ wrappedContent ++ vPad ++ bottom
         }
     }
 }
 
-renderBox :: Integer -> Integer -> Aligner -> Box -> String
-export renderBox = (strSize, size, aligner, box) => where(box) {
-  Box({ border, header, footer, content, padding }) =>
+renderBox :: Integer -> Integer -> Integer -> Integer -> Aligner -> Box -> String
+export renderBox = (boxSize, contentSize, headerSize, footerSize, aligner, box) => where(box) {
+  Box(cBox) =>
     renderContentBox(
-      strSize == 0 ? String.length(content) : strSize,
-      size == 0 ? String.length(content) : size,
+      // this is a hack until we have String.width
+      boxSize == 0 ? String.length(cBox.content) : boxSize,
+      contentSize == 0 ? String.length(cBox.content) : contentSize,
+      headerSize == 0 ? String.length(cBox.content) : headerSize,
+      footerSize == 0 ? String.length(cBox.content) : footerSize,
       aligner,
-      { header, footer, border, padding, content },
+      cBox,
     )
 }

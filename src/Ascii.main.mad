@@ -74,10 +74,11 @@ main = () => {
       ),
     ),
     IO.pTrace("PANTS!"),
-  )("🥺😆👱🏽‍♂️")
+  )("あいう★")
+  // )("🥺😆👱🏽‍♂️")
 
-  aligner = { header: Ascii.AlignLeft, content: Ascii.AlignCenter, footer: Ascii.AlignLeft }
-  Ascii.renderBox(4, 8, aligner, Ascii.unpadded("", "", "hey!")) |> IO.putLine
-  Ascii.renderBox(0, 0, aligner, Ascii.unpadded("", "", "-> 😎 <-")) |> IO.putLine
-  Ascii.renderBox(7, 7, aligner, Ascii.basicBox("", "", "あいう★")) |> IO.putLine
+  aligner = { header: Ascii.AlignLeft, content: Ascii.AlignCenter, footer: Ascii.AlignRight }
+  Ascii.renderBox(4, 8, 10, 7, aligner, Ascii.unpadded("yo", IO.red("cool"), "hey!")) |> IO.putLine
+  Ascii.renderBox(0, 0, 0, 0, aligner, Ascii.unpadded("", "", "-> 😎 <-")) |> IO.putLine
+  Ascii.renderBox(7, 7, 7, 7, aligner, Ascii.basicBox("", "", "あいう★")) |> IO.putLine
 }
