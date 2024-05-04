@@ -112,38 +112,39 @@ export charSeq = (left, middle, right, len) => pipe(
 align :: Alignment -> Char -> Integer -> Integer -> String -> String
 export align = (a, fill, width, strWidth, str) => {
   maxWidth = Math.max(width, strWidth)
-  sub = maxWidth - width + 1
+  sub = Math.abs(maxWidth - width)
+  charfill = String.repeat(fill)
   return if (a == AlignLeft) {
-    str ++ String.repeat(fill, sub - 1)
+    str ++ charfill(sub)
   } else if (a == AlignCenter) do {
     count = Integer.fromFloat(Math.floor(sub / 2))
-    side = String.repeat(fill, count)
+    side = charfill(count)
     return side ++ str ++ side
   } else do {
-    return String.repeat(fill, sub) ++ str
+    return charfill(sub) ++ str
   }
 }
 
-renderEdge :: String -> String -> Alignment -> Char -> Integer -> Integer -> Char -> Char -> String
-renderEdge = (text, pad, alignment, fill, max, len, l, r) => text != ""
-  ? pipe(
-    mappend(align(alignment, fill, max, len, text)),
-    mappend(pad),
-    cap(l, r),
-  )(pad)
-  : charSeq(l, fill, r, len)
+renderEdge :: Integer -> String -> Alignment -> Char -> Integer -> Integer -> Char -> Char -> String
+renderEdge = (padding, text, alignment, fill, max, len, l, r) => {
+  return text != ""
+    ? pipe(
+      cap(l, r),
+    )(align(alignment, fill, max + padding, len + padding, text))
+    : charSeq(l, fill, r, len)
+}
+
+import IO from "IO"
 
 
-renderContentBox :: Integer -> Integer -> Integer -> Integer -> Aligner -> ContentBox -> String
-export renderContentBox = (
-  boxSize,
-  contentWidth,
-  headerWidth,
-  footerWidth,
-  aligner,
-  contentBox
-) => where(#[aligner, contentBox]) {
+
+// this is a temporary hack while we wait for String.width
+export alias Sizes = { content :: Integer, footer :: Integer, header :: Integer, max :: Integer }
+
+renderContentBox :: Sizes -> Aligner -> ContentBox -> String
+export renderContentBox = (sizes, aligner, contentBox) => where(#[sizes, aligner, contentBox]) {
   #[
+    { max: boxSize, content: contentWidth, header: headerWidth, footer: footerWidth },
     { content: cAlignment, header: hAlignment, footer: fAlignment },
     { border, header, footer, content, padding },
   ] =>
@@ -154,9 +155,13 @@ export renderContentBox = (
           len = contentWidth + dpad
           hLen = headerWidth + dpad
           fLen = footerWidth + dpad
-          strLen = boxSize + dpad
+          padBox = boxSize + dpad
+          IO.pTrace(
+            "LENGTHS",
+            #[{ dpad, len, hLen, fLen, boxSize, padBox }, String.length(content)],
+          )
           hPad = String.repeat(' ', padding)
-          emptyHLine = charSeq(l, ' ', r, len)
+          emptyHLine = charSeq(l, ' ', r, Math.max(padBox, len))
           vPad = padding == 0
             ? "\n"
             : pipe(
@@ -164,28 +169,39 @@ export renderContentBox = (
               String.join("\n"),
               cap('\n', '\n'),
             )(padding)
-          top = renderEdge(header, hPad, hAlignment, t, strLen, hLen, tl, tr)
-          bottom = renderEdge(footer, hPad, fAlignment, b, strLen, fLen, bl, br)
+          top = renderEdge(padding, header, hAlignment, t, padBox, hLen, tl, tr)
+          bottom = renderEdge(padding, footer, fAlignment, b, padBox, fLen, bl, br)
           wrappedContent = pipe(
-            mappend(align(cAlignment, ' ', strLen, len, content)),
+            mappend(align(cAlignment, ' ', padBox, len, content)),
             mappend(hPad),
             cap(l, r),
           )(hPad)
+          IO.putLine(
+            `012345678${IO.red("9")}012345678${IO.red("9")}012345678${IO.red("9")}012345678${
+              IO.red("9")
+            }012345678${IO.red("9")}`,
+          )
           return top ++ vPad ++ wrappedContent ++ vPad ++ bottom
         }
     }
 }
 
-renderBox :: Integer -> Integer -> Integer -> Integer -> Aligner -> Box -> String
-export renderBox = (boxSize, contentSize, headerSize, footerSize, aligner, box) => where(box) {
-  Box(cBox) =>
-    renderContentBox(
-      // this is a hack until we have String.width
-      boxSize == 0 ? String.length(cBox.content) : boxSize,
-      contentSize == 0 ? String.length(cBox.content) : contentSize,
-      headerSize == 0 ? String.length(cBox.content) : headerSize,
-      footerSize == 0 ? String.length(cBox.content) : footerSize,
-      aligner,
-      cBox,
+// this is a hack until we have String.width
+autoSize :: Integer -> Sizes -> Sizes
+autoSize = (auto, sizes) => where(sizes) {
+  { max, content, header, footer } =>
+    (
+      {
+        max: max == 0 ? auto : max,
+        content: content == 0 ? auto : content,
+        header: header == 0 ? auto : header,
+        footer: footer == 0 ? auto : footer,
+      }
     )
+}
+
+renderBox :: Sizes -> Aligner -> Box -> String
+export renderBox = (sizes, aligner, box) => where(box) {
+  Box(cBox) =>
+    renderContentBox(autoSize(String.length(cBox.content), sizes), aligner, cBox)
 }

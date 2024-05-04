@@ -78,7 +78,43 @@ main = () => {
   // )("🥺😆👱🏽‍♂️")
 
   aligner = { header: Ascii.AlignLeft, content: Ascii.AlignCenter, footer: Ascii.AlignRight }
-  Ascii.renderBox(4, 8, 10, 7, aligner, Ascii.unpadded("yo", IO.red("cool"), "hey!")) |> IO.putLine
-  Ascii.renderBox(0, 0, 0, 0, aligner, Ascii.unpadded("", "", "-> 😎 <-")) |> IO.putLine
-  Ascii.renderBox(7, 7, 7, 7, aligner, Ascii.basicBox("", "", "あいう★")) |> IO.putLine
+  Ascii.renderBox(
+    { max: 4, content: 4, header: 4, footer: 4 },
+    aligner,
+    Ascii.unpadded("four", IO.red(">><<"), "hey!"),
+  )
+    |> IO.putLine
+  Ascii.renderBox(
+    { max: 8, content: 8, header: 8, footer: 8 },
+    aligner,
+    Ascii.basicBox("butthead", IO.red("{{cool}}"), IO.green("greenie")),
+  )
+    |> IO.putLine
+  Ascii.renderBox(
+    { max: 4, content: 8, header: 10, footer: 8 },
+    aligner,
+    Ascii.unpadded("yo", IO.red("cool"), "hey!"),
+  )
+    |> IO.putLine
+  Ascii.renderBox(
+    { max: 40, content: 40, header: 78, footer: 76 },
+    { header: Ascii.AlignRight, content: Ascii.AlignLeft, footer: Ascii.AlignLeft },
+    Ascii.unpadded("yo", IO.red("cool"), "Hey what does a long sentence look like?"),
+  )
+    |> IO.putLine
+  Ascii.renderBox(
+    { max: 40, content: 40, header: 80, footer: 78 },
+    { header: Ascii.AlignRight, content: Ascii.AlignLeft, footer: Ascii.AlignLeft },
+    Ascii.basicBox("yo", IO.red("cool"), "Hey what does a long sentence look like?"),
+  )
+    |> IO.putLine
+  Ascii.renderBox(
+    { max: 7, content: 7, header: 7, footer: 7 },
+    aligner,
+    Ascii.basicBox("", "", "あいう★"),
+  )
+    |> IO.putLine
+  autoSizes = { max: 0, content: 0, header: 0, footer: 0 }
+  Ascii.renderBox(autoSizes, aligner, Ascii.unpadded("", "", "-> 😎 <-")) |> IO.put
+  Ascii.renderBox(autoSizes, aligner, Ascii.unpadded("", "", "-> 😎 <-")) |> IO.putLine
 }
