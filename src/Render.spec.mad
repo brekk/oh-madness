@@ -1,0 +1,153 @@
+import Char from "Char"
+import String from "String"
+import Terminal from "Terminal"
+import { assertEquals, test } from "Test"
+
+import {
+  Ace,
+  Card,
+  Clubs,
+  Diamonds,
+  Hearts,
+  InvalidRank,
+  Jack,
+  Joker,
+  King,
+  NoFace,
+  Queen,
+  Spades,
+  Wildcard,
+} from "./Card"
+import { Bot, Player } from "./Player"
+import {
+  __colorCard,
+  __showRank,
+  __showSuit,
+  nameWithGap,
+  renderHand,
+  showBet,
+  showCard,
+  showFullPlayer,
+  showPlayedHandFor,
+  showPlayerHand,
+  showPlayerSummary,
+  showPoints,
+} from "./Render"
+import { stripAnsi } from "./String"
+
+
+
+test(
+  "__colorCard",
+  () => do {
+    _ <- assertEquals(__colorCard(Joker, "none"), "none")
+    _ <- assertEquals(__colorCard(Clubs, "blue"), Terminal.text.blue("blue"))
+    return assertEquals(__colorCard(Hearts, "red"), Terminal.text.red("red"))
+  },
+)
+test(
+  "__showRank",
+  () => do {
+    _ <- assertEquals(__showRank(Ace), "A")
+    _ <- assertEquals(__showRank(King), "K")
+    _ <- assertEquals(__showRank(Queen), "Q")
+    _ <- assertEquals(__showRank(Jack), "J")
+    _ <- assertEquals(__showRank(InvalidRank), "?")
+    _ <- assertEquals(__showRank(NoFace(10)), "X")
+    _ <- assertEquals(__showRank(NoFace(3)), "3")
+    return assertEquals(__showRank(Wildcard), "")
+  },
+)
+test(
+  "__showSuit",
+  () => do {
+    _ <- assertEquals(stripAnsi(__showSuit(Clubs)), "♧")
+    _ <- assertEquals(stripAnsi(__showSuit(Diamonds)), "♢")
+    _ <- assertEquals(stripAnsi(__showSuit(Hearts)), "♡")
+    _ <- assertEquals(stripAnsi(__showSuit(Spades)), "♤")
+    return assertEquals(stripAnsi(__showSuit(Joker)), "🃏")
+  },
+)
+// this is far too much work to make the tests happy
+test(
+  "showCard",
+  () => do {
+    convert = pipe(
+      showCard,
+      stripAnsi,
+      String.toList,
+      map(Char.toShort),
+    )
+    _ <- assertEquals(convert(Card(Hearts, NoFace(8))), [9825, 8201, 56])
+    _ <- assertEquals(convert(Card(Clubs, Wildcard)), [9831])
+    _ <- assertEquals(convert(Card(Joker, InvalidRank)), [55356, 56527, 8201, 63])
+    return assertEquals(convert(Card(Diamonds, Ace)), [9826, 8201, 65])
+  },
+)
+
+test("showBet", () => assertEquals(showBet(4, 10), "4 ⁄10 ⌻"))
+test("showPoints", () => assertEquals(showPoints(10), "10 ⌼"))
+test(
+  "nameWithGap",
+  () => assertEquals(nameWithGap("yoyoyoyo"), "yoyoyoyo                               "),
+)
+test(
+  "renderHand",
+  () => assertEquals(
+    stripAnsi(
+      renderHand(
+        Hearts,
+        [
+          Card(Hearts, Ace),
+          Card(Hearts, King),
+          Card(Hearts, Queen),
+          Card(Hearts, Jack),
+          Card(Hearts, NoFace(10)),
+        ],
+      ),
+    ),
+    `│ ↳ ♡ A ♡ K ♡ Q ♡ J ♡ X           │
+│                                                     │`,
+  ),
+)
+
+test(
+  "showFullPlayer",
+  () => assertEquals(
+    stripAnsi(
+      showFullPlayer(
+        Clubs,
+        Player(
+          "Brekk",
+          [
+            Card(Clubs, Ace),
+            Card(Clubs, King),
+            Card(Spades, Queen),
+            Card(Diamonds, Jack),
+            Card(Hearts, NoFace(10)),
+            Card(Clubs, NoFace(3)),
+            Card(Diamonds, NoFace(5)),
+            Card(Hearts, NoFace(8)),
+            Card(Hearts, NoFace(2)),
+            Card(Clubs, NoFace(2)),
+          ],
+          0,
+          0,
+          0,
+        ),
+      ),
+    ),
+    `│ Brekk                                  0 ⁄0 ⌻   0 ⌼ │  │ ↳ ♧ A ♧ K ♧ 3 ♧ 2 ♤ Q ♢ J ♡ X ♡ 8 ♢ 5 ♡ 2           │
+│                                                     │`,
+  ),
+)
+
+test(
+  "showPlayerSummary",
+  () => assertEquals(
+    showPlayerSummary(Bot(Player("Cool", [], 0, 0, 0))),
+    "│ Cool                                   0 ⁄0 ⌻   0 ⌼ │",
+  ),
+)
+
+test("showCard", () => assertEquals(stripAnsi(showCard(Card(Hearts, NoFace(8)))), "♡ 8"))

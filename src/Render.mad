@@ -3,9 +3,9 @@ import type { GameState } from "@/OhHell"
 import type { PlayedCard, Player } from "@/Player"
 
 import { always } from "Function"
-import IO from "IO"
+// import IO from "IO"
 import List from "List"
-import { fromMaybe } from "Maybe"
+// import { fromMaybe } from "Maybe"
 import String from "String"
 import Terminal from "Terminal"
 
@@ -29,6 +29,9 @@ import Player from "@/Player"
 import P from "@/Player"
 
 
+
+// this is a temporary hack while we don't have String.width
+BOX_WIDTH = 53
 
 __showSuit :: Suit -> String
 export __showSuit = where {
@@ -95,41 +98,45 @@ showHand = (trump, hand) => pipe(
   String.join(" "),
 )(hand)
 
-showActiveBet :: Integer -> Integer -> String
-export showActiveBet = (tricks, bet) => `${show(tricks)} ⁄${show(bet)} ⌻`
+showBet :: Integer -> Integer -> String
+export showBet = (tricks, bet) => `${show(tricks)} ⁄${show(bet)} ⌻`
 
 showPoints :: Integer -> String
 export showPoints = (x) => `${show(x)} ⌼`
 
 spaces :: Integer -> String
-spaces = pipe(
-  List.repeatWith(always(" ")),
-  String.join(""),
-)
+spaces = String.repeat(' ')
+
+renderHand :: Suit -> List Card -> String
+export renderHand = (trump, hand) => `│ ↳ ${showHand(trump, hand)} ${spaces(10)}│\n│${
+  spaces(BOX_WIDTH)
+}│`
 
 showPlayerHand :: Suit -> Player -> String
-export showPlayerHand = (trump, player) => {
-  gap = `│${spaces(53)}│`
-  return where(player) {
-    P.Player(name, hand, bet, tricks, points) =>
-      `│ ↳ ${showHand(trump, hand)} ${spaces(10)}│\n${gap}`
-  }
-}
+export showPlayerHand = (trump, player) => pipe(
+  P.hand,
+  renderHand(trump),
+)(player)
+
+nameWithGap :: String -> String
+export nameWithGap = (name) => name ++ spaces(BOX_WIDTH - 14 - String.length(name))
 
 showPlayerSummary :: Player -> String
-showPlayerSummary = (player) => {
-  gap = `│${spaces(53)}│`
-  return where(player) {
-    P.Player(name, hand, bet, tricks, points) =>
-      `│ ${name}${spaces(39 - String.length(name))}${showActiveBet(tricks, bet)}   ${
-        showPoints(points)
-      } │`
+export showPlayerSummary = (player) => {
+  summarize = where {
+    P.Player(name, _, bet, tricks, points) =>
+      `│ ${nameWithGap(name)}${showBet(tricks, bet)}   ${showPoints(points)} │`
+
+    P.Bot(p) =>
+      summarize(p)
   }
+  return summarize(player)
 }
 
 showFullPlayer :: Suit -> Player -> String
-export showFullPlayer = (trump, player) => `${showPlayerSummary(player)}
-${showPlayerHand(trump, player)}`
+export showFullPlayer = (trump, player) => showPlayerSummary(player)
+    ++ "  "
+    ++ showPlayerHand(trump, player)
 
 showRounds :: List Integer -> Integer -> String
 showRounds = (rounds, round) => pipe(
@@ -200,7 +207,7 @@ summarizePlayState = (state) => pipe(
         len = String.length(playedHand) + 3
         return List.append(
           `${showPlayerSummary(player)}\n│${none ? "" : ` ↳ ${playedHand}`}${
-            spaces((none ? 53 : 62 - len))
+            spaces((none ? BOX_WIDTH : 62 - len))
           }│`,
           playerSummaries,
         )
@@ -222,7 +229,6 @@ export showGameForPlayer = (playerName, state) => {
 ┃ Oh Hell ┊ ${showRounds(state.cardsPerRound, state.round)} ┊ ${
     __colorCard(state.trump, __showSuit(state.trump))
   } ┃
-┡${heavyHorizontal}┩
-${summarizePlayState(state)}
+┡${heavyHorizontal}┩\n${summarizePlayState(state)}
 └${horizontal}┘`
 }

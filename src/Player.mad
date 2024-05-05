@@ -179,16 +179,10 @@ export isBot = where {
 }
 
 isHuman :: Player -> Boolean
-export isHuman = where {
-  Bot(_) =>
-    false
-
-  _ =>
-    true
-}
+export isHuman = Fn.complement(isBot)
 
 humanMap :: (Player -> Player) -> Player -> Player
-export humanMap = (fn, player) => Fn.when(isHuman, fn, player)
+export humanMap = Fn.when(isHuman)
 
 botMap :: (Player -> Player) -> Player -> Player
-export botMap = (fn, player) => Fn.when(isBot, fn, player)
+export botMap = Fn.when(isBot)

@@ -4,6 +4,7 @@ import Maybe from "Maybe"
 import Random from "Random"
 import String from "String"
 
+import { stripAnsi } from "./String"
 import Ascii from "@/Ascii"
 import { Ace, Card, Clubs, Diamonds, Hearts, Jack, King, NoFace, Queen, Spades } from "@/Card"
 import Deck from "@/Deck"
