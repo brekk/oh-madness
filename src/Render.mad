@@ -2,12 +2,15 @@ import type { Card, Rank, Suit } from "@/Card"
 import type { GameState } from "@/OhHell"
 import type { PlayedCard, Player } from "@/Player"
 
-import { always } from "Function"
-// import IO from "IO"
+import { always, noop } from "Function"
+import IO from "IO"
 import List from "List"
+import { fromMaybe } from "Maybe"
+import Process from "Process"
 // import { fromMaybe } from "Maybe"
 import String from "String"
 import Terminal from "Terminal"
+import Tuple from "Tuple"
 
 import {
   Ace,
@@ -108,9 +111,9 @@ spaces :: Integer -> String
 spaces = String.repeat(' ')
 
 renderHand :: Suit -> List Card -> String
-export renderHand = (trump, hand) => `│ ↳ ${showHand(trump, hand)} ${spaces(10)}│\n│${
-  spaces(BOX_WIDTH)
-}│`
+export renderHand = (trump, hand) => `│ ↳ ${showHand(trump, hand)} ${spaces(10)}
+|
+│${spaces(BOX_WIDTH)}│`
 
 showPlayerHand :: Suit -> Player -> String
 export showPlayerHand = (trump, player) => pipe(
@@ -206,9 +209,8 @@ summarizePlayState = (state) => pipe(
         none = String.isEmpty(playedHand)
         len = String.length(playedHand) + 3
         return List.append(
-          `${showPlayerSummary(player)}\n│${none ? "" : ` ↳ ${playedHand}`}${
-            spaces((none ? BOX_WIDTH : 62 - len))
-          }│`,
+          `${showPlayerSummary(player)}
+│${none ? "" : ` ↳ ${playedHand}`}${spaces((none ? BOX_WIDTH : 62 - len))}│`,
           playerSummaries,
         )
       },
@@ -231,4 +233,66 @@ export showGameForPlayer = (playerName, state) => {
   } ┃
 ┡${heavyHorizontal}┩\n${summarizePlayState(state)}
 └${horizontal}┘`
+}
+
+ESC = {
+  CTRL_C: "\x03",
+  ENTER: "\r",
+  BACKSPACE: "\x7F",
+  ARROW_UP: "\x1B[A",
+  ARROW_DOWN: "\x1B[B",
+  ARROW_RIGHT: "\x1B[C",
+  ARROW_LEFT: "\x1B[D",
+}
+
+saveCursor :: {} -> {}
+export saveCursor = () => IO.put("\x1b7")
+
+restoreCursor :: {} -> {}
+export restoreCursor = () => IO.put("\x1b8")
+
+eraseAfterCursor :: {} -> {}
+export eraseAfterCursor = () => IO.put("\x1b[0J")
+
+clear :: {} -> {}
+export clear = () => IO.put("\x1b[2J\x1b[H")
+
+export alias Option = #[String, {} -> {}]
+
+renderInteractive :: List Option -> (List Option -> Integer -> String) -> {}
+export renderInteractive = (options, listRenderer) => {
+  cursor = 0
+  clear()
+  saveCursor()
+  max = List.length(options)
+  draw = pipe(
+    listRenderer(options),
+    IO.put,
+  )
+  Terminal.enableTTYRawMode()
+  draw(cursor)
+  Terminal.onKeyPressed(
+    (seq) => {
+      if (seq == ESC.CTRL_C) do {
+        IO.putLine("👋")
+        Process.exit(0)
+      } else if (seq == ESC.ARROW_UP || seq == ESC.ARROW_LEFT) do {
+        cursor := cursor - 1 < 0 ? max - 1 : cursor - 1
+      } else if (seq == ESC.ARROW_DOWN || seq == ESC.ARROW_RIGHT) do {
+        cursor := cursor + 1 > max - 1 ? 0 : cursor + 1
+      } else if (seq == ESC.ENTER) do {
+        eraseAfterCursor()
+        pipe(
+          List.nth(cursor),
+          map(Tuple.snd),
+          fromMaybe(noop),
+          (fn) => fn(),
+        )(options)
+        Process.exit(0)
+      }
+      clear()
+      // IO.put("cursor: " ++ show(cursor))
+      draw(cursor)
+    },
+  )
 }

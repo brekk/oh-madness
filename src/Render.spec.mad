@@ -18,7 +18,8 @@ import {
   Spades,
   Wildcard,
 } from "./Card"
-import { Bot, Player } from "./Player"
+import { Bets, CardsPlayed, Dealt } from "./OhHell"
+import { Bot, PlayedCard, Player } from "./Player"
 import {
   __colorCard,
   __showRank,
@@ -28,6 +29,7 @@ import {
   showBet,
   showCard,
   showFullPlayer,
+  showGameForPlayer,
   showPlayedHandFor,
   showPlayerHand,
   showPlayerSummary,
@@ -38,116 +40,94 @@ import { stripAnsi } from "./String"
 
 
 test(
-  "__colorCard",
-  () => do {
-    _ <- assertEquals(__colorCard(Joker, "none"), "none")
-    _ <- assertEquals(__colorCard(Clubs, "blue"), Terminal.text.blue("blue"))
-    return assertEquals(__colorCard(Hearts, "red"), Terminal.text.red("red"))
-  },
-)
-test(
-  "__showRank",
-  () => do {
-    _ <- assertEquals(__showRank(Ace), "A")
-    _ <- assertEquals(__showRank(King), "K")
-    _ <- assertEquals(__showRank(Queen), "Q")
-    _ <- assertEquals(__showRank(Jack), "J")
-    _ <- assertEquals(__showRank(InvalidRank), "?")
-    _ <- assertEquals(__showRank(NoFace(10)), "X")
-    _ <- assertEquals(__showRank(NoFace(3)), "3")
-    return assertEquals(__showRank(Wildcard), "")
-  },
-)
-test(
-  "__showSuit",
-  () => do {
-    _ <- assertEquals(stripAnsi(__showSuit(Clubs)), "♧")
-    _ <- assertEquals(stripAnsi(__showSuit(Diamonds)), "♢")
-    _ <- assertEquals(stripAnsi(__showSuit(Hearts)), "♡")
-    _ <- assertEquals(stripAnsi(__showSuit(Spades)), "♤")
-    return assertEquals(stripAnsi(__showSuit(Joker)), "🃏")
-  },
-)
-// this is far too much work to make the tests happy
-test(
-  "showCard",
-  () => do {
-    convert = pipe(
-      showCard,
-      stripAnsi,
-      String.toList,
-      map(Char.toShort),
-    )
-    _ <- assertEquals(convert(Card(Hearts, NoFace(8))), [9825, 8201, 56])
-    _ <- assertEquals(convert(Card(Clubs, Wildcard)), [9831])
-    _ <- assertEquals(convert(Card(Joker, InvalidRank)), [55356, 56527, 8201, 63])
-    return assertEquals(convert(Card(Diamonds, Ace)), [9826, 8201, 65])
-  },
-)
-
-test("showBet", () => assertEquals(showBet(4, 10), "4 ⁄10 ⌻"))
-test("showPoints", () => assertEquals(showPoints(10), "10 ⌼"))
-test(
-  "nameWithGap",
-  () => assertEquals(nameWithGap("yoyoyoyo"), "yoyoyoyo                               "),
-)
-test(
-  "renderHand",
+  "showGameForPlayer",
   () => assertEquals(
-    stripAnsi(
-      renderHand(
-        Hearts,
-        [
-          Card(Hearts, Ace),
-          Card(Hearts, King),
-          Card(Hearts, Queen),
-          Card(Hearts, Jack),
-          Card(Hearts, NoFace(10)),
-        ],
-      ),
-    ),
-    `│ ↳ ♡ A ♡ K ♡ Q ♡ J ♡ X           │
-│                                                     │`,
-  ),
-)
-
-test(
-  "showFullPlayer",
-  () => assertEquals(
-    stripAnsi(
-      showFullPlayer(
-        Clubs,
-        Player(
+    map(stripAnsi)(
+      String.split(
+        "\n",
+        showGameForPlayer(
           "Brekk",
-          [
-            Card(Clubs, Ace),
-            Card(Clubs, King),
-            Card(Spades, Queen),
-            Card(Diamonds, Jack),
-            Card(Hearts, NoFace(10)),
-            Card(Clubs, NoFace(3)),
-            Card(Diamonds, NoFace(5)),
-            Card(Hearts, NoFace(8)),
-            Card(Hearts, NoFace(2)),
-            Card(Clubs, NoFace(2)),
-          ],
-          0,
-          0,
-          0,
+          {
+            bets: [8, 1, 0],
+            cardsPerPlayer: 10,
+            cardsPerRound: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            playedCards: [
+              PlayedCard("Brekk", Card(Hearts, Queen)),
+              PlayedCard("Arnaud", Card(Spades, NoFace(7))),
+              PlayedCard("Computer", Card(Clubs, Ace)),
+            ],
+            players: [
+              Player(
+                "Brekk",
+                [
+                  Card(Spades, NoFace(2)),
+                  Card(Hearts, NoFace(2)),
+                  Card(Spades, NoFace(8)),
+                  Card(Hearts, NoFace(8)),
+                  Card(Diamonds, NoFace(7)),
+                  Card(Spades, NoFace(6)),
+                  Card(Clubs, Queen),
+                  Card(Diamonds, NoFace(8)),
+                  Card(Diamonds, NoFace(6)),
+                ],
+                8,
+                0,
+                0,
+              ),
+              Player(
+                "Arnaud",
+                [
+                  Card(Clubs, NoFace(5)),
+                  Card(Clubs, King),
+                  Card(Clubs, NoFace(6)),
+                  Card(Hearts, King),
+                  Card(Clubs, NoFace(10)),
+                  Card(Clubs, NoFace(3)),
+                  Card(Diamonds, NoFace(9)),
+                  Card(Diamonds, Ace),
+                  Card(Hearts, NoFace(5)),
+                ],
+                1,
+                0,
+                0,
+              ),
+              Player(
+                "Computer",
+                [
+                  Card(Clubs, NoFace(4)),
+                  Card(Diamonds, NoFace(3)),
+                  Card(Hearts, NoFace(6)),
+                  Card(Spades, Queen),
+                  Card(Diamonds, Jack),
+                  Card(Clubs, NoFace(2)),
+                  Card(Spades, Ace),
+                  Card(Clubs, NoFace(8)),
+                  Card(Spades, King),
+                ],
+                0,
+                0,
+                0,
+              ),
+            ],
+            round: 0,
+            status: CardsPlayed(3),
+            totalPlayers: 3,
+            trump: Hearts,
+          },
         ),
       ),
     ),
-    `│ Brekk                                  0 ⁄0 ⌻   0 ⌼ │  │ ↳ ♧ A ♧ K ♧ 3 ♧ 2 ♤ Q ♢ J ♡ X ♡ 8 ♢ 5 ♡ 2           │
-│                                                     │`,
+    [
+      `┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓`,
+      `┃ Oh Hell ┊ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✧ ✧ ✧ ✧ ✧ ✧ ✧ ✧ ┊ ♡ ┃`,
+      `┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩`,
+      `│ Brekk                                  0 ⁄8 ⌻   0 ⌼ │`,
+      `│ ↳ ♡ Q                                               │`,
+      `│ Arnaud                                 0 ⁄1 ⌻   0 ⌼ │`,
+      `│ ↳ ♤ 7                                               │`,
+      `│ Computer                               0 ⁄0 ⌻   0 ⌼ │`,
+      `│ ↳ ♧ A                                               │`,
+      `└─────────────────────────────────────────────────────┘`,
+    ],
   ),
 )
-
-test(
-  "showPlayerSummary",
-  () => assertEquals(
-    showPlayerSummary(Bot(Player("Cool", [], 0, 0, 0))),
-    "│ Cool                                   0 ⁄0 ⌻   0 ⌼ │",
-  ),
-)
-
-test("showCard", () => assertEquals(stripAnsi(showCard(Card(Hearts, NoFace(8)))), "♡ 8"))

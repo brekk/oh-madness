@@ -3,6 +3,7 @@ import List from "List"
 import Maybe from "Maybe"
 import Random from "Random"
 import String from "String"
+import Terminal from "Terminal"
 
 import { stripAnsi } from "./String"
 import Ascii from "@/Ascii"
@@ -24,29 +25,50 @@ tapPrintState = (x) => {
   return x
 }
 
+
+
 main = () => {
   gen = Random.generateFromString("oh-madness-0.0.0")
-  pipe(
-    OhHell.initialDeal(gen),
-    map(
-      pipe(
-        OhHell.betting(gen),
-        (state) => {
-          IO.pTrace(">>>", state)
-          getPlayer = convenientPlayerGet(state)
-          brekk = getPlayer("Brekk")
-          arnaud = getPlayer("Arnaud")
-          comp = getPlayer("Computer")
-          return pipe(
-            OhHell.playCard(brekk, Card(Hearts, Queen)),
-            OhHell.playCard(arnaud, Card(Spades, NoFace(7))),
-            OhHell.playCard(comp, Card(Clubs, Ace)),
-          )(state)
+  // pipe(
+  //   OhHell.initialDeal(gen),
+  //   map(
+  //     pipe(
+  //       OhHell.betting(gen),
+  //       (state) => {
+  //         // IO.pTrace(">>>", state)
+  //         getPlayer = convenientPlayerGet(state)
+  //         brekk = getPlayer("Brekk")
+  //         arnaud = getPlayer("Arnaud")
+  //         comp = getPlayer("Computer")
+  //         return pipe(
+  //           OhHell.playCard(brekk, Card(Hearts, Queen)),
+  //           OhHell.playCard(arnaud, Card(Spades, NoFace(7))),
+  //           OhHell.playCard(comp, Card(Clubs, Ace)),
+  //         )(state)
+  //       },
+  //       // tapPrintState,
+  //       OhHell.countRound,
+  //       tapPrintState,
+  //     ),
+  //   ),
+  // )(["Brekk", "Arnaud", "Computer"])
+  opts = [
+    #["a", () => IO.put("YOU SAID A")],
+    #["b", () => IO.put("YOU SAID B")],
+    #["c", () => IO.put("YOU SAID C")],
+  ]
+  listicle = (o, x) => `⌜ ⌝\n${
+    pipe(
+      List.mapWithIndex(
+        (_o, y) => where(_o) {
+          #[label, _] =>
+            x == y
+              ? Terminal.ansiColor([Terminal.ansi.BGBrightWhite, Terminal.ansi.FGRed], label)
+              : label
         },
-        tapPrintState,
-        OhHell.countRound,
-        tapPrintState,
       ),
-    ),
-  )(["Brekk", "Arnaud", "Computer"])
+      String.join("\n"),
+    )(o)
+  }\n⌞ ⌟`
+  Render.renderInteractive(opts, listicle)
 }
