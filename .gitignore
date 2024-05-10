@@ -3,3 +3,5 @@ build
 .tests
 .repl
 .DS_Store
+.module_cache
+madlib_modules

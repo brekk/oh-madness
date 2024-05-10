@@ -1,8 +1,8 @@
+import { Ace, Card, Diamonds, Hearts, King, NoFace, Spades, diamond, spade } from "Gambit"
 import { Just, Nothing } from "Maybe"
 import Random from "Random"
 import { assertEquals, test } from "Test"
 
-import { Ace, Card, Diamonds, Hearts, King, NoFace, Spades, diamond, spade } from "@/Card"
 import {
   Bot,
   PlayedCard,

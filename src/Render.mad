@@ -1,17 +1,9 @@
-import type { Card, Rank, Suit } from "@/Card"
+import type { Card, Rank, Suit } from "Gambit"
+
 import type { GameState } from "@/OhHell"
 import type { PlayedCard, Player } from "@/Player"
 
 import { always, noop } from "Function"
-import IO from "IO"
-import List from "List"
-import { fromMaybe } from "Maybe"
-import Process from "Process"
-// import { fromMaybe } from "Maybe"
-import String from "String"
-import Terminal from "Terminal"
-import Tuple from "Tuple"
-
 import {
   Ace,
   Card,
@@ -26,8 +18,17 @@ import {
   Queen,
   Spades,
   Wildcard,
-} from "@/Card"
-import { sortWithTrump } from "@/Deck"
+  sortWithTrump,
+} from "Gambit"
+import IO from "IO"
+import List from "List"
+import { fromMaybe } from "Maybe"
+import Process from "Process"
+// import { fromMaybe } from "Maybe"
+import String from "String"
+import Terminal from "Terminal"
+import Tuple from "Tuple"
+
 import Player from "@/Player"
 import P from "@/Player"
 

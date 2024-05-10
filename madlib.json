@@ -1,8 +1,15 @@
 {
   "name": "oh-madness",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "src/Main.mad",
   "importAliases": {
     ".": "src"
-  }
+  },
+  "dependencies": [
+    {
+      "minVersion": "0.0.2",
+      "url": "https://github.com/brekk/gambit/archive/refs/tags/v0.0.2.zip",
+      "description": "Gambit"
+    }
+  ]
 }

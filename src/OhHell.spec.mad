@@ -1,12 +1,8 @@
-import type { Card } from "@/Card"
+import type { Card } from "Gambit"
+
 import type { PlayedCard } from "@/Player"
 
 import Either from "Either"
-import List from "List"
-import { Nothing, fromMaybe } from "Maybe"
-import Random from "Random"
-import { assertEquals, test } from "Test"
-
 import {
   Ace,
   Card,
@@ -21,7 +17,12 @@ import {
   diamond,
   heart,
   spade,
-} from "@/Card"
+} from "Gambit"
+import List from "List"
+import { Nothing, fromMaybe } from "Maybe"
+import Random from "Random"
+import { assertEquals, test } from "Test"
+
 import {
   Bets,
   CardsPlayed,

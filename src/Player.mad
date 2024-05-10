@@ -1,13 +1,11 @@
+import type { Card, Suit } from "Gambit"
 import type { Maybe } from "Maybe"
 
-import type { Card, Suit } from "@/Card"
-
 import Fn from "Function"
+import Deck from "Gambit/Deck"
 import List from "List"
 import Math from "Math"
 import { Just, Nothing } from "Maybe"
-
-import Deck from "@/Deck"
 
 
 

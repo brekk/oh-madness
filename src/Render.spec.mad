@@ -1,8 +1,4 @@
 import Char from "Char"
-import String from "String"
-import Terminal from "Terminal"
-import { assertEquals, test } from "Test"
-
 import {
   Ace,
   Card,
@@ -17,7 +13,11 @@ import {
   Queen,
   Spades,
   Wildcard,
-} from "./Card"
+} from "Gambit"
+import String from "String"
+import Terminal from "Terminal"
+import { assertEquals, test } from "Test"
+
 import { Bets, CardsPlayed, Dealt } from "./OhHell"
 import { Bot, PlayedCard, Player } from "./Player"
 import {
