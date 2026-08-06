@@ -1,0 +1,48 @@
+{
+  "lockfileVersion": 1,
+  "packages": {
+    "https://github.com/brekk/dye/archive/refs/tags/v0.0.10.zip": {
+      "buildHash": "fbed1ef52bafc05de424c372d4cb244a",
+      "dependencies": [
+        "https://github.com/brekk/study/archive/refs/tags/v0.0.1.zip"
+      ],
+      "name": "dye",
+      "version": "0.0.10",
+      "versionHash": "4d3d03bfb040ab3e2b209e3c62ed614c"
+    },
+    "https://github.com/brekk/gambit/archive/refs/tags/v0.0.2.zip": {
+      "buildHash": "ee3b691384ac128b0479c8a231b0b877",
+      "dependencies": [],
+      "name": "gambit",
+      "version": "0.0.2",
+      "versionHash": "f9df19c8ed7b93c9843bcaef9576a042"
+    },
+    "https://github.com/brekk/party-bus/archive/refs/tags/v0.0.8.zip": {
+      "buildHash": "ad6a150dbb2bb6f34cd39215b973d98b",
+      "dependencies": [
+        "https://github.com/brekk/dye/archive/refs/tags/v0.0.10.zip",
+        "https://github.com/brekk/study/archive/refs/tags/v0.0.3.zip"
+      ],
+      "name": "PartyBus",
+      "version": "0.0.8",
+      "versionHash": "03afcd24d3b7852bdef203bc34360409"
+    },
+    "https://github.com/brekk/study/archive/refs/tags/v0.0.6.zip": {
+      "buildHash": "ea22d1b4088f66d9160d10e6d0079eb7",
+      "dependencies": [],
+      "name": "study",
+      "version": "0.0.6",
+      "versionHash": "cf12946e6e3b4847d54e3b71a38c6145"
+    },
+    "https://github.com/brekk/utter/archive/refs/tags/v0.0.1.zip": {
+      "buildHash": "6ddea9c836490a6b99e46947a8aec491",
+      "dependencies": [
+        "https://github.com/brekk/party-bus/archive/refs/tags/v0.0.8.zip",
+        "https://github.com/brekk/study/archive/refs/tags/v0.0.6.zip"
+      ],
+      "name": "utter",
+      "version": "0.0.1",
+      "versionHash": "ee5597d6e8f925bb2a434f7e19ff8ca6"
+    }
+  }
+}

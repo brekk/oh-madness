@@ -1,5 +1,0 @@
-import Lang from "./EastAsianLang"
-
-
-
-main = () => {}

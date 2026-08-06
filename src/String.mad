@@ -2,13 +2,9 @@ import { always, equals, ifElse, unless, when } from "Function"
 import List from "List"
 import String from "String"
 
-import Ansi from "@/Ansi"
-import EALang from "@/EastAsianLang"
-
 
 
 type CodePoint = CodePoint(Short) | InvalidCodePoint
-
 // TODO: figure out codePointAt for LLVM
 safeCodePointAt :: String -> Integer -> CodePoint
 export safeCodePointAt = (str, i) => {
@@ -19,7 +15,6 @@ export safeCodePointAt = (str, i) => {
     CodePoint(point)
   }
 }
-
 pointToShort :: CodePoint -> Short
 export pointToShort = where {
   InvalidCodePoint =>
@@ -28,55 +23,11 @@ export pointToShort = where {
   CodePoint(p) =>
     p
 }
-
 codePointAt :: String -> Integer -> Short
 export codePointAt = (str, i) => pipe(
   safeCodePointAt(str),
   pointToShort,
 )(i)
-
-isCombiningChar :: Short -> Boolean
-export isCombiningChar = (s) => s >= 0x300 && s <= 0x36F
-
 // TODO: we can't do emoji checking yet
 isEmoji :: Short -> Boolean
-isEmoji = (_) => false
-
-sumStringWidth :: Boolean -> String -> Integer
-export sumStringWidth = (ambigIsWide, str) => pipe(
-  // this isn't correct but we're working with what we have for now
-  String.toList,
-  map((c) => String.fromList([c])),
-  map(codePointAt($, 0)),
-  List.reduce(
-    (sum, codepoint) => if (isEmoji(codepoint)) {
-      sum + 2
-    } else if (Ansi.isControlChar(codepoint) || isCombiningChar(codepoint)) {
-      sum
-    } else {
-      sum + EALang.getAmbiguousWidth(ambigIsWide, codepoint)
-    },
-    0,
-  ),
-)(str)
-
-ambiguousStringWidth :: Boolean -> Boolean -> String -> Integer
-export ambiguousStringWidth = (ambigIsWide, includeAnsi, input) => pipe(
-  when(always(!includeAnsi), Ansi.strip),
-  ifElse(
-    pipe(
-      String.length,
-      equals(0),
-    ),
-    always(0),
-    sumStringWidth(ambigIsWide),
-  ),
-)(input)
-
-export stringWidth = ambiguousStringWidth(true, false)
-
-stripAnsi :: String -> String
-export stripAnsi = String.replace(
-  `[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]))`,
-  "",
-)
+export isEmoji = (_) => false

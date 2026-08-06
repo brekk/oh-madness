@@ -1,146 +1,69 @@
-import type { Card, Suit } from "Gambit"
 import type { Maybe } from "Maybe"
 
+import type { Card, Suit } from "Gambit"
+
 import Fn from "Function"
-import Deck from "Gambit/Deck"
 import List from "List"
 import Math from "Math"
 import { Just, Nothing } from "Maybe"
 
+import Deck from "gambit/Deck"
 
 
-export type Player = Player(String, List Card, Integer, Integer, Integer) | Bot(Player)
 
+export type Player = Player(String, List Card) | Bot(Player)
 name :: Player -> String
 export name = where {
-  Player(x, _, _, _, _) =>
+  Player(x, _) =>
     x
 
   Bot(p) =>
     name(p)
 }
-
 isNamed :: String -> Player -> Boolean
 export isNamed = (n, p) => name(p) == n
-
-
 hand :: Player -> List Card
 export hand = where {
-  Player(_, cards, _, _, _) =>
+  Player(_, cards) =>
     cards
 
   Bot(p) =>
     hand(p)
 }
-
 hasCard :: Card -> Player -> Boolean
 export hasCard = (card, player) => pipe(
   hand,
   Deck.has(card),
 )(player)
-
-bet :: Player -> Integer
-export bet = where {
-  Player(_, _, x, _, _) =>
-    x
-
-  Bot(p) =>
-    bet(p)
-}
-
-tricks :: Player -> Integer
-export tricks = where {
-  Player(_, _, _, t, _) =>
-    t
-
-  Bot(p) =>
-    tricks(p)
-}
-
-addTrick :: Player -> Player
-export addTrick = where {
-  Player(a, b, c, t, e) =>
-    Player(a, b, c, t + 1, e)
-
-  Bot(p) =>
-    Bot(addTrick(p))
-}
-
-points :: Player -> Integer
-export points = where {
-  Player(_, _, _, _, x) =>
-    x
-
-  Bot(p) =>
-    points(p)
-}
-
-countTricks :: Player -> Player
-export countTricks = where {
-  Player(n, _, b, t, p) =>
-    Player(n, [], 0, 0, (b == t ? t + 10 : t) + p)
-
-  Bot(p) =>
-    Bot(countTricks(p))
-}
-
-setBet :: Player -> Integer -> Player
-export setBet = (player, i) => where(player) {
-  Player(n, h, _, t, p) =>
-    Player(n, h, i, t, p)
-
-  Bot(p) =>
-    Bot(setBet(p, i))
-}
-
-countOtherBets :: List Player -> Player -> Integer
-export countOtherBets = (players, toExclude) => pipe(
-  List.reject(
-    pipe(
-      name,
-      Fn.equals(name(toExclude)),
-    ),
-  ),
-  map(bet),
-  List.reduce(Math.add, 0),
-)(players)
-
 discard :: Card -> Player -> Player
 export discard = (card, player) => where(player) {
-  Player(n, cards, b, t, p) =>
-    Player(n, Deck.remove(card, cards), b, t, p)
+  Player(n, cards) =>
+    Player(n, Deck.remove(card, cards))
 
   Bot(p) =>
     Bot(discard(card, p))
 }
-
 // Keep track of who played what card
 export type PlayedCard = PlayedCard(String, Card)
-
 playCard :: Card -> Player -> Maybe PlayedCard
 export playCard = (card, player) => hasCard(card, player)
   ? Just(PlayedCard(name(player), card))
   : Nothing
-
-
 cardPlayedBy :: String -> PlayedCard -> Boolean
 export cardPlayedBy = (playerName, pCard) => where(pCard) {
   PlayedCard(by, _) =>
     by == playerName
 }
-
 cardFromPlayed :: PlayedCard -> Card
 export cardFromPlayed = where {
   PlayedCard(_, c) =>
     c
 }
-
 playerNameFromPlayedCard :: PlayedCard -> String
 export playerNameFromPlayedCard = where {
   PlayedCard(n, _) =>
     n
 }
-
 // these aren't yet dealing with many of the edge cases:
 // you must follow suit if possible
 bestCardInHand :: Suit -> Player -> Maybe Card
@@ -149,24 +72,12 @@ export bestCardInHand = (trump, p) => pipe(
   Deck.sortWithTrump(trump),
   List.first,
 )(p)
-
 worstCardInHand :: Suit -> Player -> Maybe Card
 export worstCardInHand = (trump, p) => pipe(
   hand,
   Deck.sortLowWithTrump(trump),
   List.first,
 )(p)
-
-
-optimalPlay :: Suit -> Player -> Maybe Card
-export optimalPlay = (trump, player) => where(player) {
-  Player(_, _, b, t, _) =>
-    (t + 1 < b || t > b ? bestCardInHand(trump, player) : worstCardInHand(trump, player))
-
-  Bot(p) =>
-    optimalPlay(trump, p)
-}
-
 isBot :: Player -> Boolean
 export isBot = where {
   Bot(_) =>
@@ -175,12 +86,9 @@ export isBot = where {
   _ =>
     false
 }
-
 isHuman :: Player -> Boolean
 export isHuman = Fn.complement(isBot)
-
 humanMap :: (Player -> Player) -> Player -> Player
 export humanMap = Fn.when(isHuman)
-
 botMap :: (Player -> Player) -> Player -> Player
 export botMap = Fn.when(isBot)

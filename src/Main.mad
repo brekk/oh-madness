@@ -1,74 +1,238 @@
-import { Ace, Card, Clubs, Diamonds, Hearts, Jack, King, NoFace, Queen, Spades } from "Gambit"
-import Deck from "Gambit/Deck"
+import type { Card, Suit } from "gambit"
+import type { Controller } from "utter/Interpreter"
+
+import type { Player } from "@/Player"
+
+import Dict from "Dictionary"
 import IO from "IO"
 import List from "List"
+import { Just, Nothing } from "Maybe"
 import Maybe from "Maybe"
 import Random from "Random"
 import String from "String"
 import Terminal from "Terminal"
 
-import { stripAnsi } from "./String"
+import {
+  Ace,
+  Card,
+  Clubs,
+  DECK,
+  Diamonds,
+  Hearts,
+  Jack,
+  Joker,
+  King,
+  NoFace,
+  Queen,
+  Spades,
+} from "gambit"
+import Deck from "gambit/Deck"
+// import Utter from "utter"
+import {
+  Action,
+} from "utter/Action"
+import { Guard } from "utter/Guard"
+import Interpreter from "utter/Interpreter"
+import Machine from "utter/Machine"
+import Reducer from "utter/Reducer"
+import State from "utter/State"
+import Transition from "utter/Transition"
+
 import Ascii from "@/Ascii"
-import OhHell from "@/OhHell"
-import { Player } from "@/Player"
+import Log from "@/Log"
+// import OhHell from "@/OhHell"
+import {
+  Bot,
+  Player,
+} from "@/Player"
 import Render from "@/Render"
 
 
 
-convenientPlayerGet = (state, player) => pipe(
-  OhHell.getPlayerByName(state),
-  Maybe.fromMaybe(Player("Devil", [], 0, 0, 0)),
-)(player)
-
-tapPrintState = (x) => {
-  IO.putLine(Render.showGameForPlayer("Brekk", x))
-  return x
+STATES = {
+  setPlayers: "SETTING_PLAYERS",
+  changeDealer: "CHANGING_DEALER",
+  playing: "PLAYING",
+  dealing: "DEALING",
+  flipTrumpCard: "FLIPPING_TRUMP",
+  betting: "BETTING",
+  initial: "INITIAL",
+  scoring: "SCORING",
 }
+EVENTS = {
+  initialized: "initialized",
+  playersSet: "playersSet",
+  dealerSet: "dealerSet",
+  trumpCardSet: "trumpCardSet",
+  cardsDealt: "cardsDealt",
+  betsTaken: "betsTaken",
+  roundsComplete: "roundsComplete",
+  trickComplete: "trickComplete",
+  playComplete: "playComplete",
+  scoresRecorded: "scoresRecorded",
+}
+announceWith = (k) => Action((e, mPay, mCtx) => { Log.env.main((k ?? "") ++ e, mPay) })
+announce = announceWith(Nothing)
+GUARDS = {
+  roundUnderTotalRound: Guard(
+    (ev, mCtx, mPay) => ev
+        == EVENTS.roundsComplete
+        && where(#[mCtx, mPay]) {
+          #[Just(ctx), Just(pay)] =>
+            do {
+              // ctx.round + 1 < 
+              return false
+            }
 
-
-
-main = () => {
-  gen = Random.generateFromString("oh-madness-0.0.0")
-  // pipe(
-  //   OhHell.initialDeal(gen),
-  //   map(
-  //     pipe(
-  //       OhHell.betting(gen),
-  //       (state) => {
-  //         // IO.pTrace(">>>", state)
-  //         getPlayer = convenientPlayerGet(state)
-  //         brekk = getPlayer("Brekk")
-  //         arnaud = getPlayer("Arnaud")
-  //         comp = getPlayer("Computer")
-  //         return pipe(
-  //           OhHell.playCard(brekk, Card(Hearts, Queen)),
-  //           OhHell.playCard(arnaud, Card(Spades, NoFace(7))),
-  //           OhHell.playCard(comp, Card(Clubs, Ace)),
-  //         )(state)
-  //       },
-  //       // tapPrintState,
-  //       OhHell.countRound,
-  //       tapPrintState,
-  //     ),
-  //   ),
-  // )(["Brekk", "Arnaud", "Computer"])
-  opts = [
-    #["a", () => IO.put("YOU SAID A")],
-    #["b", () => IO.put("YOU SAID B")],
-    #["c", () => IO.put("YOU SAID C")],
-  ]
-  listicle = (o, x) => `⌜ ⌝\n${
-    pipe(
-      List.mapWithIndex(
-        (_o, y) => where(_o) {
-          #[label, _] =>
-            x == y
-              ? Terminal.ansiColor([Terminal.ansi.BGBrightWhite, Terminal.ansi.FGRed], label)
-              : label
+          _ =>
+            false
         },
+  ),
+  allRoundsComplete: Guard(
+    (ev, mCtx, mPay) => ev
+        == EVENTS.roundsComplete
+        && where(#[mCtx, mPay]) {
+          #[Just(ctx), Just(pay)] =>
+            do {
+              // ctx.round + 1 < 
+              return false
+            }
+
+          _ =>
+            false
+        },
+  ),
+}
+REDUCERS = {
+  setPlayers: Reducer.ActionReducer(
+    (ev, mPay, mCtx) => ev == EVENTS.initialized
+      ? where(#[mPay, mCtx]) {
+        #[Just({ payload: players }), Just(ctx)] =>
+          Just({ ...ctx, players })
+
+        _ =>
+          mCtx
+      }
+      : mCtx,
+  ),
+}
+export alias PayloadShape a = { name :: String, payload :: List a }
+export alias GameStateContext = {
+  bets :: Dictionary Player Integer,
+  cardsPerPlayer :: Integer,
+  cardsPerRound :: Integer,
+  dealer :: Maybe Player,
+  deck :: List Card,
+  playedCards :: List Card,
+  players :: List Player,
+  round :: Integer,
+  scores :: Dictionary Player Integer,
+  trump :: Suit,
+}
+setPlayers :: List Player
+  -> Controller (PayloadShape a) GameStateContext
+  -> Controller (PayloadShape a) GameStateContext
+setPlayers = (players, service) => Interpreter.send(
+  EVENTS.initialized,
+  Just({ name: "players", payload: players }),
+  service,
+)
+GAMEPLAY = { setPlayers }
+main = () => {
+  gameMachine :: Machine (PayloadShape a) GameStateContext
+  gameMachine = Machine.create(
+    "oh-hell",
+    [
+      State.create(
+        STATES.initial,
+        [
+          Transition.createComplex(
+            EVENTS.initialized,
+            STATES.setPlayers,
+            [announce],
+            [],
+            [REDUCERS.setPlayers],
+          ),
+        ],
       ),
-      String.join("\n"),
-    )(o)
-  }\n⌞ ⌟`
-  Render.renderInteractive(opts, listicle)
+      State.create(
+        STATES.setPlayers,
+        [Transition.createComplex(EVENTS.playersSet, STATES.changeDealer, [announce], [], [])],
+      ),
+      State.create(
+        STATES.changeDealer,
+        [Transition.createComplex(EVENTS.dealerSet, STATES.flipTrumpCard, [announce], [], [])],
+      ),
+      State.create(
+        STATES.flipTrumpCard,
+        [Transition.createComplex(EVENTS.trumpCardSet, STATES.dealing, [announce], [], [])],
+      ),
+      State.create(
+        STATES.dealing,
+        [Transition.createComplex(EVENTS.cardsDealt, STATES.betting, [announce], [], [])],
+      ),
+      State.create(
+        STATES.betting,
+        [Transition.createComplex(EVENTS.betsTaken, STATES.playing, [announce], [], [])],
+      ),
+      State.create(
+        STATES.playing,
+        [
+          Transition.createComplex(
+            EVENTS.trickComplete,
+            STATES.playing,
+            [announce],
+            [GUARDS.roundUnderTotalRound],
+            [],
+          ),
+          Transition.createComplex(
+            EVENTS.roundsComplete,
+            STATES.scoring,
+            [announce],
+            [GUARDS.allRoundsComplete],
+            [],
+          ),
+        ],
+      ),
+      State.create(
+        STATES.scoring,
+        [Transition.createComplex(EVENTS.scoresRecorded, STATES.changeDealer, [announce], [], [])],
+      ),
+    ],
+  )
+  initialContext :: Maybe GameStateContext
+  initialContext = Just({
+    bets: Dict.empty,
+    cardsPerPlayer: -1,
+    cardsPerRound: -1,
+    dealer: Nothing,
+    deck: DECK,
+    playedCards: [],
+    players: [],
+    round: -1,
+    scores: Dict.empty,
+    trump: Joker,
+  })
+  // IO.pTrace("GAME", gameMachine)
+  service = Interpreter.create(initialContext, gameMachine)
+  IO.pTrace(
+    "PLAYERS!",
+    pipe(
+      Interpreter.context,
+      (v) => v.players,
+    )(service),
+  )
+  service2 = GAMEPLAY.setPlayers(
+    [Player("brekk", []), Bot(Player("arnaud", [])), Bot(Player("robot", []))],
+    service,
+  )
+  /*
+                                                        IO.pTrace(
+                                                          "PLAYERS AFTER UPDATE!",
+                                                          pipe(
+                                                            Interpreter.context,
+                                                            map(.players),
+                                                          )(service2),
+                                                        )
+                                                        */
 }

@@ -1,6 +1,6 @@
 {
   "name": "oh-madness",
-  "version": "0.0.2",
+  "version": "0.0.0",
   "main": "src/Main.mad",
   "importAliases": {
     ".": "src"
@@ -10,6 +10,16 @@
       "minVersion": "0.0.2",
       "url": "https://github.com/brekk/gambit/archive/refs/tags/v0.0.2.zip",
       "description": "Gambit"
+    },
+    {
+      "minVersion": "0.0.8",
+      "url": "https://github.com/brekk/party-bus/archive/refs/tags/v0.0.8.zip",
+      "description": "PartyBus"
+    },
+    {
+      "minVersion": "0.0.1",
+      "url": "https://github.com/brekk/utter/archive/refs/tags/v0.0.1.zip",
+      "description": "Utter"
     }
   ]
 }

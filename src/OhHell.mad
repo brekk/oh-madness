@@ -1,26 +1,27 @@
 import type { Either } from "Either"
-import type { Card, Suit } from "Gambit"
 import type { Maybe } from "Maybe"
+
+import type { Card, Suit } from "Gambit"
 
 import type { PlayedCard, Player } from "@/Player"
 
 import { EQ, GT, LT } from "Compare"
 import { Left, Right } from "Either"
 import Fn from "Function"
-import Card from "Gambit"
-import Deck from "Gambit/Deck"
 // import IO from "IO"
 import List from "List"
 import Math from "Math"
 import { Just, Nothing, fromMaybe } from "Maybe"
 import Random from "Random"
 
+import Card from "gambit"
+import Deck from "gambit/Deck"
+
 import Player from "@/Player"
 
 
 
 export type GameStatus = Dealt | Bets(Integer) | CardsPlayed(Integer) | CountRound
-
 export alias GameState = {
   bets :: List Integer,
   cardsPerPlayer :: Integer,
@@ -38,10 +39,7 @@ export alias HandWeights = {
   trumpCards :: Integer,
   trumpFaceCards :: Integer,
 }
-
 export type GameError = Error(Integer, String) | GenericError
-
-
 getHumanError :: GameError -> String
 export getHumanError = where {
   Error(_, s) =>
@@ -50,7 +48,6 @@ export getHumanError = where {
   GenericError =>
     "An error occurred!"
 }
-
 cardsPerTotalPlayers :: Integer -> Integer
 export cardsPerTotalPlayers = (i) => if (i >= 3 && i <= 5) {
   10
@@ -61,7 +58,6 @@ export cardsPerTotalPlayers = (i) => if (i >= 3 && i <= 5) {
 } else {
   -1
 }
-
 roundsPerTotalPlayers :: Integer -> List Integer
 export roundsPerTotalPlayers = (i) => {
   max = cardsPerTotalPlayers(i) + 1
@@ -71,8 +67,6 @@ export roundsPerTotalPlayers = (i) => {
     [max]
   }
 }
-
-
 initialDeal :: Random -> List String -> Either GameError GameState
 export initialDeal = (rand, playerNames) => {
   total = List.length(playerNames)
@@ -85,7 +79,7 @@ export initialDeal = (rand, playerNames) => {
         Right({
           players: pipe(
             List.zip(playerNames),
-            map(where { #[name, hand] => Player.Player(name, hand, 0, 0, 0) }),
+            map(where { #[name, hand] => Player.Player(name, hand) }),
           )(hands),
           trump: pipe(
             List.first,
@@ -106,10 +100,8 @@ export initialDeal = (rand, playerNames) => {
     },
   )(Deck.DECK)
 }
-
 getPlayerByName :: GameState -> String -> Maybe Player
 export getPlayerByName = (state, name) => List.find(Player.isNamed(name), state.players)
-
 __largest :: List Integer -> Integer
 export __largest = pipe(
   List.sortBy((a, b) => a == b ? EQ : a < b ? GT : LT),
@@ -121,7 +113,6 @@ export __largest = pipe(
       0
   },
 )
-
 weighHand :: Suit -> List Card -> List Integer -> HandWeights
 export weighHand = (trump, cards, bets) => {
   sorted = Deck.sortWithTrump(trump, cards)
@@ -137,7 +128,6 @@ export weighHand = (trump, cards, bets) => {
     )(faceCards),
   }
 }
-
 /**
  * If a player has great trump cards (starting with an ace), what is the contiguous set of
  * cards that will beat all others? i.e. If they have ace through queen of trump, then
@@ -166,16 +156,13 @@ export winningCards = (trump, cards) => {
     )(cards)
   }
 }
-
 canBet :: Integer -> List Integer -> Boolean
 export canBet = (goal, xs) => List.reduce(Math.add, 0, xs) != goal
-
 maxBet :: GameState -> Integer
 export maxBet = (state) => pipe(
   List.nth(state.round),
   fromMaybe(state.totalPlayers),
 )(state.cardsPerRound)
-
 // getBets :: GameState -> List Integer
 // export getBets = pipe(
 //   .players,
@@ -183,64 +170,58 @@ export maxBet = (state) => pipe(
 // )
 
 // this has some of the needed mechanics but isn't yet at all correct
-judgeByWeight :: GameState -> Player -> HandWeights -> #[Integer, Integer]
-export judgeByWeight = (state, player, weights) => {
-  max = maxBet(state)
-  currentSum = Player.countOtherBets(state.players, player)
-  upperLimit = max - currentSum
-  sureBets = winningCards(state.trump, Player.hand(player))
-  // return Random.integer(weights.trumpFaceCards, upperLimit, rand)
-  return #[weights.trumpFaceCards, upperLimit]
-}
-
+// judgeByWeight :: GameState -> Player -> HandWeights -> #[Integer, Integer]
+// export judgeByWeight = (state, player, weights) => {
+//   max = maxBet(state)
+//   currentSum = Player.countOtherBets(state.players, player)
+//   upperLimit = max - currentSum
+//   sureBets = winningCards(state.trump, Player.hand(player))
+//   // return Random.integer(weights.trumpFaceCards, upperLimit, rand)
+//   return #[weights.trumpFaceCards, upperLimit]
+// }
 randomIntTuple :: Random -> #[Integer, Integer] -> Integer
 export randomIntTuple = (r, az) => where(az) {
   #[a, z] =>
     Random.integer(a, z, r)
 }
-
-
-betForPlayer :: Random -> GameState -> Player -> Integer
-export betForPlayer = (rand, state, player) => pipe(
-  where {
-    Player.Player(name, hand, _, _, _) =>
-      pipe(
-        .bets,
-        weighHand(state.trump, hand),
-        judgeByWeight(state, player),
-        randomIntTuple(rand),
-      )(state)
-
-    Player.Bot(p) =>
-      betForPlayer(rand, state, p)
-  },
-)(player)
-
-betting :: Random -> GameState -> GameState
-export betting = (rand, state) => List.reduce(
-  (s, p) => pipe(
-    betForPlayer(rand, s),
-    (bet) => {
-      bets = [...s.bets, bet]
-      status = Bets(List.length(bets))
-      return ({ ...state, bets, status, players: [...s.players, Player.setBet(p, bet)] })
-    },
-  )(p),
-  { ...state, players: [] },
-  state.players,
-)
-
-autoPlay :: Random -> GameState -> GameState
-export autoPlay = (rand, state) => List.reduce(
-  (s, player) => pipe(
-    Player.optimalPlay(state.trump),
-    map(playCard(player, $, s)),
-    fromMaybe(state),
-  )(player),
-  { ...state, players: [] },
-  state.players,
-)
-
+// betForPlayer :: Random -> GameState -> Player -> Integer
+// export betForPlayer = (rand, state, player) => pipe(
+//   where {
+//     Player.Player(name, hand, _, _, _) =>
+//       pipe(
+//         .bets,
+//         weighHand(state.trump, hand),
+//         judgeByWeight(state, player),
+//         randomIntTuple(rand),
+//       )(state)
+//
+//     Player.Bot(p) =>
+//       betForPlayer(rand, state, p)
+//   },
+// )(player)
+// betting :: Random -> GameState -> GameState
+// export betting = (rand, state) => List.reduce(
+//   (s, p) => pipe(
+//     betForPlayer(rand, s),
+//     (bet) => {
+//       bets = [...s.bets, bet]
+//       status = Bets(List.length(bets))
+//       return ({ ...state, bets, status, players: [...s.players, Player.setBet(p, bet)] })
+//     },
+//   )(p),
+//   { ...state, players: [] },
+//   state.players,
+// )
+// autoPlay :: Random -> GameState -> GameState
+// export autoPlay = (rand, state) => List.reduce(
+//   (s, player) => pipe(
+//     Player.optimalPlay(state.trump),
+//     map(playCard(player, $, s)),
+//     fromMaybe(state),
+//   )(player),
+//   { ...state, players: [] },
+//   state.players,
+// )
 updatePlayer :: Player -> List Player -> List Player
 export updatePlayer = (p, ps) => map(
   Fn.when(
@@ -251,12 +232,10 @@ export updatePlayer = (p, ps) => map(
     (_) => p,
   ),
 )(ps)
-
 updatePlayerByName :: String -> (Player -> Player) -> List Player -> List Player
 export updatePlayerByName = (name, modifyPlayer, players) => map(
   Fn.when(Player.isNamed(name), modifyPlayer),
 )(players)
-
 playCard :: Player -> Card -> GameState -> GameState
 export playCard = (player, card, state) => pipe(
   Player.playCard(card),
@@ -277,7 +256,6 @@ export playCard = (player, card, state) => pipe(
       state
   },
 )(player)
-
 // heather eat your heart out
 getPlayedBy :: String -> GameState -> List Card
 export getPlayedBy = (playerName, state) => pipe(
@@ -290,13 +268,13 @@ export getPlayedBy = (playerName, state) => pipe(
     [],
   ),
 )(state)
-
 sortPlayed :: Suit -> List PlayedCard -> List PlayedCard
 export sortPlayed = (trump, cards) => List.sortBy(
   (a, b) => Deck.compareWithTrump(true, trump, Player.cardFromPlayed(a), Player.cardFromPlayed(b)),
   cards,
 )
 
+/*
 countRound :: GameState -> GameState
 export countRound = (state) => pipe(
   .playedCards,
@@ -317,3 +295,4 @@ export countRound = (state) => pipe(
       state
   },
 )(state)
+*/

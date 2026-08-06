@@ -1,0 +1,38 @@
+/* ★★★ oh-madness@0.0.0 ★★★
+ * THIS FILE AUTOMATICALLY GENERATED FROM SOURCE: oh-madness.clowncar
+ */
+
+import Party from "PartyBus"
+
+
+
+export tags = {
+  ohMadness: Party.tag("ohMadness"),
+  main: Party.tagWithScope("ohMadness", ["main"]),
+  player: Party.tagWithScope("ohMadness", ["player"]),
+  game: Party.tagWithScope("ohMadness", ["game"]),
+  render: Party.tagWithScope("ohMadness", ["render"]),
+  state: Party.tagWithScope("ohMadness", ["state"]),
+  guard: Party.tagWithScope("ohMadness", ["guard"]),
+  event: Party.tagWithScope("ohMadness", ["event"]),
+}
+export env = {
+  ohMadness: Party.env(tags.ohMadness),
+  main: Party.env(tags.main),
+  player: Party.env(tags.player),
+  game: Party.env(tags.game),
+  render: Party.env(tags.render),
+  state: Party.env(tags.state),
+  guard: Party.env(tags.guard),
+  event: Party.env(tags.event),
+}
+export tapped = {
+  ohMadness: Party.tap(env.ohMadness),
+  main: Party.tap(env.main),
+  player: Party.tap(env.player),
+  game: Party.tap(env.game),
+  render: Party.tap(env.render),
+  state: Party.tap(env.state),
+  guard: Party.tap(env.guard),
+  event: Party.tap(env.event),
+}

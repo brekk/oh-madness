@@ -1,9 +1,18 @@
-import type { Card, Rank, Suit } from "Gambit"
+import type { Card, Rank, Suit } from "gambit"
 
 import type { GameState } from "@/OhHell"
 import type { PlayedCard, Player } from "@/Player"
 
 import { always, noop } from "Function"
+import IO from "IO"
+import List from "List"
+import { fromMaybe } from "Maybe"
+import Process from "Process"
+// import { fromMaybe } from "Maybe"
+import String from "String"
+import Terminal from "Terminal"
+import Tuple from "Tuple"
+
 import {
   Ace,
   Card,
@@ -20,14 +29,6 @@ import {
   Wildcard,
   sortWithTrump,
 } from "Gambit"
-import IO from "IO"
-import List from "List"
-import { fromMaybe } from "Maybe"
-import Process from "Process"
-// import { fromMaybe } from "Maybe"
-import String from "String"
-import Terminal from "Terminal"
-import Tuple from "Tuple"
 
 import Player from "@/Player"
 import P from "@/Player"
@@ -36,7 +37,6 @@ import P from "@/Player"
 
 // this is a temporary hack while we don't have String.width
 BOX_WIDTH = 53
-
 __showSuit :: Suit -> String
 export __showSuit = where {
   Clubs =>
@@ -54,7 +54,6 @@ export __showSuit = where {
   Joker =>
     "🃏"
 }
-
 __showRank :: Rank -> String
 export __showRank = where {
   Ace =>
@@ -79,7 +78,6 @@ export __showRank = where {
   Wildcard =>
     ""
 }
-
 __colorCard :: Suit -> String -> String
 export __colorCard = (s, str) => if (s == Hearts || s == Diamonds) {
   Terminal.text.red(str)
@@ -88,107 +86,91 @@ export __colorCard = (s, str) => if (s == Hearts || s == Diamonds) {
 } else {
   str
 }
-
 showCard :: Card -> String
 export showCard = where {
   Card(s, r) =>
     __colorCard(s, `${__showSuit(s)}${r != Wildcard ? " " ++ __showRank(r) : ""}`)
 }
-
 showHand :: Suit -> List Card -> String
 showHand = (trump, hand) => pipe(
   sortWithTrump(trump),
   map(showCard),
   String.join(" "),
 )(hand)
-
 showBet :: Integer -> Integer -> String
 export showBet = (tricks, bet) => `${show(tricks)} ⁄${show(bet)} ⌻`
-
 showPoints :: Integer -> String
 export showPoints = (x) => `${show(x)} ⌼`
-
 spaces :: Integer -> String
 spaces = String.repeat(' ')
-
 renderHand :: Suit -> List Card -> String
 export renderHand = (trump, hand) => `│ ↳ ${showHand(trump, hand)} ${spaces(10)}
 |
 │${spaces(BOX_WIDTH)}│`
-
 showPlayerHand :: Suit -> Player -> String
 export showPlayerHand = (trump, player) => pipe(
   P.hand,
   renderHand(trump),
 )(player)
-
 nameWithGap :: String -> String
 export nameWithGap = (name) => name ++ spaces(BOX_WIDTH - 14 - String.length(name))
-
 showPlayerSummary :: Player -> String
 export showPlayerSummary = (player) => {
   summarize = where {
-    P.Player(name, _, bet, tricks, points) =>
-      `│ ${nameWithGap(name)}${showBet(tricks, bet)}   ${showPoints(points)} │`
+    P.Player(name, _) =>
+      `│ ${nameWithGap(name)} │`
 
     P.Bot(p) =>
       summarize(p)
   }
   return summarize(player)
 }
-
 showFullPlayer :: Suit -> Player -> String
 export showFullPlayer = (trump, player) => showPlayerSummary(player)
     ++ "  "
     ++ showPlayerHand(trump, player)
-
 showRounds :: List Integer -> Integer -> String
 showRounds = (rounds, round) => pipe(
   List.length,
   List.repeatWith((i) => (i <= round ? "✦" : "✧")),
   String.join(" "),
 )(rounds)
-
 bannerLine :: Char -> Integer -> String
-bannerLine = (c, x) => pipe(
+bannerLine = // omniscient view
+/*
+      showGame :: GameState -> String
+      export showGame = (state) => {
+        lhs = 10
+        rhs = 5
+        width = (List.length(state.cardsPerRound) * 2) + lhs + rhs
+        heavyHorizontal = bannerLine('━', width)
+        horizontal = bannerLine('─', width)
+        return `┏${heavyHorizontal}┓
+      ┃ Oh Hell ┊ ${showRounds(state.cardsPerRound, state.round)} ┊ ${
+          __colorCard(state.trump, __showSuit(state.trump))
+        } ┃
+      ┡${heavyHorizontal}┩
+      ${
+          pipe(
+            .players,
+            map(showFullPlayer(state.trump)),
+            String.join("\n"),
+          )(state)
+        }
+      └${horizontal}┘`
+      }
+      */
+/*
+      pipe(
+            .players,
+            map((p) => P.name(p) == playerName ? showFullPlayer(state.trump, p) : showPlayerSummary(p)),
+            String.join("\n"),
+          )(state)
+      */
+(c, x) => pipe(
   List.repeatWith(always(c)),
   String.fromList,
 )(x)
-
-
-// omniscient view
-/*
-showGame :: GameState -> String
-export showGame = (state) => {
-  lhs = 10
-  rhs = 5
-  width = (List.length(state.cardsPerRound) * 2) + lhs + rhs
-  heavyHorizontal = bannerLine('━', width)
-  horizontal = bannerLine('─', width)
-  return `┏${heavyHorizontal}┓
-┃ Oh Hell ┊ ${showRounds(state.cardsPerRound, state.round)} ┊ ${
-    __colorCard(state.trump, __showSuit(state.trump))
-  } ┃
-┡${heavyHorizontal}┩
-${
-    pipe(
-      .players,
-      map(showFullPlayer(state.trump)),
-      String.join("\n"),
-    )(state)
-  }
-└${horizontal}┘`
-}
-*/
-
-/*
-pipe(
-      .players,
-      map((p) => P.name(p) == playerName ? showFullPlayer(state.trump, p) : showPlayerSummary(p)),
-      String.join("\n"),
-    )(state)
-*/
-
 showPlayedHandFor :: List PlayedCard -> Player -> String
 export showPlayedHandFor = (playedCards, player) => pipe(
   List.filter(Player.cardPlayedBy(Player.name(player))),
@@ -200,7 +182,6 @@ export showPlayedHandFor = (playedCards, player) => pipe(
   ),
   String.join(" "),
 )(playedCards)
-
 summarizePlayState :: GameState -> String
 summarizePlayState = (state) => pipe(
   List.reduce(
@@ -220,7 +201,6 @@ summarizePlayState = (state) => pipe(
   ),
   String.join("\n"),
 )(state.players)
-
 showGameForPlayer :: String -> GameState -> String
 export showGameForPlayer = (playerName, state) => {
   lhs = 10
@@ -232,10 +212,9 @@ export showGameForPlayer = (playerName, state) => {
 ┃ Oh Hell ┊ ${showRounds(state.cardsPerRound, state.round)} ┊ ${
     __colorCard(state.trump, __showSuit(state.trump))
   } ┃
-┡${heavyHorizontal}┩\n${summarizePlayState(state)}
+┡${heavyHorizontal}┩${summarizePlayState(state)}
 └${horizontal}┘`
 }
-
 ESC = {
   CTRL_C: "\x03",
   ENTER: "\r",
@@ -245,21 +224,15 @@ ESC = {
   ARROW_RIGHT: "\x1B[C",
   ARROW_LEFT: "\x1B[D",
 }
-
 saveCursor :: {} -> {}
 export saveCursor = () => IO.put("\x1b7")
-
 restoreCursor :: {} -> {}
 export restoreCursor = () => IO.put("\x1b8")
-
 eraseAfterCursor :: {} -> {}
 export eraseAfterCursor = () => IO.put("\x1b[0J")
-
 clear :: {} -> {}
 export clear = () => IO.put("\x1b[2J\x1b[H")
-
 export alias Option = #[String, {} -> {}]
-
 renderInteractive :: List Option -> (List Option -> Integer -> String) -> {}
 export renderInteractive = (options, listRenderer) => {
   cursor = 0
@@ -277,7 +250,8 @@ export renderInteractive = (options, listRenderer) => {
       if (seq == ESC.CTRL_C) do {
         IO.putLine("👋")
         Process.exit(0)
-      } else if (seq == ESC.ARROW_UP || seq == ESC.ARROW_LEFT) do {
+      } else if (seq == ESC.ARROW_UP || seq == ESC.ARROW_LEFT) // IO.put("cursor: " ++ show(cursor))
+      do {
         cursor := cursor - 1 < 0 ? max - 1 : cursor - 1
       } else if (seq == ESC.ARROW_DOWN || seq == ESC.ARROW_RIGHT) do {
         cursor := cursor + 1 > max - 1 ? 0 : cursor + 1
@@ -292,7 +266,7 @@ export renderInteractive = (options, listRenderer) => {
         Process.exit(0)
       }
       clear()
-      // IO.put("cursor: " ++ show(cursor))
+
       draw(cursor)
     },
   )
