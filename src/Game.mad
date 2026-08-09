@@ -1,4 +1,5 @@
 import type { Maybe } from "Maybe"
+import type { Random } from "Random"
 
 import type { Card, Suit } from "gambit"
 import type { Controller } from "utter/Interpreter"
@@ -23,6 +24,7 @@ export alias GameStateContext = {
   deck :: List Card,
   playedCards :: List PlayedCard,
   players :: List Player,
+  random :: Random,
   round :: Integer,
   scores :: Dictionary Player Integer,
   trump :: Suit,

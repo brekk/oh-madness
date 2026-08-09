@@ -10,6 +10,8 @@ import { Just, Nothing } from "Maybe"
 import { ActionReducer } from "utter/Reducer"
 
 import { GameDealCards, GameSetDealer, GameSetPlayers, GameSetTrump } from "@/Game"
+import Log from "@/Log"
+import OhHell from "@/OhHell"
 
 
 
@@ -45,11 +47,15 @@ _setDealer = (ev, pay, mCtx) => {
   }
 }
 export setDealer = ActionReducer(_setDealer)
-_dealCards :: RedFun pay ctx
+_dealCards :: (Show pay, Show ctx) => RedFun pay ctx
 _dealCards = (ev, pay, mCtx) => {
   return where(#[pay, mCtx]) {
     #[GameDealCards, Just(ctx)] =>
-      Just(ctx)
+      do {
+        raw = OhHell.initialDeal(ctx.random, ctx)
+        Log.env.reducer("RAW", raw)
+        return Just(ctx)
+      }
 
     _ =>
       mCtx

@@ -46,6 +46,7 @@ import { gameMachine } from "@/StateMachine"
 
 
 main = () => {
+  random = Random.generateFromString("my-cool-game")
   initialContext :: Maybe GameStateContext
   initialContext = Just({
     bets: Dict.empty,
@@ -58,6 +59,7 @@ main = () => {
     round: -1,
     scores: Dict.empty,
     trump: Joker,
+    random,
   })
   IO.pTrace("COMPLETE?", Machine.findIncomplete(gameMachine))
   // IO.pTrace("GAME", gameMachine)

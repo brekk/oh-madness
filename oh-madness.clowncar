@@ -4,6 +4,7 @@ ohMadness
  - main:gameplay
  - main:event
  - main:event:post
+ - reducer
  - player
  - game
  - render
