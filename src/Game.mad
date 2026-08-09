@@ -1,0 +1,30 @@
+import type { Maybe } from "Maybe"
+
+import type { Card, Suit } from "gambit"
+import type { Controller } from "utter/Interpreter"
+
+import type { PlayedCard, Player } from "@/Player"
+
+
+
+export type GamePayload
+  = GameSetPlayers(List Player)
+  | GameSetDealer(Player)
+  | GameDealCards
+  | GameSetTrump(Suit)
+  | GameTakeBets(Dictionary Player Integer)
+  | GameRecordTrick(List PlayedCard)
+  | GameRecordRound
+export alias GameStateContext = {
+  bets :: Dictionary Player Integer,
+  cardsPerPlayer :: Integer,
+  cardsPerRound :: List Integer,
+  dealer :: Maybe Player,
+  deck :: List Card,
+  playedCards :: List PlayedCard,
+  players :: List Player,
+  round :: Integer,
+  scores :: Dictionary Player Integer,
+  trump :: Suit,
+}
+export alias OhHell = Controller GamePayload GameStateContext

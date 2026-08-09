@@ -1,0 +1,114 @@
+import type { Suit } from "gambit"
+import type { Machine } from "utter/Machine"
+
+import type { GamePayload, GameStateContext, OhHell } from "@/Game"
+import type { Player } from "@/Player"
+
+import { Just, Nothing } from "Maybe"
+
+import { Action } from "utter/Action"
+import Interpreter from "utter/Interpreter"
+import Machine from "utter/Machine"
+import State from "utter/State"
+import Transition from "utter/Transition"
+
+import { EVENTS, STATES } from "@/Constants"
+import { GameDealCards, GameSetDealer, GameSetPlayers, GameSetTrump } from "@/Game"
+import Log from "@/Log"
+import GUARDS from "@/StateMachine/Guards"
+import REDUCERS from "@/StateMachine/Reducers"
+
+
+
+announceWith = (k) => Action((e, mPay, mCtx) => { Log.env.main((k ?? "") ++ e, mPay) })
+announce = announceWith(Nothing)
+ACTIONS = [announce]
+setPlayers :: List Player -> OhHell -> OhHell
+export setPlayers = (players, sv) => Interpreter.send(
+  EVENTS.playersSet,
+  GameSetPlayers(players),
+  sv,
+)
+setDealer :: Player -> OhHell -> OhHell
+export setDealer = (player, sv) => Interpreter.send(EVENTS.dealerSet, GameSetDealer(player), sv)
+setTrump :: Suit -> OhHell -> OhHell
+export setTrump = (suit, sv) => Interpreter.send(EVENTS.trumpCardSet, GameSetTrump(suit), sv)
+dealCards :: OhHell -> OhHell
+export dealCards = Interpreter.send(EVENTS.cardsDealt, GameDealCards)
+gameMachine :: Machine GamePayload GameStateContext
+export gameMachine = Machine.create(
+  "oh-hell",
+  [
+    State.create(
+      STATES.initial,
+      [
+        Transition.createComplex(
+          EVENTS.playersSet,
+          STATES.setPlayers,
+          ACTIONS,
+          [],
+          [REDUCERS.setPlayers],
+        ),
+      ],
+    ),
+    State.create(
+      STATES.setPlayers,
+      [
+        Transition.createComplex(
+          EVENTS.dealerSet,
+          STATES.changeDealer,
+          ACTIONS,
+          [],
+          [REDUCERS.setDealer],
+        ),
+      ],
+    ),
+    State.create(
+      STATES.changeDealer,
+      [
+        Transition.createComplex(
+          EVENTS.trumpCardSet,
+          STATES.flipTrumpCard,
+          ACTIONS,
+          [],
+          [REDUCERS.setTrump],
+        ),
+      ],
+    ),
+    State.create(
+      STATES.flipTrumpCard,
+      [Transition.createComplex(EVENTS.deal, STATES.dealing, ACTIONS, [], [REDUCERS.dealCards])],
+    ),
+    State.create(
+      STATES.dealing,
+      [Transition.createComplex(EVENTS.cardsDealt, STATES.betting, ACTIONS, [], [])],
+    ),
+    State.create(
+      STATES.betting,
+      [Transition.createComplex(EVENTS.betsTaken, STATES.playing, ACTIONS, [], [])],
+    ),
+    State.create(
+      STATES.playing,
+      [
+        Transition.createComplex(
+          EVENTS.trickComplete,
+          STATES.playing,
+          ACTIONS,
+          [GUARDS.roundUnderTotalRound],
+          [],
+        ),
+        Transition.createComplex(
+          EVENTS.roundsComplete,
+          STATES.scoring,
+          ACTIONS,
+          [GUARDS.allRoundsComplete],
+          [],
+        ),
+      ],
+    ),
+    State.create(
+      STATES.scoring,
+      [Transition.createComplex(EVENTS.scoresRecorded, STATES.changeDealer, ACTIONS, [], [])],
+    ),
+  ],
+)

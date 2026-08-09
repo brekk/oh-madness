@@ -4,11 +4,13 @@
 
 import Party from "PartyBus"
 
-
-
 export tags = {
   ohMadness: Party.tag("ohMadness"),
   main: Party.tagWithScope("ohMadness", ["main"]),
+  mainState: Party.tagWithScope("ohMadness", ["main", "state"]),
+  mainGameplay: Party.tagWithScope("ohMadness", ["main", "gameplay"]),
+  mainEvent: Party.tagWithScope("ohMadness", ["main", "event"]),
+  mainEventPost: Party.tagWithScope("ohMadness", ["main", "event", "post"]),
   player: Party.tagWithScope("ohMadness", ["player"]),
   game: Party.tagWithScope("ohMadness", ["game"]),
   render: Party.tagWithScope("ohMadness", ["render"]),
@@ -19,6 +21,10 @@ export tags = {
 export env = {
   ohMadness: Party.env(tags.ohMadness),
   main: Party.env(tags.main),
+  mainState: Party.env(tags.mainState),
+  mainGameplay: Party.env(tags.mainGameplay),
+  mainEvent: Party.env(tags.mainEvent),
+  mainEventPost: Party.env(tags.mainEventPost),
   player: Party.env(tags.player),
   game: Party.env(tags.game),
   render: Party.env(tags.render),
@@ -29,6 +35,10 @@ export env = {
 export tapped = {
   ohMadness: Party.tap(env.ohMadness),
   main: Party.tap(env.main),
+  mainState: Party.tap(env.mainState),
+  mainGameplay: Party.tap(env.mainGameplay),
+  mainEvent: Party.tap(env.mainEvent),
+  mainEventPost: Party.tap(env.mainEventPost),
   player: Party.tap(env.player),
   game: Party.tap(env.game),
   render: Party.tap(env.render),

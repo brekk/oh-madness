@@ -1,5 +1,9 @@
 ohMadness
  - main
+ - main:state
+ - main:gameplay
+ - main:event
+ - main:event:post
  - player
  - game
  - render

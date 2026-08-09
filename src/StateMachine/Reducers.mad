@@ -1,0 +1,58 @@
+import type { Maybe } from "Maybe"
+
+import type { Card, Suit } from "gambit"
+import type { Controller } from "utter/Interpreter"
+
+import type { PlayedCard, Player } from "@/Player"
+
+import { Just, Nothing } from "Maybe"
+
+import { ActionReducer } from "utter/Reducer"
+
+import { GameDealCards, GameSetDealer, GameSetPlayers, GameSetTrump } from "@/Game"
+
+
+
+alias RedFun pay ctx = String -> pay -> Maybe ctx -> Maybe ctx
+_setPlayers :: RedFun pay ctx
+_setPlayers = (ev, mPay, mCtx) => where(#[mPay, mCtx]) {
+  #[GameSetPlayers(players), Just(ctx)] =>
+    Just({ ...ctx, players })
+
+  _ =>
+    mCtx
+}
+export setPlayers = ActionReducer(_setPlayers)
+_setTrump :: RedFun pay ctx
+_setTrump = (ev, pay, mCtx) => {
+  return where(#[pay, mCtx]) {
+    #[GameSetTrump(suit), Just(ctx)] =>
+      Just({ ...ctx, trump: suit })
+
+    _ =>
+      mCtx
+  }
+}
+export setTrump = ActionReducer(_setTrump)
+_setDealer :: RedFun pay ctx
+_setDealer = (ev, pay, mCtx) => {
+  return where(#[pay, mCtx]) {
+    #[GameSetDealer(dealer), Just(ctx)] =>
+      Just({ ...ctx, dealer: Just(dealer) })
+
+    _ =>
+      mCtx
+  }
+}
+export setDealer = ActionReducer(_setDealer)
+_dealCards :: RedFun pay ctx
+_dealCards = (ev, pay, mCtx) => {
+  return where(#[pay, mCtx]) {
+    #[GameDealCards, Just(ctx)] =>
+      Just(ctx)
+
+    _ =>
+      mCtx
+  }
+}
+export dealCards = ActionReducer(_dealCards)

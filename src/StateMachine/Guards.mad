@@ -1,0 +1,38 @@
+import type { Maybe } from "Maybe"
+
+import { Just, Nothing } from "Maybe"
+
+import { Guard } from "utter/Guard"
+
+import { EVENTS } from "@/Constants"
+
+
+
+_roundUnderTotalRound :: String -> pay -> Maybe ctx -> Boolean
+_roundUnderTotalRound = (ev, mPay, mCtx) => ev
+    == EVENTS.roundsComplete
+    && where(mCtx) {
+      Just(ctx) =>
+        do {
+          // ctx.round + 1 < 
+          return false
+        }
+
+      _ =>
+        false
+    }
+_allRoundsComplete :: String -> pay -> Maybe ctx -> Boolean
+_allRoundsComplete = (ev, mPay, mCtx) => ev
+    == EVENTS.roundsComplete
+    && where(mCtx) {
+      Just(ctx) =>
+        do {
+          // ctx.round + 1 < 
+          return false
+        }
+
+      _ =>
+        false
+    }
+export roundUnderTotalRound = Guard(_roundUnderTotalRound)
+export allRoundsComplete = Guard(_allRoundsComplete)

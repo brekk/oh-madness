@@ -3,6 +3,7 @@ import type { Maybe } from "Maybe"
 
 import type { Card, Suit } from "Gambit"
 
+import type { GamePayload, GameStateContext } from "@/Game"
 import type { PlayedCard, Player } from "@/Player"
 
 import { EQ, GT, LT } from "Compare"
@@ -21,18 +22,6 @@ import Player from "@/Player"
 
 
 
-export type GameStatus = Dealt | Bets(Integer) | CardsPlayed(Integer) | CountRound
-export alias GameState = {
-  bets :: List Integer,
-  cardsPerPlayer :: Integer,
-  cardsPerRound :: List Integer,
-  playedCards :: List Player.PlayedCard,
-  players :: List Player,
-  round :: Integer,
-  status :: GameStatus,
-  totalPlayers :: Integer,
-  trump :: Suit,
-}
 export alias HandWeights = {
   faceCards :: Integer,
   highestBet :: Integer,
@@ -67,16 +56,21 @@ export roundsPerTotalPlayers = (i) => {
     [max]
   }
 }
-initialDeal :: Random -> List String -> Either GameError GameState
-export initialDeal = (rand, playerNames) => {
-  total = List.length(playerNames)
+initialDeal :: Random -> GameStateContext -> Either GameError GameStateContext
+export initialDeal = (rand, ctx) => {
+  total = List.length(ctx.players)
   cardsPerPlayer = cardsPerTotalPlayers(total)
+  playerNames = pipe(
+    .players,
+    map(Player.name),
+  )(ctx)
   return pipe(
     Random.shuffle($, rand),
     Deck.deal(cardsPerPlayer, total),
     where {
       Just(#[hands, undealt]) =>
         Right({
+          ...ctx,
           players: pipe(
             List.zip(playerNames),
             map(where { #[name, hand] => Player.Player(name, hand) }),
@@ -88,11 +82,6 @@ export initialDeal = (rand, playerNames) => {
           )(undealt),
           cardsPerPlayer,
           cardsPerRound: roundsPerTotalPlayers(total),
-          round: 0,
-          totalPlayers: List.length(playerNames),
-          bets: [],
-          playedCards: [],
-          status: Dealt,
         })
 
       Nothing =>
@@ -100,7 +89,7 @@ export initialDeal = (rand, playerNames) => {
     },
   )(Deck.DECK)
 }
-getPlayerByName :: GameState -> String -> Maybe Player
+getPlayerByName :: GameStateContext -> String -> Maybe Player
 export getPlayerByName = (state, name) => List.find(Player.isNamed(name), state.players)
 __largest :: List Integer -> Integer
 export __largest = pipe(
@@ -158,10 +147,15 @@ export winningCards = (trump, cards) => {
 }
 canBet :: Integer -> List Integer -> Boolean
 export canBet = (goal, xs) => List.reduce(Math.add, 0, xs) != goal
-maxBet :: GameState -> Integer
+maxBet :: GameStateContext -> Integer
 export maxBet = (state) => pipe(
   List.nth(state.round),
-  fromMaybe(state.totalPlayers),
+  fromMaybe(
+    pipe(
+      .players,
+      List.length,
+    )(state),
+  ),
 )(state.cardsPerRound)
 // getBets :: GameState -> List Integer
 // export getBets = pipe(
@@ -236,19 +230,18 @@ updatePlayerByName :: String -> (Player -> Player) -> List Player -> List Player
 export updatePlayerByName = (name, modifyPlayer, players) => map(
   Fn.when(Player.isNamed(name), modifyPlayer),
 )(players)
-playCard :: Player -> Card -> GameState -> GameState
+playCard :: Player -> Card -> GameStateContext -> GameStateContext
 export playCard = (player, card, state) => pipe(
   Player.playCard(card),
   where {
     Just(played) =>
       do {
         playedCards = [...state.playedCards, played]
-        status = CardsPlayed(List.length(playedCards))
+        // status = CardsPlayed(List.length(playedCards))
         return {
           ...state,
           players: updatePlayer(Player.discard(card, player), state.players),
           playedCards,
-          status,
         }
       }
 
@@ -257,16 +250,10 @@ export playCard = (player, card, state) => pipe(
   },
 )(player)
 // heather eat your heart out
-getPlayedBy :: String -> GameState -> List Card
+getPlayedBy :: String -> GameStateContext -> List PlayedCard
 export getPlayedBy = (playerName, state) => pipe(
   .playedCards,
-  List.reduce(
-    (matched, pCard) => where(pCard) {
-      Player.PlayedCard(by, card) =>
-        by == playerName ? List.append(card, matched) : matched
-    },
-    [],
-  ),
+  List.filter((pCard) => where(pCard) { Player.PlayedCard(by, _) => by == playerName }),
 )(state)
 sortPlayed :: Suit -> List PlayedCard -> List PlayedCard
 export sortPlayed = (trump, cards) => List.sortBy(

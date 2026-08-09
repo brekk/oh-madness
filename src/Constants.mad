@@ -1,0 +1,23 @@
+export STATES = {
+  setPlayers: "SETTING_PLAYERS",
+  changeDealer: "CHANGING_DEALER",
+  playing: "PLAYING",
+  dealing: "DEALING",
+  flipTrumpCard: "FLIPPING_TRUMP",
+  betting: "BETTING",
+  initial: "INITIAL",
+  scoring: "SCORING",
+}
+export EVENTS = {
+  deal: "dealing",
+  initialized: "initialized",
+  playersSet: "playersSet",
+  dealerSet: "dealerSet",
+  trumpCardSet: "trumpCardSet",
+  cardsDealt: "cardsDealt",
+  betsTaken: "betsTaken",
+  roundsComplete: "roundsComplete",
+  trickComplete: "trickComplete",
+  playComplete: "playComplete",
+  scoresRecorded: "scoresRecorded",
+}
