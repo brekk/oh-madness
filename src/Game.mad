@@ -67,7 +67,7 @@ export setTrump = Interpreter.send(EVENTS.trumpCardSet, GameSetTrump)
 dealCards :: GameApi
 export dealCards = pipe(
   // Log.tapped.game("dealing cards?", Interpreter.context),
-  Interpreter.send(EVENTS.cardsDealt, GameDealCards),
+  Interpreter.send(EVENTS.deal, GameDealCards),
   // Log.tapped.game("dealt cards?", Interpreter.context),
 )
 takeBets :: Maybe (Dictionary Player Integer) -> GameApi
