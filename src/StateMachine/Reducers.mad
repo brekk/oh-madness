@@ -5,6 +5,7 @@ import type { Controller } from "utter/Interpreter"
 
 import type { PlayedCard, Player } from "@/Player"
 
+import { Left, Right } from "Either"
 import List from "List"
 import { Just, Nothing } from "Maybe"
 import Random from "Random"
@@ -62,25 +63,40 @@ _dealCards :: (Show pay, Show ctx) => RedFun pay ctx
 _dealCards = (ev, pay, mCtx) => {
   return where(#[pay, mCtx]) {
     #[GameDealCards, Just(ctx)] =>
-      do {
-        raw = OhHell.initialDeal(ctx)
-        Log.env.reducer("RAW", raw)
-        return Just(ctx)
-      }
+      pipe(
+        OhHell.initialDeal,
+        where {
+          // Log.env.reducer("smiggle", raw)
+          Right(raw) =>
+            do {
+              return Just(ctx)
+            }
+
+          Left(e) =>
+            do {
+              Log.env.reducer("error", e)
+              return mCtx
+            }
+        },
+      )(ctx)
 
     _ =>
       mCtx
   }
 }
 export dealCards = ActionReducer(_dealCards)
-_takeBets :: RedFun pay ctx
-_takeBets = (ev, pay, mCtx) => where(#[pay, mCtx]) {
-  #[GameTakeBets(Just(bets)), Just(ctx)] =>
-    do {
-      return Just(ctx)
-    }
+_takeBets :: (Show pay, Show ctx) => RedFun pay ctx
+_takeBets = (ev, pay, mCtx) => {
+  Log.env.player("BARF BARFO", #[ev, pay])
+  return where(#[pay, mCtx]) {
+    #[GameTakeBets(Just(bets)), Just(ctx)] =>
+      do {
+        Log.env.player("oh hell no", bets)
+        return Just(ctx)
+      }
 
-  _ =>
-    mCtx
+    _ =>
+      mCtx
+  }
 }
 export takeBets = ActionReducer(_takeBets)

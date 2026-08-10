@@ -15,7 +15,7 @@ import Deck from "gambit/Deck"
 // eventually we should wire the LogicModel to the Bot behavior,
 // but since everything is gonna be the most naive 
 export type Player = Player(String, List Card) | Bot(Player)
-// derive Comparable Player
+derive Comparable Player
 name :: Player -> String
 export name = where {
   Player(x, _) =>

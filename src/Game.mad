@@ -66,4 +66,4 @@ export setTrump = Interpreter.send(EVENTS.trumpCardSet, GameSetTrump)
 dealCards :: OhHell -> OhHell
 export dealCards = Interpreter.send(EVENTS.cardsDealt, GameDealCards)
 takeBets :: Maybe (Dictionary Player Integer) -> OhHell -> OhHell
-export takeBets = (dict) => Interpreter.send(EVENTS.betsTaken, GameTakeBets(dict))
+export takeBets = (dict, sv) => Interpreter.send(EVENTS.betsTaken, GameTakeBets(dict), sv)

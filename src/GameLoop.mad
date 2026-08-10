@@ -1,0 +1,29 @@
+import type { GamePayload, GameStateContext, OhHell } from "@/Game"
+
+import { Just } from "Maybe"
+import Random from "Random"
+
+import { Controller } from "utter/Interpreter"
+
+
+
+gameLoop :: (GameStateContext -> GameStateContext) -> OhHell -> OhHell
+export gameLoop = (run, ctrl) => pipe(
+  where {
+    Controller(mCtx, machine, state, exec) =>
+      where(mCtx) {
+        Just(ctx) =>
+          do {
+            r = ctx.random
+            r.update()
+            return Controller(Just(run({ ...ctx, random: r })), machine, state, exec)
+          }
+
+        _ =>
+          ctrl
+      }
+
+    _ =>
+      ctrl
+  },
+)(ctrl)

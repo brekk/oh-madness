@@ -1,46 +1,13 @@
-import type { Card, Suit } from "gambit"
-import type { Controller } from "utter/Interpreter"
-
-import type { GamePayload, GameStateContext, OhHell } from "@/Game"
-import type { PlayedCard, Player } from "@/Player"
-
-import Dict from "Dictionary"
 import IO from "IO"
-import List from "List"
-import { Just, Nothing } from "Maybe"
-import Maybe from "Maybe"
 import Random from "Random"
-import String from "String"
-import Terminal from "Terminal"
 
-import {
-  Ace,
-  Card,
-  Clubs,
-  DECK,
-  Diamonds,
-  Hearts,
-  Jack,
-  Joker,
-  King,
-  NoFace,
-  Queen,
-  Spades,
-  Wildcard,
-} from "gambit"
-import Deck from "gambit/Deck"
-import { Action } from "utter/Action"
-import { Guard } from "utter/Guard"
 import Interpreter from "utter/Interpreter"
 import Machine from "utter/Machine"
-import Reducer from "utter/Reducer"
 import State from "utter/State"
-import Transition from "utter/Transition"
 
-import { EVENTS, STATES } from "@/Constants"
 import GAMEPLAY from "@/Game"
+import Loop from "@/GameLoop"
 import Log from "@/Log"
-import Oh from "@/OhHell"
 import { Bot, Player } from "@/Player"
 import { createInitialContext, gameMachine } from "@/StateMachine"
 
@@ -106,6 +73,7 @@ main = () => {
     )
   service5 = GAMEPLAY.dealCards(service4)
   statement("5", service5)
-  service6 = GAMEPLAY.takeBets(Just({{ brekk: 4 }}))
+  // service6 = GAMEPLAY.takeBets(Just(Dict.fromList([#[brekk, 5]])), service5)
+  // statement("6", service6)
   // Log.env.mainEventPost("CARDS DEALT", service5)
 }
