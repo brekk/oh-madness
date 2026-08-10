@@ -9,6 +9,7 @@ import type { PlayedCard, Player } from "@/Player"
 import Interpreter from "utter/Interpreter"
 
 import { EVENTS } from "@/Constants"
+import Log from "@/Log"
 
 
 
@@ -53,17 +54,21 @@ export alias GameStateContext = {
   trump :: Card,
 }
 export alias OhHell = Controller GamePayload GameStateContext
-setPlayers :: List Player -> OhHell -> OhHell
-export setPlayers = (players, sv) => Interpreter.send(
-  EVENTS.playersSet,
-  GameSetPlayers(players),
-  sv,
-)
-setDealer :: OhHell -> OhHell
+export alias GameApi = OhHell -> OhHell
+setPlayers :: List Player -> GameApi
+export setPlayers = (players, sv) => pipe(
+  GameSetPlayers,
+  Interpreter.send(EVENTS.playersSet, $, sv),
+)(players)
+setDealer :: GameApi
 export setDealer = Interpreter.send(EVENTS.dealerSet, GameSetDealer)
-setTrump :: OhHell -> OhHell
+setTrump :: GameApi
 export setTrump = Interpreter.send(EVENTS.trumpCardSet, GameSetTrump)
-dealCards :: OhHell -> OhHell
-export dealCards = Interpreter.send(EVENTS.cardsDealt, GameDealCards)
-takeBets :: Maybe (Dictionary Player Integer) -> OhHell -> OhHell
+dealCards :: GameApi
+export dealCards = pipe(
+  // Log.tapped.game("dealing cards?", Interpreter.context),
+  Interpreter.send(EVENTS.cardsDealt, GameDealCards),
+  // Log.tapped.game("dealt cards?", Interpreter.context),
+)
+takeBets :: Maybe (Dictionary Player Integer) -> GameApi
 export takeBets = (dict, sv) => Interpreter.send(EVENTS.betsTaken, GameTakeBets(dict), sv)

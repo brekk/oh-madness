@@ -61,16 +61,14 @@ _setDealer = (ev, pay, mCtx) => {
 export setDealer = ActionReducer(_setDealer)
 _dealCards :: (Show pay, Show ctx) => RedFun pay ctx
 _dealCards = (ev, pay, mCtx) => {
+  // Log.env.reducer("EVE " ++ ev, #[pay, mCtx])
   return where(#[pay, mCtx]) {
     #[GameDealCards, Just(ctx)] =>
       pipe(
         OhHell.initialDeal,
         where {
-          // Log.env.reducer("smiggle", raw)
           Right(raw) =>
-            do {
-              return Just(ctx)
-            }
+            Just(raw)
 
           Left(e) =>
             do {

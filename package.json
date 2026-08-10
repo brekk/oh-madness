@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "maddoc-cli": "file:madlib_modules/MadDocCli"
+  }
+}

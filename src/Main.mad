@@ -7,6 +7,7 @@ import State from "utter/State"
 
 import GAMEPLAY from "@/Game"
 import Loop from "@/GameLoop"
+import { permaloop } from "@/GameLoop"
 import Log from "@/Log"
 import { Bot, Player } from "@/Player"
 import { createInitialContext, gameMachine } from "@/StateMachine"
@@ -16,63 +17,17 @@ import { createInitialContext, gameMachine } from "@/StateMachine"
 main = () => {
   random = Random.generateFromString("my-cool-game")
 
-  IO.pTrace("COMPLETE?", Machine.findIncomplete(gameMachine))
-  // IO.pTrace("GAME", gameMachine)
-  statement = (a, b) => pipe(
-    Interpreter.state,
-    map(State.name),
-    Log.env.mainState(a ++ " change!"),
-  )(b)
+
   service = Interpreter.create(createInitialContext(random), gameMachine)
-  statement("1", service)
-  Log
-    .env
-    .mainEventPost(
-      "PLAYERS!",
-      pipe(
-        Interpreter.context,
-        map((v) => v.players),
-      )(service),
-    )
+  hidden = permaloop(service)
+
   brekk = Player("brekk", [])
-  service2 = GAMEPLAY.setPlayers(
-    [brekk, Bot(Player("arnaud", [])), Bot(Player("robot", []))],
-    service,
-  )
-  statement("2", service2)
-  Log
-    .env
-    .mainEventPost(
-      "PLAYERS AFTER UPDATE!",
-      pipe(
-        Interpreter.context,
-        map(.players),
-      )(service2),
-    )
-  service3 = GAMEPLAY.setDealer(service2)
-  statement("3", service3)
-  Log
-    .env
-    .mainEventPost(
-      "DEALER SET?",
-      pipe(
-        Interpreter.context,
-        chain(.dealer),
-      )(service3),
-    )
-  service4 = GAMEPLAY.setTrump(service3)
-  statement("4", service4)
-  Log
-    .env
-    .mainEventPost(
-      "TRUMP CARD SET",
-      pipe(
-        Interpreter.context,
-        map(.trump),
-      )(service4),
-    )
-  service5 = GAMEPLAY.dealCards(service4)
-  statement("5", service5)
+  hidden.send(GAMEPLAY.setPlayers([brekk, Bot(Player("arnaud", [])), Bot(Player("robot", []))]))
+
+  hidden.send(GAMEPLAY.setDealer)
+  hidden.send(GAMEPLAY.setTrump)
+  hidden.send(GAMEPLAY.dealCards)
+  // statement("5", service5)
   // service6 = GAMEPLAY.takeBets(Just(Dict.fromList([#[brekk, 5]])), service5)
   // statement("6", service6)
   // Log.env.mainEventPost("CARDS DEALT", service5)

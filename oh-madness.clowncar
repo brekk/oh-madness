@@ -6,6 +6,7 @@ ohMadness
  - main:event:post
  - reducer
  - player
+ - loop
  - game
  - render
  - state

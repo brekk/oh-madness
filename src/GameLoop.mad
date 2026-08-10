@@ -1,13 +1,18 @@
-import type { GamePayload, GameStateContext, OhHell } from "@/Game"
+import type { GameApi, GamePayload, GameStateContext, OhHell } from "@/Game"
 
 import { Just } from "Maybe"
 import Random from "Random"
 
+import Interpreter from "utter/Interpreter"
 import { Controller } from "utter/Interpreter"
+import Machine from "utter/Machine"
+import State from "utter/State"
+
+import Log from "@/Log"
 
 
 
-gameLoop :: (GameStateContext -> GameStateContext) -> OhHell -> OhHell
+gameLoop :: GameApi -> OhHell -> OhHell
 export gameLoop = (run, ctrl) => pipe(
   where {
     Controller(mCtx, machine, state, exec) =>
@@ -16,7 +21,7 @@ export gameLoop = (run, ctrl) => pipe(
           do {
             r = ctx.random
             r.update()
-            return Controller(Just(run({ ...ctx, random: r })), machine, state, exec)
+            return Controller(Just({ ...ctx, random: r }), machine, state, exec)
           }
 
         _ =>
@@ -26,4 +31,27 @@ export gameLoop = (run, ctrl) => pipe(
     _ =>
       ctrl
   },
+  run,
 )(ctrl)
+stateName = pipe(
+  Interpreter.state,
+  map(State.name),
+)
+export alias HiddenController = { get :: {} -> OhHell, send :: GameApi -> OhHell }
+permaloop :: OhHell -> HiddenController
+export permaloop = (ctrl) => {
+  iter = 0
+  command = ctrl
+  send :: GameApi -> OhHell
+  send = (run) => {
+    iter := iter + 1
+    command := pipe(
+      gameLoop(run),
+      Log.tapped.loop("update " ++ show(iter) ++ ": ", stateName),
+    )(command)
+    return command
+  }
+  hidden :: HiddenController
+  hidden = { send, get: () => command }
+  return hidden
+}
