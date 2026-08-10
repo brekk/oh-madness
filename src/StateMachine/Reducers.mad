@@ -5,11 +5,13 @@ import type { Controller } from "utter/Interpreter"
 
 import type { PlayedCard, Player } from "@/Player"
 
+import List from "List"
 import { Just, Nothing } from "Maybe"
+import Random from "Random"
 
 import { ActionReducer } from "utter/Reducer"
 
-import { GameDealCards, GameSetDealer, GameSetPlayers, GameSetTrump } from "@/Game"
+import { GameDealCards, GameSetDealer, GameSetPlayers, GameSetTrump, GameTakeBets } from "@/Game"
 import Log from "@/Log"
 import OhHell from "@/OhHell"
 
@@ -28,8 +30,17 @@ export setPlayers = ActionReducer(_setPlayers)
 _setTrump :: RedFun pay ctx
 _setTrump = (ev, pay, mCtx) => {
   return where(#[pay, mCtx]) {
-    #[GameSetTrump(suit), Just(ctx)] =>
-      Just({ ...ctx, trump: suit })
+    #[GameSetTrump, Just(ctx)] =>
+      where(Random.shuffle(ctx.deck, ctx.random)) {
+        [trump, ...deck] =>
+          do {
+            Log.tapped.reducer("deck length should be 51", List.length, deck)
+            return Just({ ...ctx, trump, deck })
+          }
+
+        [] =>
+          mCtx
+      }
 
     _ =>
       mCtx
@@ -39,8 +50,8 @@ export setTrump = ActionReducer(_setTrump)
 _setDealer :: RedFun pay ctx
 _setDealer = (ev, pay, mCtx) => {
   return where(#[pay, mCtx]) {
-    #[GameSetDealer(dealer), Just(ctx)] =>
-      Just({ ...ctx, dealer: Just(dealer) })
+    #[GameSetDealer, Just(ctx)] =>
+      Just({ ...ctx, dealer: Random.pick(ctx.players, ctx.random) })
 
     _ =>
       mCtx
@@ -52,7 +63,7 @@ _dealCards = (ev, pay, mCtx) => {
   return where(#[pay, mCtx]) {
     #[GameDealCards, Just(ctx)] =>
       do {
-        raw = OhHell.initialDeal(ctx.random, ctx)
+        raw = OhHell.initialDeal(ctx)
         Log.env.reducer("RAW", raw)
         return Just(ctx)
       }
@@ -62,3 +73,14 @@ _dealCards = (ev, pay, mCtx) => {
   }
 }
 export dealCards = ActionReducer(_dealCards)
+_takeBets :: RedFun pay ctx
+_takeBets = (ev, pay, mCtx) => where(#[pay, mCtx]) {
+  #[GameTakeBets(Just(bets)), Just(ctx)] =>
+    do {
+      return Just(ctx)
+    }
+
+  _ =>
+    mCtx
+}
+export takeBets = ActionReducer(_takeBets)

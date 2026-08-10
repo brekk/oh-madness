@@ -26,6 +26,7 @@ import {
   NoFace,
   Queen,
   Spades,
+  Wildcard,
 } from "gambit"
 import Deck from "gambit/Deck"
 import { Action } from "utter/Action"
@@ -37,30 +38,17 @@ import State from "utter/State"
 import Transition from "utter/Transition"
 
 import { EVENTS, STATES } from "@/Constants"
+import GAMEPLAY from "@/Game"
 import Log from "@/Log"
 import Oh from "@/OhHell"
 import { Bot, Player } from "@/Player"
-import GAMEPLAY from "@/StateMachine"
-import { gameMachine } from "@/StateMachine"
+import { createInitialContext, gameMachine } from "@/StateMachine"
 
 
 
 main = () => {
   random = Random.generateFromString("my-cool-game")
-  initialContext :: Maybe GameStateContext
-  initialContext = Just({
-    bets: Dict.empty,
-    cardsPerPlayer: -1,
-    cardsPerRound: [],
-    dealer: Nothing,
-    deck: DECK,
-    playedCards: [],
-    players: [],
-    round: -1,
-    scores: Dict.empty,
-    trump: Joker,
-    random,
-  })
+
   IO.pTrace("COMPLETE?", Machine.findIncomplete(gameMachine))
   // IO.pTrace("GAME", gameMachine)
   statement = (a, b) => pipe(
@@ -68,7 +56,7 @@ main = () => {
     map(State.name),
     Log.env.mainState(a ++ " change!"),
   )(b)
-  service = Interpreter.create(initialContext, gameMachine)
+  service = Interpreter.create(createInitialContext(random), gameMachine)
   statement("1", service)
   Log
     .env
@@ -94,7 +82,7 @@ main = () => {
         map(.players),
       )(service2),
     )
-  service3 = GAMEPLAY.setDealer(brekk, service2)
+  service3 = GAMEPLAY.setDealer(service2)
   statement("3", service3)
   Log
     .env
@@ -105,7 +93,7 @@ main = () => {
         chain(.dealer),
       )(service3),
     )
-  service4 = GAMEPLAY.setTrump(Spades, service3)
+  service4 = GAMEPLAY.setTrump(service3)
   statement("4", service4)
   Log
     .env
@@ -118,5 +106,6 @@ main = () => {
     )
   service5 = GAMEPLAY.dealCards(service4)
   statement("5", service5)
+  service6 = GAMEPLAY.takeBets(Just({{ brekk: 4 }}))
   // Log.env.mainEventPost("CARDS DEALT", service5)
 }

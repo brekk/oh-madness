@@ -11,7 +11,11 @@ import Deck from "gambit/Deck"
 
 
 
+// export type LogicModel pay ctx = NaiveLogic | RandomLogic | CustomLogic(pay -> Maybe ctx)
+// eventually we should wire the LogicModel to the Bot behavior,
+// but since everything is gonna be the most naive 
 export type Player = Player(String, List Card) | Bot(Player)
+// derive Comparable Player
 name :: Player -> String
 export name = where {
   Player(x, _) =>

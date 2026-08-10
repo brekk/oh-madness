@@ -53,11 +53,11 @@ export roundsPerTotalPlayers = (i) => {
   return if (max > 0) {
     List.concat(List.reverse(List.range(2, max)), List.range(1, max))
   } else {
-    [max]
+    []
   }
 }
-initialDeal :: Random -> GameStateContext -> Either GameError GameStateContext
-export initialDeal = (rand, ctx) => {
+initialDeal :: GameStateContext -> Either GameError GameStateContext
+export initialDeal = (ctx) => {
   total = List.length(ctx.players)
   cardsPerPlayer = cardsPerTotalPlayers(total)
   playerNames = pipe(
@@ -65,7 +65,7 @@ export initialDeal = (rand, ctx) => {
     map(Player.name),
   )(ctx)
   return pipe(
-    Random.shuffle($, rand),
+    Random.shuffle($, ctx.random),
     Deck.deal(cardsPerPlayer, total),
     where {
       Just(#[hands, undealt]) =>
@@ -75,19 +75,17 @@ export initialDeal = (rand, ctx) => {
             List.zip(playerNames),
             map(where { #[name, hand] => Player.Player(name, hand) }),
           )(hands),
-          trump: pipe(
-            List.first,
-            map(Card.suit),
-            fromMaybe(Card.Joker),
-          )(undealt),
           cardsPerPlayer,
           cardsPerRound: roundsPerTotalPlayers(total),
+          round: 0,
+          trick: 0,
+          deck: undealt,
         })
 
       Nothing =>
         Left(Error(2, `Unable to deal hands for ${show(total)} players.`))
     },
-  )(Deck.DECK)
+  )(ctx.deck)
 }
 getPlayerByName :: GameStateContext -> String -> Maybe Player
 export getPlayerByName = (state, name) => List.find(Player.isNamed(name), state.players)

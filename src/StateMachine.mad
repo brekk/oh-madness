@@ -1,11 +1,16 @@
-import type { Suit } from "gambit"
+import type { Maybe } from "Maybe"
+import type { Random } from "Random"
+
+import type { Card, Suit } from "gambit"
 import type { Machine } from "utter/Machine"
 
 import type { GamePayload, GameStateContext, OhHell } from "@/Game"
 import type { Player } from "@/Player"
 
+import Dict from "Dictionary"
 import { Just, Nothing } from "Maybe"
 
+import { Card, DECK, Joker, Wildcard } from "gambit"
 import { Action } from "utter/Action"
 import Interpreter from "utter/Interpreter"
 import Machine from "utter/Machine"
@@ -23,18 +28,21 @@ import REDUCERS from "@/StateMachine/Reducers"
 announceWith = (k) => Action((e, mPay, mCtx) => { Log.env.main((k ?? "") ++ e, mPay) })
 announce = announceWith(Nothing)
 ACTIONS = [announce]
-setPlayers :: List Player -> OhHell -> OhHell
-export setPlayers = (players, sv) => Interpreter.send(
-  EVENTS.playersSet,
-  GameSetPlayers(players),
-  sv,
-)
-setDealer :: Player -> OhHell -> OhHell
-export setDealer = (player, sv) => Interpreter.send(EVENTS.dealerSet, GameSetDealer(player), sv)
-setTrump :: Suit -> OhHell -> OhHell
-export setTrump = (suit, sv) => Interpreter.send(EVENTS.trumpCardSet, GameSetTrump(suit), sv)
-dealCards :: OhHell -> OhHell
-export dealCards = Interpreter.send(EVENTS.cardsDealt, GameDealCards)
+createInitialContext :: Random -> Maybe GameStateContext
+export createInitialContext = (random) => Just({
+  bets: Dict.empty,
+  cardsPerPlayer: -1,
+  cardsPerRound: [],
+  dealer: Nothing,
+  deck: DECK,
+  playedCards: [],
+  players: [],
+  round: -1,
+  trick: 0,
+  scores: Dict.empty,
+  trump: Card(Joker, Wildcard),
+  random,
+})
 gameMachine :: Machine GamePayload GameStateContext
 export gameMachine = Machine.create(
   "oh-hell",
@@ -81,7 +89,15 @@ export gameMachine = Machine.create(
     ),
     State.create(
       STATES.dealing,
-      [Transition.createComplex(EVENTS.cardsDealt, STATES.betting, ACTIONS, [], [])],
+      [
+        Transition.createComplex(
+          EVENTS.cardsDealt,
+          STATES.betting,
+          ACTIONS,
+          [],
+          [REDUCERS.takeBets],
+        ),
+      ],
     ),
     State.create(
       STATES.betting,
