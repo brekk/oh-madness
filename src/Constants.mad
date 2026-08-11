@@ -9,6 +9,7 @@ export STATES = {
   scoring: "SCORING",
 }
 export EVENTS = {
+  ready: "ready",
   deal: "dealing",
   initialized: "initialized",
   playersSet: "playersSet",

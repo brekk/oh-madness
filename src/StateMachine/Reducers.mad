@@ -3,10 +3,13 @@ import type { Maybe } from "Maybe"
 import type { Card, Suit } from "gambit"
 import type { Controller } from "utter/Interpreter"
 
-import type { PlayedCard, Player } from "@/Player"
+import type { PlayedCard } from "@/PlayedCards"
+import type { Player } from "@/Player"
 
+import Dict from "Dictionary"
 import { Left, Right } from "Either"
 import List from "List"
+import Math from "Math"
 import { Just, Nothing } from "Maybe"
 import Random from "Random"
 
@@ -90,6 +93,15 @@ _takeBets = (ev, pay, mCtx) => {
     #[GameTakeBets(Just(bets)), Just(ctx)] =>
       do {
         Log.env.player("oh hell no", bets)
+        // do we have a bet for every player?
+        given = Dict.keys(bets)
+        provided = List.length(given)
+        expected = List.length(ctx.players)
+        fulfilled = provided == expected
+        if (!fulfilled) do {
+          Log.env.player("need more stuff!", Math.abs(expected - provided))
+        }
+        // for every non bot player, we need bets
         return Just(ctx)
       }
 

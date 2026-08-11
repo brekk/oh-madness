@@ -1,12 +1,12 @@
 import type { Maybe } from "Maybe"
 
-import type { Card, Suit } from "Gambit"
+import type { Card, Suit } from "gambit"
 
 import Fn from "Function"
 import List from "List"
-import Math from "Math"
 import { Just, Nothing } from "Maybe"
 
+import { Card, Joker, Wildcard } from "gambit/Cards"
 import Deck from "gambit/Deck"
 
 
@@ -14,14 +14,16 @@ import Deck from "gambit/Deck"
 // export type LogicModel pay ctx = NaiveLogic | RandomLogic | CustomLogic(pay -> Maybe ctx)
 // eventually we should wire the LogicModel to the Bot behavior,
 // but since everything is gonna be the most naive 
-export type Player = Player(String, List Card) | Bot(Player)
+alias Event = String
+export type Player = Player(String, List Card) | Bot(Player, Event -> Player -> Player)
+export alias Puppeteer = Event -> Player -> Player
 derive Comparable Player
 name :: Player -> String
 export name = where {
   Player(x, _) =>
     x
 
-  Bot(p) =>
+  Bot(p, _) =>
     name(p)
 }
 isNamed :: String -> Player -> Boolean
@@ -31,7 +33,7 @@ export hand = where {
   Player(_, cards) =>
     cards
 
-  Bot(p) =>
+  Bot(p, _) =>
     hand(p)
 }
 hasCard :: Card -> Player -> Boolean
@@ -44,29 +46,8 @@ export discard = (card, player) => where(player) {
   Player(n, cards) =>
     Player(n, Deck.remove(card, cards))
 
-  Bot(p) =>
-    Bot(discard(card, p))
-}
-// Keep track of who played what card
-export type PlayedCard = PlayedCard(String, Card)
-playCard :: Card -> Player -> Maybe PlayedCard
-export playCard = (card, player) => hasCard(card, player)
-  ? Just(PlayedCard(name(player), card))
-  : Nothing
-cardPlayedBy :: String -> PlayedCard -> Boolean
-export cardPlayedBy = (playerName, pCard) => where(pCard) {
-  PlayedCard(by, _) =>
-    by == playerName
-}
-cardFromPlayed :: PlayedCard -> Card
-export cardFromPlayed = where {
-  PlayedCard(_, c) =>
-    c
-}
-playerNameFromPlayedCard :: PlayedCard -> String
-export playerNameFromPlayedCard = where {
-  PlayedCard(n, _) =>
-    n
+  Bot(p, x) =>
+    Bot(discard(card, p), x)
 }
 // these aren't yet dealing with many of the edge cases:
 // you must follow suit if possible
@@ -84,7 +65,7 @@ export worstCardInHand = (trump, p) => pipe(
 )(p)
 isBot :: Player -> Boolean
 export isBot = where {
-  Bot(_) =>
+  Bot(_, _) =>
     true
 
   _ =>
@@ -96,3 +77,10 @@ humanMap :: (Player -> Player) -> Player -> Player
 export humanMap = Fn.when(isHuman)
 botMap :: (Player -> Player) -> Player -> Player
 export botMap = Fn.when(isBot)
+export actor = where {
+  Bot(_, act) =>
+    Just(act)
+
+  _ =>
+    Nothing
+}

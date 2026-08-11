@@ -1,15 +1,18 @@
+import Dict from "Dictionary"
 import IO from "IO"
+import { Just } from "Maybe"
 import Random from "Random"
 
 import Interpreter from "utter/Interpreter"
 import Machine from "utter/Machine"
 import State from "utter/State"
 
+import Bot from "@/Bot"
 import GAMEPLAY from "@/Game"
 import Loop from "@/GameLoop"
 import { permaloop } from "@/GameLoop"
 import Log from "@/Log"
-import { Bot, Player } from "@/Player"
+import { Player } from "@/Player"
 import { createInitialContext, gameMachine } from "@/StateMachine"
 
 
@@ -22,13 +25,14 @@ main = () => {
   hidden = permaloop(service)
 
   brekk = Player("brekk", [])
-  hidden.send(GAMEPLAY.setPlayers([brekk, Bot(Player("arnaud", [])), Bot(Player("robot", []))]))
+  hidden.send(
+    GAMEPLAY.setPlayers([brekk, Bot.create(Player("arnaud", [])), Bot.create(Player("robot", []))]),
+  )
 
   hidden.send(GAMEPLAY.setDealer)
   hidden.send(GAMEPLAY.setTrump)
   hidden.send(GAMEPLAY.dealCards)
-  // statement("5", service5)
-  // service6 = GAMEPLAY.takeBets(Just(Dict.fromList([#[brekk, 5]])), service5)
+  hidden.send(GAMEPLAY.takeBets(Just(Dict.fromList([#[brekk, 5]]))))
   // statement("6", service6)
   // Log.env.mainEventPost("CARDS DEALT", service5)
 }

@@ -66,7 +66,7 @@ export gameMachine = Machine.create(
           EVENTS.dealerSet,
           STATES.changeDealer,
           ACTIONS,
-          [],
+          [GUARDS.ensurePlayers],
           [REDUCERS.setDealer],
         ),
       ],
@@ -78,30 +78,34 @@ export gameMachine = Machine.create(
           EVENTS.trumpCardSet,
           STATES.flipTrumpCard,
           ACTIONS,
-          [],
+          [GUARDS.hasDealer],
           [REDUCERS.setTrump],
         ),
       ],
     ),
     State.create(
       STATES.flipTrumpCard,
-      [Transition.createComplex(EVENTS.deal, STATES.dealing, ACTIONS, [], [REDUCERS.dealCards])],
+      [
+        Transition.createComplex(
+          EVENTS.deal,
+          STATES.dealing,
+          ACTIONS,
+          [GUARDS.hasTrumpCard],
+          [REDUCERS.dealCards],
+        ),
+      ],
     ),
     State.create(
       STATES.dealing,
       [
         Transition.createComplex(
-          EVENTS.cardsDealt,
-          STATES.betting,
+          EVENTS.betsTaken,
+          STATES.playing,
           ACTIONS,
           [],
           [REDUCERS.takeBets],
         ),
       ],
-    ),
-    State.create(
-      STATES.betting,
-      [Transition.createComplex(EVENTS.betsTaken, STATES.playing, ACTIONS, [], [])],
     ),
     State.create(
       STATES.playing,

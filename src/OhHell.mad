@@ -4,7 +4,8 @@ import type { Maybe } from "Maybe"
 import type { Card, Suit } from "Gambit"
 
 import type { GamePayload, GameStateContext } from "@/Game"
-import type { PlayedCard, Player } from "@/Player"
+import type { PlayedCard } from "@/PlayedCards"
+import type { Player } from "@/Player"
 
 import { EQ, GT, LT } from "Compare"
 import { Left, Right } from "Either"
@@ -18,6 +19,7 @@ import Random from "Random"
 import Card from "gambit"
 import Deck from "gambit/Deck"
 
+import PlayedCards from "@/PlayedCards"
 import Player from "@/Player"
 
 
@@ -230,7 +232,7 @@ export updatePlayerByName = (name, modifyPlayer, players) => map(
 )(players)
 playCard :: Player -> Card -> GameStateContext -> GameStateContext
 export playCard = (player, card, state) => pipe(
-  Player.playCard(card),
+  PlayedCards.playCard(card),
   where {
     Just(played) =>
       do {
@@ -251,11 +253,11 @@ export playCard = (player, card, state) => pipe(
 getPlayedBy :: String -> GameStateContext -> List PlayedCard
 export getPlayedBy = (playerName, state) => pipe(
   .playedCards,
-  List.filter((pCard) => where(pCard) { Player.PlayedCard(by, _) => by == playerName }),
+  List.filter((pCard) => where(pCard) { PlayedCards.PlayedCard(by, _) => by == playerName }),
 )(state)
 sortPlayed :: Suit -> List PlayedCard -> List PlayedCard
 export sortPlayed = (trump, cards) => List.sortBy(
-  (a, b) => Deck.compareWithTrump(true, trump, Player.cardFromPlayed(a), Player.cardFromPlayed(b)),
+  (a, b) => Deck.compareWithTrump(true, trump, PlayedCards.card(a), PlayedCards.card(b)),
   cards,
 )
 

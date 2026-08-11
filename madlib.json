@@ -7,8 +7,8 @@
   },
   "dependencies": [
     {
-      "minVersion": "0.0.4",
-      "url": "https://github.com/brekk/gambit/archive/refs/tags/v0.0.4.zip",
+      "minVersion": "0.0.5",
+      "url": "https://github.com/brekk/gambit/archive/refs/tags/v0.0.5.zip",
       "description": "gambit"
     },
     {

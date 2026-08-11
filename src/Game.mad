@@ -4,7 +4,8 @@ import type { Random } from "Random"
 import type { Card } from "gambit"
 import type { Controller } from "utter/Interpreter"
 
-import type { PlayedCard, Player } from "@/Player"
+import type { PlayedCard } from "@/PlayedCards"
+import type { Player } from "@/Player"
 
 import Interpreter from "utter/Interpreter"
 
@@ -29,6 +30,8 @@ export type GamePayload
 
 // the values which have arguments are tied to ostensible user input
 // or are required for any state to proceed
+// the maybe values are intentionally there to allow for a game to
+// eventually be played entirely devoid of human players for testing porpoises
 
 export type GamePayload
   = GameSetPlayers(List Player)
@@ -65,10 +68,6 @@ export setDealer = Interpreter.send(EVENTS.dealerSet, GameSetDealer)
 setTrump :: GameApi
 export setTrump = Interpreter.send(EVENTS.trumpCardSet, GameSetTrump)
 dealCards :: GameApi
-export dealCards = pipe(
-  // Log.tapped.game("dealing cards?", Interpreter.context),
-  Interpreter.send(EVENTS.deal, GameDealCards),
-  // Log.tapped.game("dealt cards?", Interpreter.context),
-)
+export dealCards = Interpreter.send(EVENTS.deal, GameDealCards)
 takeBets :: Maybe (Dictionary Player Integer) -> GameApi
 export takeBets = (dict, sv) => Interpreter.send(EVENTS.betsTaken, GameTakeBets(dict), sv)

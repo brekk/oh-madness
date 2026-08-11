@@ -1,28 +1,20 @@
 import type { Maybe } from "Maybe"
 
-import { Just, Nothing } from "Maybe"
+import List from "List"
+import { Just, Nothing, isJust } from "Maybe"
 
+import Cards from "gambit/Cards"
 import { Guard } from "utter/Guard"
 
 import { EVENTS } from "@/Constants"
+import Log from "@/Log"
 
 
 
-_roundUnderTotalRound :: String -> pay -> Maybe ctx -> Boolean
-_roundUnderTotalRound = (ev, mPay, mCtx) => ev
-    == EVENTS.roundsComplete
-    && where(mCtx) {
-      Just(ctx) =>
-        do {
-          // ctx.round + 1 < 
-          return false
-        }
-
-      _ =>
-        false
-    }
-_allRoundsComplete :: String -> pay -> Maybe ctx -> Boolean
-_allRoundsComplete = (ev, mPay, mCtx) => ev
+export complement = (fn, ev, mPay, mCtx) => !fn(ev, mPay, mCtx)
+alias Guardian pay ctx = String -> pay -> Maybe ctx -> Boolean
+_roundUnderTotalRound :: Guardian pay ctx
+export _roundUnderTotalRound = (ev, mPay, mCtx) => ev
     == EVENTS.roundsComplete
     && where(mCtx) {
       Just(ctx) =>
@@ -35,4 +27,55 @@ _allRoundsComplete = (ev, mPay, mCtx) => ev
         false
     }
 export roundUnderTotalRound = Guard(_roundUnderTotalRound)
+_allRoundsComplete :: Guardian pay ctx
+export _allRoundsComplete = (ev, mPay, mCtx) => ev
+    == EVENTS.roundsComplete
+    && where(mCtx) {
+      Just(ctx) =>
+        do {
+          // ctx.round + 1 < 
+          return false
+        }
+
+      _ =>
+        false
+    }
 export allRoundsComplete = Guard(_allRoundsComplete)
+_ensurePlayers :: Guardian pay ctx
+_ensurePlayers = (_, _, mCtx) => Log
+  .env
+  .guard(
+    "ensuring players",
+    where(mCtx) {
+      Just({ players }) =>
+        List.length(players) > 0
+
+      _ =>
+        false
+    },
+  )
+export ensurePlayers = Guard(_ensurePlayers)
+_hasDealer :: Show ctx => Guardian pay ctx
+_hasDealer = (_, _, mCtx) => pipe(
+  where {
+    Just({ dealer }) =>
+      isJust(dealer)
+
+    _ =>
+      false
+  },
+  Log.env.guard("ensuring there's a dealer"),
+)(mCtx)
+export hasDealer = Guard(_hasDealer)
+_hasTrumpCard :: Show ctx => Guardian pay ctx
+_hasTrumpCard = (_, _, mCtx) => pipe(
+  where {
+    Just({ trump }) =>
+      !Cards.isNonStandardRank(trump)
+
+    _ =>
+      false
+  },
+  Log.env.guard("has trump card"),
+)(mCtx)
+export hasTrumpCard = Guard(_hasTrumpCard)
