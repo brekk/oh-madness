@@ -27,7 +27,10 @@ alias RedFun pay ctx = String -> pay -> Maybe ctx -> Maybe ctx
 _setPlayers :: RedFun pay ctx
 _setPlayers = (ev, mPay, mCtx) => where(#[mPay, mCtx]) {
   #[GameSetPlayers(players), Just(ctx)] =>
-    Just({ ...ctx, players })
+    pipe(
+      Log.tapped.reducer("setting players", .players),
+      Just,
+    )({ ...ctx, players })
 
   _ =>
     mCtx
@@ -90,17 +93,21 @@ _dealCards = (ev, pay, mCtx) => {
 export dealCards = ActionReducer(_dealCards)
 _takeBets :: (Show pay, Show ctx) => RedFun pay ctx
 _takeBets = (ev, pay, mCtx) => {
-  Log.env.player("BARF BARFO", #[ev, pay])
   return where(#[pay, mCtx]) {
     #[GameTakeBets(Just(bets)), Just(ctx)] =>
       do {
         Log.env.player("oh hell no", bets)
+        players = ctx.players
+        Log.env.reducer("!!!", players)
         // do we have a bet for every player?
         playersWhoStillNeedToBet = pipe(
           Dict.keys,
-          Player.excludingPlayers($, ctx.players),
-          Log.env.player("xxx"),
+          Player.excludingPlayers($, players),
+          // Log.env.player("xxx"),
+          List.reject(Player.isHuman),
+          Log.env.player("yyy"),
         )(bets)
+
         // pipe(
         //   map(Log.env.reducer("dealin")),
         // )(remainder)

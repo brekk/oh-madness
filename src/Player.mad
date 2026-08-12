@@ -9,6 +9,8 @@ import { Just, Nothing } from "Maybe"
 import { Card, Joker, Wildcard } from "gambit/Cards"
 import Deck from "gambit/Deck"
 
+import Log from "@/Log"
+
 
 
 // export type LogicModel pay ctx = NaiveLogic | RandomLogic | CustomLogic(pay -> Maybe ctx)
@@ -40,6 +42,17 @@ export hand = where {
 
   Bot(p, _) =>
     hand(p)
+}
+setHand :: List Card -> Player -> Player
+export setHand = (h, p) => where(p) {
+  Player(n, _) =>
+    Player(n, h)
+
+  Bot(Player(n, _), ctrl) =>
+    Bot(Player(n, h), ctrl)
+
+  _ =>
+    p
 }
 hasCard :: Card -> Player -> Boolean
 export hasCard = (card, player) => pipe(
@@ -92,9 +105,8 @@ export actor = where {
 excludingPlayers :: List Player -> List Player -> List Player
 export excludingPlayers = (as, bs) => List.reduce(
   (agg, x) => pipe(
-    samePlayer,
-    List.reject($, agg),
-  )(x),
-  bs,
+    List.reject(samePlayer($, x)),
+  )(agg),
+  Log.env.reducer("initial", bs),
   as,
 )

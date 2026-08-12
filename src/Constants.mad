@@ -5,9 +5,11 @@ export STATES = {
   dealing: "DEALING",
   flipTrumpCard: "FLIPPING_TRUMP",
   betting: "BETTING",
-  initial: "INITIAL",
+  gameStart: "GAME_START",
   scoring: "SCORING",
   failure: "FAILURE",
+  initial: "INITIAL",
+  preparingRound: "PREPARING_ROUND",
 }
 export EVENTS = {
   ready: "ready",

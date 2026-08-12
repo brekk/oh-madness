@@ -37,4 +37,11 @@ export naiveController = (ev, player) => {
   // }
   return player
 }
+export mindControl = (ev, bot) => where(bot) {
+  _Player.Bot(pl, ctrl) =>
+    _Player.Bot(ctrl(ev, pl), ctrl)
+
+  _ =>
+    bot
+}
 export create = _Player.Bot($, naiveController)

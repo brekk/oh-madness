@@ -47,7 +47,6 @@ gameMachine :: Machine GamePayload GameStateContext
 export gameMachine = Machine.create(
   "oh-hell",
   [
-    State.createFinal(STATES.failure),
     State.create(
       STATES.initial,
       [
@@ -55,7 +54,7 @@ export gameMachine = Machine.create(
           EVENTS.playersSet,
           STATES.setPlayers,
           ACTIONS,
-          [],
+          [GUARDS.noPlayers],
           [REDUCERS.setPlayers],
         ),
       ],
@@ -67,11 +66,13 @@ export gameMachine = Machine.create(
           EVENTS.dealerSet,
           STATES.changingDealer,
           ACTIONS,
-          [GUARDS.ensurePlayers],
+          [GUARDS.hasNoDealer],
           [REDUCERS.setDealer],
         ),
       ],
     ),
+    // I wanna collapse some of these states to something like PREPARING_ROUND
+    // but that seems to break things, so I don't wanna go to unstable yet
     State.create(
       STATES.changingDealer,
       [
@@ -79,7 +80,7 @@ export gameMachine = Machine.create(
           EVENTS.trumpCardSet,
           STATES.flipTrumpCard,
           ACTIONS,
-          [GUARDS.hasDealer],
+          [GUARDS.hasNoTrumpCard],
           [REDUCERS.setTrump],
         ),
       ],
@@ -91,7 +92,7 @@ export gameMachine = Machine.create(
           EVENTS.deal,
           STATES.dealing,
           ACTIONS,
-          [GUARDS.hasTrumpCard],
+          [GUARDS.noCardsDealt],
           [REDUCERS.dealCards],
         ),
       ],
@@ -103,7 +104,7 @@ export gameMachine = Machine.create(
           EVENTS.betsTaken,
           STATES.playing,
           ACTIONS,
-          [],
+          [GUARDS.noBetsTaken],
           [REDUCERS.takeBets],
         ),
       ],
@@ -127,6 +128,7 @@ export gameMachine = Machine.create(
         ),
       ],
     ),
+    State.createFinal(STATES.failure),
     State.createFinal(STATES.scoring),
   ],
 )

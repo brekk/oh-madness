@@ -1,5 +1,6 @@
 import type { Maybe } from "Maybe"
 
+import Dict from "Dictionary"
 import List from "List"
 import { Just, Nothing, isJust } from "Maybe"
 
@@ -8,6 +9,7 @@ import { Guard } from "utter/Guard"
 
 import { EVENTS } from "@/Constants"
 import Log from "@/Log"
+import Player from "@/Player"
 
 
 
@@ -55,6 +57,7 @@ _ensurePlayers = (_, _, mCtx) => Log
     },
   )
 export ensurePlayers = Guard(_ensurePlayers)
+export noPlayers = Guard(complement(_ensurePlayers))
 _hasDealer :: Show ctx => Guardian pay ctx
 _hasDealer = (_, _, mCtx) => pipe(
   where {
@@ -66,12 +69,15 @@ _hasDealer = (_, _, mCtx) => pipe(
   },
   Log.env.guard("ensuring there's a dealer"),
 )(mCtx)
+export hasNoDealer = Guard(complement(_hasDealer))
 export hasDealer = Guard(_hasDealer)
 _hasTrumpCard :: Show ctx => Guardian pay ctx
 _hasTrumpCard = (_, _, mCtx) => pipe(
   where {
     Just({ trump }) =>
-      !Cards.isNonStandardRank(trump)
+      !pipe(
+        Cards.isNonStandardRank,
+      )(trump)
 
     _ =>
       false
@@ -79,3 +85,29 @@ _hasTrumpCard = (_, _, mCtx) => pipe(
   Log.env.guard("has trump card"),
 )(mCtx)
 export hasTrumpCard = Guard(_hasTrumpCard)
+export hasNoTrumpCard = Guard(complement(_hasTrumpCard))
+_cardsDealt = (_, _, mCtx) => where(mCtx) {
+  Just({ players }) =>
+    List.any(
+      pipe(
+        Player.hand,
+        List.length,
+        (x) => x > 0,
+      ),
+      players,
+    )
+
+  _ =>
+    false
+}
+export cardsDealt = Guard(_cardsDealt)
+export noCardsDealt = Guard(complement(_cardsDealt))
+_betsTaken = (_, _, mCtx) => where(mCtx) {
+  Just({ bets }) =>
+    Dict.length(bets) > 0
+
+  _ =>
+    false
+}
+export betsTaken = Guard(_betsTaken)
+export noBetsTaken = Guard(complement(_betsTaken))

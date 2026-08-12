@@ -66,6 +66,8 @@ export initialDeal = (ctx) => {
     .players,
     map(Player.name),
   )(ctx)
+  recon = (str) => List.find(Player.isNamed(str), ctx.players)
+
   return pipe(
     Random.shuffle($, ctx.random),
     Deck.deal(cardsPerPlayer, total),
@@ -74,8 +76,8 @@ export initialDeal = (ctx) => {
         Right({
           ...ctx,
           players: pipe(
-            List.zip(playerNames),
-            map(where { #[name, hand] => Player.Player(name, hand) }),
+            List.zip(ctx.players),
+            map(where { #[pl, hand] => Player.setHand(hand, pl) }),
           )(hands),
           cardsPerPlayer,
           cardsPerRound: roundsPerTotalPlayers(total),
