@@ -20,6 +20,7 @@ export EVENTS = {
   trumpCardSet: "trumpCardSet",
   cardsDealt: "cardsDealt",
   betsTaken: "betsTaken",
+  bet: "bet",
   roundsComplete: "roundsComplete",
   trickComplete: "trickComplete",
   playComplete: "playComplete",

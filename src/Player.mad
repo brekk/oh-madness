@@ -14,6 +14,7 @@ import { Card } from "gambit/Cards"
 import Cards from "gambit/Cards"
 import Deck from "gambit/Deck"
 
+import { EVENTS } from "@/Constants"
 import { Bot, PlayedCard, Player } from "@/Game"
 import Log from "@/Log"
 
@@ -106,12 +107,10 @@ export excludingPlayers = (as, bs) => List.reduce(
   (agg, x) => pipe(
     List.reject(samePlayer($, x)),
   )(agg),
-  Log.env.reducer("initial", bs),
+  bs,
   as,
 )
-// BOT LIFE
-
-
+// :::::::::::::::: BOT LIFE ::::::::::::::::::::
 
 
 naiveBet :: Card -> Integer -> Integer -> Player -> Integer
@@ -131,15 +130,34 @@ export naiveBet = (trump, max, totalPlayers, p) => {
     0
   }
 }
+// export takeBet = (ev, pay, ctx, pl) => {}
 naiveController :: Puppeteer
-export naiveController = (ev, ctx, pl) => {
-  // if (ev == EVENTS.betsTaken) do {
-  // }
-  return pl
+export naiveController = (ev, pay, { trump, cardsPerRound, round, players }, pl) => where(pl) {
+  Player(n, h) =>
+    Log
+      .env
+      .player(
+        "EVENTED (" ++ ev ++ ")",
+        if (ev == EVENTS.betsTaken) do {
+          bet = naiveBet(
+            trump,
+            List.nth(round, cardsPerRound) ?? List.length(players),
+            List.length(players),
+            pl,
+          )
+          Log.env.player("<><>", bet)
+          return pl
+        } else {
+          pl
+        },
+      )
+
+  _ =>
+    pl
 }
-export mindControl = (ev, ctx, botlike) => where(botlike) {
+export mindControl = (ev, pay, ctx, botlike) => where(botlike) {
   Bot(pl, ctrl) =>
-    Bot(ctrl(ev, ctx, pl), ctrl)
+    Log.env.player("controllllllll", Bot(ctrl(ev, pay, ctx, pl), ctrl))
 
   _ =>
     botlike

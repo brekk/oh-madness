@@ -59,8 +59,9 @@ export alias GameApi = OhHell -> OhHell
 export alias Event = String
 export type Player
   = Player(String, List Card)
-  | Bot(Player, Event -> GameStateContext -> Player -> Player)
+  | Bot(Player, Event -> GamePayload -> GameStateContext -> Player -> Player)
 derive Comparable Player
-export alias Puppeteer = Event -> GameStateContext -> Player -> Player
+// convenient to not wrap GameStateContext with Maybe?
+export alias Puppeteer = Event -> GamePayload -> GameStateContext -> Player -> Player
 // Keep track of who played what card
 export type PlayedCard = PlayedCard(String, Card)

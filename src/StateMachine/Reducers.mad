@@ -92,7 +92,7 @@ _takeBets = (ev, pay, mCtx) => {
     #[GG.GameTakeBets(Just(bets)), Just(ctx)] =>
       do {
         Log.env.player("oh hell no", bets)
-        players = ctx.players
+        { players } = ctx
         Log.env.reducer("!!!", players)
         // do we have a bet for every player?
         playersWhoStillNeedToBet = pipe(
@@ -100,9 +100,12 @@ _takeBets = (ev, pay, mCtx) => {
           Player.excludingPlayers($, players),
         )(bets)
         botsToBet = List.reject(Player.isHuman, playersWhoStillNeedToBet)
-        // pipe(
-        //   map(Player.takeBet(ctx)),
-        // )(botsToBet)
+        // I think we wanna move this to an event call slightly downstream from this,
+        // as it requires no human intervention
+        pipe(
+          map(Player.mindControl(ev, pay, ctx)),
+          Log.env.reducer("yoyyoyo"),
+        )(botsToBet)
         // pipe(
         //   map(Log.env.reducer("dealin")),
         // )(remainder)
