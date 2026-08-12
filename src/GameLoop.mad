@@ -19,9 +19,10 @@ export gameLoop = (run, ctrl) => pipe(
       where(mCtx) {
         Just(ctx) =>
           do {
-            r = ctx.random
-            r.update()
-            return Controller(Just({ ...ctx, random: r }), machine, state, exec)
+            { random } = ctx
+            // I find your stack of fate perturbing
+            random.update()
+            return Controller(Just({ ...ctx, random }), machine, state, exec)
           }
 
         _ =>

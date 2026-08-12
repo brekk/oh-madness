@@ -14,6 +14,10 @@ import Player from "@/Player"
 
 
 export complement = (fn, ev, mPay, mCtx) => !fn(ev, mPay, mCtx)
+export shield = (g, ev, pay, mCtx) => where(g) {
+  Guard(fn) =>
+    !fn(ev, pay, mCtx)
+}
 alias Guardian pay ctx = String -> pay -> Maybe ctx -> Boolean
 _roundUnderTotalRound :: Guardian pay ctx
 export _roundUnderTotalRound = (ev, mPay, mCtx) => ev
@@ -102,12 +106,19 @@ _cardsDealt = (_, _, mCtx) => where(mCtx) {
 }
 export cardsDealt = Guard(_cardsDealt)
 export noCardsDealt = Guard(complement(_cardsDealt))
-_betsTaken = (_, _, mCtx) => where(mCtx) {
-  Just({ bets }) =>
-    Dict.length(bets) > 0
+_betsIncomplete = (_, _, mCtx) => where(mCtx) {
+  Just({ bets, players }) =>
+    Dict.length(bets) < List.length(players)
 
   _ =>
     false
 }
-export betsTaken = Guard(_betsTaken)
-export noBetsTaken = Guard(complement(_betsTaken))
+export betsIncomplete = Guard(_betsIncomplete)
+_allBetsTaken = (_, _, mCtx) => where(mCtx) {
+  Just({ bets, players }) =>
+    Dict.length(bets) == List.length(players)
+
+  _ =>
+    false
+}
+export allBetsTaken = Guard(_allBetsTaken)

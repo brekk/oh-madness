@@ -19,6 +19,7 @@ export tags = {
   state: Party.tagWithScope("ohMadness", ["state"]),
   guard: Party.tagWithScope("ohMadness", ["guard"]),
   event: Party.tagWithScope("ohMadness", ["event"]),
+  card: Party.tagWithScope("ohMadness", ["card"]),
 }
 export env = {
   ohMadness: Party.env(tags.ohMadness),
@@ -35,6 +36,7 @@ export env = {
   state: Party.env(tags.state),
   guard: Party.env(tags.guard),
   event: Party.env(tags.event),
+  card: Party.env(tags.card),
 }
 export tapped = {
   ohMadness: Party.tap(env.ohMadness),
@@ -51,4 +53,5 @@ export tapped = {
   state: Party.tap(env.state),
   guard: Party.tap(env.guard),
   event: Party.tap(env.event),
+  card: Party.tap(env.card),
 }

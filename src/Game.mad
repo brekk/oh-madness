@@ -11,32 +11,12 @@ import Log from "@/Log"
 
 
 
-/*
-// ostensibly we can do more to make this wired to a control flow with direct payloads
-// but since a lot of this is going to be randomized, let's use that in lieu of events
-// with direct payloads for everything that we can do without players for now
-export type GamePayload
-  = GameSetPlayers(List Player)
-  | GameSetDealer(Player)
-  | GameDealCards
-  | GameSetTrump(Card)
-  | GameTakeBets(Dictionary Player Integer)
-  | GameRecordTrick(List PlayedCard)
-  | GameRecordRound
-*/
-
-// the values which have arguments are tied to ostensible user input
-// or are required for any state to proceed
-// the maybe values are intentionally there to allow for a game to
-// eventually be played entirely devoid of human players for testing porpoises
-// this also necessitates error states, as sometimes we cannot proceed
-
 export type GamePayload
   = GameSetPlayers(List Player)
   | GameSetDealer
   | GameDealCards
   | GameSetTrump
-  | GameTakeBets(Maybe (Dictionary Player Integer))
+  | GameTakeBet(Player, Integer)
   | GamePlayHand(Maybe (List PlayedCard))
   | GameRecordTrick(Maybe (List PlayedCard))
   | GameRecordRound

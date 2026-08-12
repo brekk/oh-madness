@@ -5,7 +5,7 @@ import type { GameApi, Player } from "@/Game"
 import Interpreter from "utter/Interpreter"
 
 import { EVENTS } from "@/Constants"
-import { GameDealCards, GameSetDealer, GameSetPlayers, GameSetTrump, GameTakeBets } from "@/Game"
+import { GameDealCards, GameSetDealer, GameSetPlayers, GameSetTrump, GameTakeBet } from "@/Game"
 import Log from "@/Log"
 
 
@@ -21,5 +21,5 @@ setTrump :: GameApi
 export setTrump = Interpreter.send(EVENTS.trumpCardSet, GameSetTrump)
 dealCards :: GameApi
 export dealCards = Interpreter.send(EVENTS.deal, GameDealCards)
-takeBets :: Maybe (Dictionary Player Integer) -> GameApi
-export takeBets = (dict, sv) => Interpreter.send(EVENTS.betsTaken, GameTakeBets(dict), sv)
+takeBet :: Player -> Integer -> GameApi
+export takeBet = (pl, i, sv) => Interpreter.send(EVENTS.bet, GameTakeBet(pl, i), sv)

@@ -96,12 +96,21 @@ export gameMachine = Machine.create(
     State.create(
       STATES.dealing,
       [
+        // self transition
+        Transition.createComplex(
+          EVENTS.bet,
+          STATES.dealing,
+          ACTIONS,
+          [GUARDS.betsIncomplete],
+          [REDUCERS.takeBet],
+        ),
+        // transition away
         Transition.createComplex(
           EVENTS.betsTaken,
           STATES.playing,
           ACTIONS,
-          [GUARDS.noBetsTaken],
-          [REDUCERS.takeBets],
+          [GUARDS.allBetsTaken],
+          [],
         ),
       ],
     ),

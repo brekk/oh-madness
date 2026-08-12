@@ -86,14 +86,13 @@ _dealCards = (ev, pay, mCtx) => {
   }
 }
 export dealCards = ActionReducer(_dealCards)
-_takeBets :: (Show pay, Show ctx) => RedFun pay ctx
-_takeBets = (ev, pay, mCtx) => {
+_takeBet :: (Show pay, Show ctx) => RedFun pay ctx
+_takeBet = (ev, pay, mCtx) => {
   return where(#[pay, mCtx]) {
-    #[GG.GameTakeBets(Just(bets)), Just(ctx)] =>
+    #[GG.GameTakeBet(pl, bet), Just(ctx)] =>
       do {
-        Log.env.player("oh hell no", bets)
-        { players } = ctx
-        Log.env.reducer("!!!", players)
+        Log.env.player("bet!", #[pl, bet])
+        { players, bets } = ctx
         // do we have a bet for every player?
         playersWhoStillNeedToBet = pipe(
           Dict.keys,
@@ -117,4 +116,4 @@ _takeBets = (ev, pay, mCtx) => {
       mCtx
   }
 }
-export takeBets = ActionReducer(_takeBets)
+export takeBet = ActionReducer(_takeBet)

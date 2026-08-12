@@ -151,12 +151,6 @@ export maxBet = (state) => pipe(
     )(state),
   ),
 )(state.cardsPerRound)
-// getBets :: GameState -> List Integer
-// export getBets = pipe(
-//   .players,
-//   map(Player.bet),
-// )
-
 // this has some of the needed mechanics but isn't yet at all correct
 // judgeByWeight :: GameState -> Player -> HandWeights -> #[Integer, Integer]
 // export judgeByWeight = (state, player, weights) => {

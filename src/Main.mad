@@ -39,5 +39,5 @@ main = () => {
   // deal the rest of the cards to the players (up to a known limit)
   hidden.send(GAMEPLAY.dealCards)
   // take bets, we need only the bet from the non-player (non-bot wrapped) characters
-  hidden.send(GAMEPLAY.takeBets(Just(Dict.fromList([#[brekk, 5]]))))
+  hidden.send(GAMEPLAY.takeBet(brekk, 5))
 }
