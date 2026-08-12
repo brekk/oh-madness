@@ -1,24 +1,20 @@
 import type { Maybe } from "Maybe"
 import type { Random } from "Random"
 
-import type { Card, Suit } from "gambit"
 import type { Machine } from "utter/Machine"
 
-import type { GamePayload, GameStateContext, OhHell } from "@/Game"
-import type { Player } from "@/Player"
+import type { GamePayload, GameStateContext, OhHell, Player } from "@/Game"
 
 import Dict from "Dictionary"
 import { Just, Nothing } from "Maybe"
 
 import { Card, DECK, Joker, Wildcard } from "gambit"
 import { Action } from "utter/Action"
-import Interpreter from "utter/Interpreter"
 import Machine from "utter/Machine"
 import State from "utter/State"
 import Transition from "utter/Transition"
 
 import { EVENTS, STATES } from "@/Constants"
-import { GameDealCards, GameSetDealer, GameSetPlayers, GameSetTrump } from "@/Game"
 import Log from "@/Log"
 import GUARDS from "@/StateMachine/Guards"
 import REDUCERS from "@/StateMachine/Reducers"
@@ -72,7 +68,7 @@ export gameMachine = Machine.create(
       ],
     ),
     // I wanna collapse some of these states to something like PREPARING_ROUND
-    // but that seems to break things, so I don't wanna go to unstable yet
+    // but that seems to break things, so I don't wanna go to move to something unstable yet
     State.create(
       STATES.changingDealer,
       [

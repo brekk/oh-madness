@@ -2,24 +2,23 @@ import type { Maybe } from "Maybe"
 
 import type { Card, Suit } from "gambit"
 
+import type { PlayedCard, Player, Puppeteer } from "@/Game"
+
+import Float from "Float"
 import Fn from "Function"
 import List from "List"
+import Math from "Math"
 import { Just, Nothing } from "Maybe"
 
-import { Card, Joker, Wildcard } from "gambit/Cards"
+import { Card } from "gambit/Cards"
+import Cards from "gambit/Cards"
 import Deck from "gambit/Deck"
 
+import { Bot, PlayedCard, Player } from "@/Game"
 import Log from "@/Log"
 
 
 
-// export type LogicModel pay ctx = NaiveLogic | RandomLogic | CustomLogic(pay -> Maybe ctx)
-// eventually we should wire the LogicModel to the Bot behavior,
-// but since everything is gonna be the most naive 
-alias Event = String
-export type Player = Player(String, List Card) | Bot(Player, Event -> Player -> Player)
-derive Comparable Player
-export alias Puppeteer = Event -> Player -> Player
 name :: Player -> String
 export name = where {
   Player(x, _) =>
@@ -55,12 +54,12 @@ export setHand = (h, p) => where(p) {
     p
 }
 hasCard :: Card -> Player -> Boolean
-export hasCard = (card, player) => pipe(
+export hasCard = (card, pl) => pipe(
   hand,
   Deck.has(card),
-)(player)
+)(pl)
 discard :: Card -> Player -> Player
-export discard = (card, player) => where(player) {
+export discard = (card, pl) => where(pl) {
   Player(n, cards) =>
     Player(n, Deck.remove(card, cards))
 
@@ -110,3 +109,57 @@ export excludingPlayers = (as, bs) => List.reduce(
   Log.env.reducer("initial", bs),
   as,
 )
+// BOT LIFE
+
+
+
+
+naiveBet :: Card -> Integer -> Integer -> Player -> Integer
+export naiveBet = (trump, max, totalPlayers, p) => {
+  x = bestCardInHand(Cards.suit(trump), p) ?? Cards.Card(Cards.Joker, Cards.Wildcard)
+  median = Math.floor(max / totalPlayers)
+  ordRank = pipe(
+    Cards.rank,
+    Cards.toOrdinal,
+  )
+  rankT = ordRank(trump)
+  rankX = ordRank(x)
+  distance = Math.abs(rankX - rankT)
+  return if (distance < 3) {
+    Float.toInteger(median + 2)
+  } else {
+    0
+  }
+}
+naiveController :: Puppeteer
+export naiveController = (ev, ctx, pl) => {
+  // if (ev == EVENTS.betsTaken) do {
+  // }
+  return pl
+}
+export mindControl = (ev, ctx, botlike) => where(botlike) {
+  Bot(pl, ctrl) =>
+    Bot(ctrl(ev, ctx, pl), ctrl)
+
+  _ =>
+    botlike
+}
+export createBot = Bot($, naiveController)
+export create = Player
+playCard :: Card -> Player -> Maybe PlayedCard
+export playCard = (crd, ply) => hasCard(crd, ply) ? Just(PlayedCard(name(ply), crd)) : Nothing
+cardPlayedBy :: String -> PlayedCard -> Boolean
+export cardPlayedBy = (playerName, pCard) => where(pCard) {
+  PlayedCard(by, _) =>
+    by == playerName
+}
+rawCard :: PlayedCard -> Card
+export rawCard = where {
+  PlayedCard(_, c) =>
+    c
+}
+player :: PlayedCard -> String
+export player = where {
+  PlayedCard(n, _) =>
+    n
+}

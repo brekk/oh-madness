@@ -7,12 +7,11 @@ import Interpreter from "utter/Interpreter"
 import Machine from "utter/Machine"
 import State from "utter/State"
 
-import Bot from "@/Bot"
-import GAMEPLAY from "@/Game"
-import Loop from "@/GameLoop"
+import Game from "@/Game"
 import { permaloop } from "@/GameLoop"
+import GAMEPLAY from "@/Gameplay"
 import Log from "@/Log"
-import { Player } from "@/Player"
+import Player from "@/Player"
 import { createInitialContext, gameMachine } from "@/StateMachine"
 
 
@@ -24,15 +23,21 @@ main = () => {
   service = Interpreter.create(createInitialContext(random), gameMachine)
   hidden = permaloop(service)
 
-  brekk = Player("brekk", [])
+  brekk = Game.Player("brekk", [])
+  // set the players
   hidden.send(
-    GAMEPLAY.setPlayers([brekk, Bot.create(Player("arnaud", [])), Bot.create(Player("robot", []))]),
+    GAMEPLAY.setPlayers([
+      brekk,
+      Player.createBot(Player("arnaud", [])),
+      Player.createBot(Player("robot", [])),
+    ]),
   )
-
+  // set the dealer
   hidden.send(GAMEPLAY.setDealer)
+  // deal the trump card
   hidden.send(GAMEPLAY.setTrump)
+  // deal the rest of the cards to the players (up to a known limit)
   hidden.send(GAMEPLAY.dealCards)
+  // take bets, we need only the bet from the non-player (non-bot wrapped) characters
   hidden.send(GAMEPLAY.takeBets(Just(Dict.fromList([#[brekk, 5]]))))
-  // statement("6", service6)
-  // Log.env.mainEventPost("CARDS DEALT", service5)
 }

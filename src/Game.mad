@@ -4,9 +4,6 @@ import type { Random } from "Random"
 import type { Card } from "gambit"
 import type { Controller } from "utter/Interpreter"
 
-import type { PlayedCard } from "@/PlayedCards"
-import type { Player } from "@/Player"
-
 import Interpreter from "utter/Interpreter"
 
 import { EVENTS } from "@/Constants"
@@ -32,6 +29,7 @@ export type GamePayload
 // or are required for any state to proceed
 // the maybe values are intentionally there to allow for a game to
 // eventually be played entirely devoid of human players for testing porpoises
+// this also necessitates error states, as sometimes we cannot proceed
 
 export type GamePayload
   = GameSetPlayers(List Player)
@@ -58,16 +56,11 @@ export alias GameStateContext = {
 }
 export alias OhHell = Controller GamePayload GameStateContext
 export alias GameApi = OhHell -> OhHell
-setPlayers :: List Player -> GameApi
-export setPlayers = (players, sv) => pipe(
-  GameSetPlayers,
-  Interpreter.send(EVENTS.playersSet, $, sv),
-)(players)
-setDealer :: GameApi
-export setDealer = Interpreter.send(EVENTS.dealerSet, GameSetDealer)
-setTrump :: GameApi
-export setTrump = Interpreter.send(EVENTS.trumpCardSet, GameSetTrump)
-dealCards :: GameApi
-export dealCards = Interpreter.send(EVENTS.deal, GameDealCards)
-takeBets :: Maybe (Dictionary Player Integer) -> GameApi
-export takeBets = (dict, sv) => Interpreter.send(EVENTS.betsTaken, GameTakeBets(dict), sv)
+export alias Event = String
+export type Player
+  = Player(String, List Card)
+  | Bot(Player, Event -> GameStateContext -> Player -> Player)
+derive Comparable Player
+export alias Puppeteer = Event -> GameStateContext -> Player -> Player
+// Keep track of who played what card
+export type PlayedCard = PlayedCard(String, Card)

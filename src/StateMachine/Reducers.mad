@@ -3,9 +3,6 @@ import type { Maybe } from "Maybe"
 import type { Card, Suit } from "gambit"
 import type { Controller } from "utter/Interpreter"
 
-import type { PlayedCard } from "@/PlayedCards"
-import type { Player } from "@/Player"
-
 import Dict from "Dictionary"
 import { Left, Right } from "Either"
 import Fn from "Function"
@@ -16,7 +13,7 @@ import Random from "Random"
 
 import { ActionReducer } from "utter/Reducer"
 
-import { GameDealCards, GameSetDealer, GameSetPlayers, GameSetTrump, GameTakeBets } from "@/Game"
+import GG from "@/Game"
 import Log from "@/Log"
 import OhHell from "@/OhHell"
 import Player from "@/Player"
@@ -26,7 +23,7 @@ import Player from "@/Player"
 alias RedFun pay ctx = String -> pay -> Maybe ctx -> Maybe ctx
 _setPlayers :: RedFun pay ctx
 _setPlayers = (ev, mPay, mCtx) => where(#[mPay, mCtx]) {
-  #[GameSetPlayers(players), Just(ctx)] =>
+  #[GG.GameSetPlayers(players), Just(ctx)] =>
     pipe(
       Log.tapped.reducer("setting players", .players),
       Just,
@@ -36,30 +33,28 @@ _setPlayers = (ev, mPay, mCtx) => where(#[mPay, mCtx]) {
     mCtx
 }
 export setPlayers = ActionReducer(_setPlayers)
-_setTrump :: RedFun pay ctx
-_setTrump = (ev, pay, mCtx) => {
-  return where(#[pay, mCtx]) {
-    #[GameSetTrump, Just(ctx)] =>
-      where(Random.shuffle(ctx.deck, ctx.random)) {
-        [trump, ...deck] =>
-          do {
-            Log.tapped.reducer("deck length should be 51", List.length, deck)
-            return Just({ ...ctx, trump, deck })
-          }
+// _setTrump :: RedFun pay ctx
+_setTrump = (ev, pay, mCtx) => where(#[pay, mCtx]) {
+  #[GG.GameSetTrump, Just(ctx)] =>
+    where(Random.shuffle(ctx.deck, ctx.random)) {
+      [trump, ...deck] =>
+        do {
+          Log.env.reducer("trump card", trump)
+          return Just({ ...ctx, trump, deck })
+        }
 
-        [] =>
-          mCtx
-      }
+      [] =>
+        mCtx
+    }
 
-    _ =>
-      mCtx
-  }
+  _ =>
+    mCtx
 }
 export setTrump = ActionReducer(_setTrump)
 _setDealer :: RedFun pay ctx
 _setDealer = (ev, pay, mCtx) => {
   return where(#[pay, mCtx]) {
-    #[GameSetDealer, Just(ctx)] =>
+    #[GG.GameSetDealer, Just(ctx)] =>
       Just({ ...ctx, dealer: Random.pick(ctx.players, ctx.random) })
 
     _ =>
@@ -71,7 +66,7 @@ _dealCards :: (Show pay, Show ctx) => RedFun pay ctx
 _dealCards = (ev, pay, mCtx) => {
   // Log.env.reducer("EVE " ++ ev, #[pay, mCtx])
   return where(#[pay, mCtx]) {
-    #[GameDealCards, Just(ctx)] =>
+    #[GG.GameDealCards, Just(ctx)] =>
       pipe(
         OhHell.initialDeal,
         where {
@@ -94,7 +89,7 @@ export dealCards = ActionReducer(_dealCards)
 _takeBets :: (Show pay, Show ctx) => RedFun pay ctx
 _takeBets = (ev, pay, mCtx) => {
   return where(#[pay, mCtx]) {
-    #[GameTakeBets(Just(bets)), Just(ctx)] =>
+    #[GG.GameTakeBets(Just(bets)), Just(ctx)] =>
       do {
         Log.env.player("oh hell no", bets)
         players = ctx.players
@@ -103,11 +98,11 @@ _takeBets = (ev, pay, mCtx) => {
         playersWhoStillNeedToBet = pipe(
           Dict.keys,
           Player.excludingPlayers($, players),
-          // Log.env.player("xxx"),
-          List.reject(Player.isHuman),
-          Log.env.player("yyy"),
         )(bets)
-
+        botsToBet = List.reject(Player.isHuman, playersWhoStillNeedToBet)
+        // pipe(
+        //   map(Player.takeBet(ctx)),
+        // )(botsToBet)
         // pipe(
         //   map(Log.env.reducer("dealin")),
         // )(remainder)
