@@ -47,6 +47,7 @@ gameMachine :: Machine GamePayload GameStateContext
 export gameMachine = Machine.create(
   "oh-hell",
   [
+    State.createFinal(STATES.failure),
     State.create(
       STATES.initial,
       [
@@ -64,7 +65,7 @@ export gameMachine = Machine.create(
       [
         Transition.createComplex(
           EVENTS.dealerSet,
-          STATES.changeDealer,
+          STATES.changingDealer,
           ACTIONS,
           [GUARDS.ensurePlayers],
           [REDUCERS.setDealer],
@@ -72,7 +73,7 @@ export gameMachine = Machine.create(
       ],
     ),
     State.create(
-      STATES.changeDealer,
+      STATES.changingDealer,
       [
         Transition.createComplex(
           EVENTS.trumpCardSet,
@@ -126,9 +127,6 @@ export gameMachine = Machine.create(
         ),
       ],
     ),
-    State.create(
-      STATES.scoring,
-      [Transition.createComplex(EVENTS.scoresRecorded, STATES.changeDealer, ACTIONS, [], [])],
-    ),
+    State.createFinal(STATES.scoring),
   ],
 )

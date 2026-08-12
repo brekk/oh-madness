@@ -16,8 +16,8 @@ import Deck from "gambit/Deck"
 // but since everything is gonna be the most naive 
 alias Event = String
 export type Player = Player(String, List Card) | Bot(Player, Event -> Player -> Player)
-export alias Puppeteer = Event -> Player -> Player
 derive Comparable Player
+export alias Puppeteer = Event -> Player -> Player
 name :: Player -> String
 export name = where {
   Player(x, _) =>
@@ -28,6 +28,11 @@ export name = where {
 }
 isNamed :: String -> Player -> Boolean
 export isNamed = (n, p) => name(p) == n
+samePlayer :: Player -> Player -> Boolean
+export samePlayer = (a, b) => pipe(
+  name,
+  isNamed($, a),
+)(b)
 hand :: Player -> List Card
 export hand = where {
   Player(_, cards) =>
@@ -84,3 +89,12 @@ export actor = where {
   _ =>
     Nothing
 }
+excludingPlayers :: List Player -> List Player -> List Player
+export excludingPlayers = (as, bs) => List.reduce(
+  (agg, x) => pipe(
+    samePlayer,
+    List.reject($, agg),
+  )(x),
+  bs,
+  as,
+)

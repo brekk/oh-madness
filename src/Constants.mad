@@ -1,12 +1,13 @@
 export STATES = {
   setPlayers: "SETTING_PLAYERS",
-  changeDealer: "CHANGING_DEALER",
+  changingDealer: "CHANGING_DEALER",
   playing: "PLAYING",
   dealing: "DEALING",
   flipTrumpCard: "FLIPPING_TRUMP",
   betting: "BETTING",
   initial: "INITIAL",
   scoring: "SCORING",
+  failure: "FAILURE",
 }
 export EVENTS = {
   ready: "ready",

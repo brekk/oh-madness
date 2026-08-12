@@ -8,6 +8,7 @@ import type { Player } from "@/Player"
 
 import Dict from "Dictionary"
 import { Left, Right } from "Either"
+import Fn from "Function"
 import List from "List"
 import Math from "Math"
 import { Just, Nothing } from "Maybe"
@@ -18,6 +19,7 @@ import { ActionReducer } from "utter/Reducer"
 import { GameDealCards, GameSetDealer, GameSetPlayers, GameSetTrump, GameTakeBets } from "@/Game"
 import Log from "@/Log"
 import OhHell from "@/OhHell"
+import Player from "@/Player"
 
 
 
@@ -94,13 +96,14 @@ _takeBets = (ev, pay, mCtx) => {
       do {
         Log.env.player("oh hell no", bets)
         // do we have a bet for every player?
-        given = Dict.keys(bets)
-        provided = List.length(given)
-        expected = List.length(ctx.players)
-        fulfilled = provided == expected
-        if (!fulfilled) do {
-          Log.env.player("need more stuff!", Math.abs(expected - provided))
-        }
+        playersWhoStillNeedToBet = pipe(
+          Dict.keys,
+          Player.excludingPlayers($, ctx.players),
+          Log.env.player("xxx"),
+        )(bets)
+        // pipe(
+        //   map(Log.env.reducer("dealin")),
+        // )(remainder)
         // for every non bot player, we need bets
         return Just(ctx)
       }
