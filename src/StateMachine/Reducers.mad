@@ -21,6 +21,9 @@ import Player from "@/Player"
 
 
 alias RedFun pay ctx = String -> pay -> Maybe ctx -> Maybe ctx
+PLACEHOLDER :: RedFun pay ctx
+PLACEHOLDER = (_, _, x) => x
+export REDUCEHOLDER = ActionReducer(PLACEHOLDER)
 _setPlayers :: RedFun pay ctx
 _setPlayers = (ev, mPay, mCtx) => where(#[mPay, mCtx]) {
   #[GG.GameSetPlayers(players), Just(ctx)] =>
@@ -117,3 +120,7 @@ _takeBet = (ev, pay, mCtx) => {
   }
 }
 export takeBet = ActionReducer(_takeBet)
+export recordTrick = REDUCEHOLDER
+export recordRound = REDUCEHOLDER
+export updateRound = REDUCEHOLDER
+export finalScores = REDUCEHOLDER

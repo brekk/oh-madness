@@ -16,6 +16,7 @@ export type GamePayload
   | GameSetDealer
   | GameDealCards
   | GameSetTrump
+  | GameReadyToBet
   | GameTakeBet(Player, Integer)
   | GamePlayHand(Maybe (List PlayedCard))
   | GameRecordTrick(Maybe (List PlayedCard))

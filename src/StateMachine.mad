@@ -21,7 +21,11 @@ import REDUCERS from "@/StateMachine/Reducers"
 
 
 
-announceWith = (k) => Action((e, mPay, mCtx) => { Log.env.main((k ?? "") ++ e, mPay) })
+announceWith = (k) => Action(
+  (e, mPay, mCtx) => {
+    Log.env.main((k ?? "") ++ "event: (" ++ e ++ ")", mPay)
+  },
+)
 announce = announceWith(Nothing)
 ACTIONS = [announce]
 createInitialContext :: Random -> Maybe GameStateContext
@@ -44,11 +48,11 @@ export gameMachine = Machine.create(
   "oh-hell",
   [
     State.create(
-      STATES.initial,
+      STATES.gameStart,
       [
         Transition.createComplex(
           EVENTS.playersSet,
-          STATES.setPlayers,
+          STATES.ready,
           ACTIONS,
           [GUARDS.noPlayers],
           [REDUCERS.setPlayers],
@@ -56,50 +60,51 @@ export gameMachine = Machine.create(
       ],
     ),
     State.create(
-      STATES.setPlayers,
+      STATES.ready,
       [
         Transition.createComplex(
           EVENTS.dealerSet,
-          STATES.changingDealer,
+          STATES.preparingRound,
           ACTIONS,
           [GUARDS.hasNoDealer],
           [REDUCERS.setDealer],
         ),
       ],
     ),
-    // I wanna collapse some of these states to something like PREPARING_ROUND
-    // but that seems to break things, so I don't wanna go to move to something unstable yet
     State.create(
-      STATES.changingDealer,
+      STATES.preparingRound,
       [
         Transition.createComplex(
           EVENTS.trumpCardSet,
-          STATES.flipTrumpCard,
+          STATES.preparingRound,
+          // I believe we can make the actions here be called as a part 
+          // of this process
           ACTIONS,
           [GUARDS.hasNoTrumpCard],
           [REDUCERS.setTrump],
         ),
-      ],
-    ),
-    State.create(
-      STATES.flipTrumpCard,
-      [
         Transition.createComplex(
           EVENTS.deal,
-          STATES.dealing,
+          STATES.preparingRound,
           ACTIONS,
           [GUARDS.noCardsDealt],
           [REDUCERS.dealCards],
         ),
+        Transition.createComplex(
+          EVENTS.readyForBetting,
+          STATES.betting,
+          ACTIONS,
+          [GUARDS.betsIncomplete],
+          [REDUCERS.takeBet],
+        ),
       ],
     ),
     State.create(
-      STATES.dealing,
+      STATES.betting,
       [
-        // self transition
         Transition.createComplex(
           EVENTS.bet,
-          STATES.dealing,
+          STATES.betting,
           ACTIONS,
           [GUARDS.betsIncomplete],
           [REDUCERS.takeBet],
@@ -119,21 +124,46 @@ export gameMachine = Machine.create(
       [
         Transition.createComplex(
           EVENTS.trickComplete,
-          STATES.playing,
+          STATES.scoring,
           ACTIONS,
           [GUARDS.roundUnderTotalRound],
-          [],
+          [REDUCERS.recordTrick],
         ),
         Transition.createComplex(
-          EVENTS.roundsComplete,
+          EVENTS.roundComplete,
           STATES.scoring,
           ACTIONS,
           [GUARDS.allRoundsComplete],
-          [],
+          [REDUCERS.recordRound],
         ),
       ],
     ),
-    State.createFinal(STATES.failure),
-    State.createFinal(STATES.scoring),
+    State.create(
+      STATES.scoring,
+      [
+        Transition.createComplex(
+          EVENTS.trickRecorded,
+          STATES.playing,
+          ACTIONS,
+          [GUARDS.roundIncomplete],
+          [REDUCERS.updateRound],
+        ),
+        Transition.createComplex(
+          EVENTS.roundRecorded,
+          STATES.preparingRound,
+          ACTIONS,
+          [GUARDS.roundComplete],
+          [REDUCERS.recordRound],
+        ),
+        Transition.createComplex(
+          EVENTS.endGame,
+          STATES.gameOver,
+          ACTIONS,
+          [GUARDS.allRoundsComplete],
+          [REDUCERS.finalScores],
+        ),
+      ],
+    ),
+    State.createFinal(STATES.gameOver),
   ],
 )

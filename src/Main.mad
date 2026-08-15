@@ -2,11 +2,17 @@ import Dict from "Dictionary"
 import IO from "IO"
 import { Just } from "Maybe"
 import Random from "Random"
+import String from "String"
 
+import Graph from "utter/Graph"
 import Interpreter from "utter/Interpreter"
 import Machine from "utter/Machine"
 import State from "utter/State"
+import VEdge from "vizier/Edge"
+import VGraph from "vizier/Graph"
+import VNode from "vizier/Node"
 
+import { STATES } from "@/Constants"
 import Game from "@/Game"
 import { permaloop } from "@/GameLoop"
 import GAMEPLAY from "@/Gameplay"
@@ -16,13 +22,73 @@ import { createInitialContext, gameMachine } from "@/StateMachine"
 
 
 
+/*
+GOAL:
+*/
+
+/*
+digraph "oh-hell" {
+    layout=sfdp;
+    fontname = "'Helvetica Neue',Helvetica,Arial,sans-serif";
+    nodesep=1.9;
+    sep=3.8;
+    dimen=2;
+    overlap=scale;
+    // splines=true;
+    edge [fontname = "'Helvetica Neue',Helvetica,Arial,sans-serif"]
+   node [shape="doublecircle", fontname = "'Helvetica Neue',Helvetica,Arial,sans-serif"]
+   gameOver
+   gameStart
+   node [shape="rectangle"]
+   nothing [width=0.01 height=0.01 shape=point fixedsize=true label=""]
+   betting
+   playing
+   preparingRound
+   ready
+   scoring
+   betting -> betting [label = "bet", style="dashed"];
+   betting -> playing [label = "betsTaken"];
+   gameStart -> ready [label = "playersSet"];
+   playing -> scoring [label = "roundComplete"];
+   playing -> scoring [label = "trickComplete"];
+   nothing -> playing [style=invis];
+   nothing -> scoring [style=invis];
+   preparingRound -> preparingRound [label = "dealing", style="dashed"];
+   preparingRound -> betting [label = "readyForBetting"];
+   preparingRound -> preparingRound [label = "trumpCardSet", style="dashed"];
+   ready -> preparingRound [label = "dealerSet"];
+   scoring -> gameOver [label = "endGame"];
+   scoring -> preparingRound [label = "roundRecorded"];
+   scoring -> playing [label = "trickRecorded"];
+}
+*/
+HELLVETICA = `"Helvetica Neue",Helvetica,Arial,sans-serif`
+graphvizConfig = {
+  ...Graph.VANILLA,
+  // some junk
+  // elides over existing nodes
+  nodeMap: (n) => n == "gameStart" || n == "gameOver" ? [VNode.Shape(VNode.ShapeDoublecircle)] : [],
+  attrStyle: [
+    VGraph.Fontname(HELLVETICA),
+    VGraph.Layout(VGraph.LayoutSFDP),
+    VGraph.Nodesep(1.9),
+    VGraph.Sep(3.8),
+    VGraph.Dimen(2),
+    VGraph.Overlap("scale"),
+  ],
+  nodes: [VNode.GlobalNode([VNode.Fontname(HELLVETICA)])],
+  edges: [VEdge.GlobalEdge([VEdge.Fontname(HELLVETICA)])],
+}
 main = () => {
   random = Random.generateFromString("my-cool-game")
-
+  IO.put(
+    pipe(
+      Graph.toDotWithConfig(graphvizConfig),
+    )(gameMachine),
+  )
 
   service = Interpreter.create(createInitialContext(random), gameMachine)
   hidden = permaloop(service)
-
   brekk = Game.Player("brekk", [])
   // set the players
   hidden.send(
@@ -38,6 +104,7 @@ main = () => {
   hidden.send(GAMEPLAY.setTrump)
   // deal the rest of the cards to the players (up to a known limit)
   hidden.send(GAMEPLAY.dealCards)
+  hidden.send(GAMEPLAY.readyToBet)
   // take bets, we need only the bet from the non-player (non-bot wrapped) characters
   hidden.send(GAMEPLAY.takeBet(brekk, 5))
 }
